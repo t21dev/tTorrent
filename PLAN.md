@@ -1,6 +1,6 @@
 # tTorrent plan
 
-A torrent client with qBittorrent's features and layout, a modern finish, and memory that stays flat: engine and window together under 50 MB as the target, never above 100 to 120 MB. Windows first, then macOS and Linux.
+A torrent client with qBittorrent's features and layout, a modern finish, and memory that stays flat. UI: **GPUI** (decided 18 November 2026). Windows first, then macOS and Linux.
 
 Living references:
 - Feature picks (v1 / Later / Skip): https://claude.ai/artifact/8rWBDxNJoz7gp5RDLCGwPo (105 v1, 18 later, 9 skipped = 93.2 % of qBittorrent 5.2, plus our additions)
@@ -8,12 +8,13 @@ Living references:
 
 ## 1. Goals and budgets
 
-Every memory figure is **engine and window together**, with 735 torrents, measured as Task Manager memory (private working set) and as private bytes.
+Every memory figure is **everything tTorrent runs** (engine and window processes together), with 735 torrents. The gated number is **Task Manager memory** (private working set), the one users see; private bytes, working set and GPU memory are recorded next to it on every run.
 
 | Budget | Target | Hard limit | Measured how |
 |---|---|---|---|
-| Window open, 735 torrents | **under 50 MB** | 100 to 120 MB | Task Manager and private bytes, after 24 h, on an NVIDIA dGPU and an AMD/Intel iGPU |
-| Window closed (tray only) | under 30 MB | 50 MB | Same |
+| Window open, 735 torrents | as close to 50 MB as we can get; **100 MB** | **120 MB** | Task Manager, after 24 h, on the NVIDIA dGPU **and** the AMD iGPU (the iGPU is the hard case) |
+| Window closed (tray only: engine process alone, no GPU) | **under 30 MB** | 50 MB | Same |
+| Private bytes, window open | recorded, no gate | flag if above 200 MB on the iGPU | VMMap / `tt-bench` |
 | Over time | flat: day 7 equals day 1 within 10 % | no growth trend | `scripts/qb-mem-log.ps1`-style log |
 | Idle CPU (seeding, window closed or open and idle) | 0 % | 1 to 2 % | Process Explorer, 10 min |
 | Cold start to list on screen | under 300 ms | 500 ms | External timing, as in Kitab |
@@ -27,45 +28,35 @@ Every memory figure is **engine and window together**, with 735 torrents, measur
 
 ## 2. Architecture
 
-### The memory floor of each UI stack
+### Decision: GPUI (18 November 2026)
 
-The window's rendering stack decides the budget. Measured on this machine where we have numbers:
+The owner chose **GPUI**: the team already ships Kitab on it (with its patches and lean mode), it gives the best look and motion for the Dose design, and it runs on Windows, macOS and Linux.
 
-| Stack | Engine + window, window open | Evidence | Look and motion | All scripts in names | Platforms | Verdict |
-|---|---|---|---|---|---|---|
-| Tauri + Rust | ~235 to 285 MB | **Measured** in Turbo Reader: 14 MB app process, ~220 to 270 MB with WebView2 | Easiest | Yes | Win, mac, Linux | Out |
-| GPUI + Rust | ~55 to 80 MB Task Manager, ~110 to 175 MB private | **Measured** in Kitab (`../kitab/docs/perf/baseline.md`): GPUI alone in lean mode 87 MB private on NVIDIA, 149 MB on the AMD iGPU, plus ~70 MB GPU memory; engine estimated | Best | Yes | Win, mac, Linux | Meets 120 MB only on a dGPU; misses 50 MB |
-| GPUI on WARP (software Direct3D) | ~60 to 75 MB private | **Measured** in Kitab: 39 MB GPUI floor, but ~14 cores busy for the first second and CPU on every frame | Best | Yes | Windows only | Fallback, not default |
-| egui + wgpu or glow | Same GPU device and driver floor as GPUI | Not measured; same Direct3D/OpenGL drivers | Hard to make premium | Yes | Win, mac, Linux | Out |
-| **iced + tiny-skia** (CPU rendering) | ~40 to 60 MB (estimate) | Not measured. Docs: lower memory than wgpu. No GPU device or driver loaded; a 1080p window needs ~16 MB of frame buffers; text by cosmic-text | Good; flexible styling | Yes (cosmic-text shapes complex scripts) | Win, mac, Linux | **Lead candidate** |
-| Slint + software renderer | ~40 to 60 MB (estimate) | Not measured. Partial redraws. Docs: software renderer text is limited to western scripts | Good; animations built in | **No**: CJK, Devanagari and Tamil names would break | Win, mac, Linux | Out unless text support lands |
-| Native per OS (Win32/AppKit/GTK) | ~25 to 40 MB (estimate) | SumatraPDF-class apps measure 15 to 40 MB | Hard to match the design three times | Yes | Three codebases | Out |
+What that costs, measured in Kitab (`../kitab/docs/perf/baseline.md`, 7 November 2026), and how the design contains it:
 
-Estimates are marked; only measured rows are facts. The spike replaces every estimate.
+| Kitab, lean mode | Task Manager | Private bytes | GPU memory |
+|---|---|---|---|
+| Kitab, 2 pages, NVIDIA RTX 5070 | 28.8 MB | 107 MB | ~70 MB |
+| Kitab, 2 pages, AMD integrated GPU | 50.8 MB | 186 MB | shared with RAM |
+| GPUI alone, NVIDIA / AMD iGPU | | 87 / 149 MB | |
 
-### Proposed: one process, CPU-rendered window
+Most of that is the Direct3D device, the graphics driver and window-sized surfaces, paid whenever a GPUI window exists. So:
 
 ```
- tTorrent (one process, Rust)
- ├─ engine: librqbit session, SQLite, limits, RSS, scheduler, Web API
- ├─ tray / menu-bar icon (native, no GPU)
- └─ window: iced + tiny-skia, created when shown, destroyed when hidden
-            (frame buffers, glyph cache and widget tree freed on close to tray)
+ tt-engine (always running, no GPU)            tt-ui (GPUI, only while the window is open)
+ ├─ librqbit session: all torrents             ├─ list, details, settings, menus
+ ├─ SQLite: torrents, settings, RSS, stats     └─ talks to the engine over local IPC
+ ├─ tray / menu-bar icon and menu                 (named pipe / Unix socket, typed API)
+ ├─ Web API, MCP server (opt-in)
+ └─ RSS, watched folders, scheduler, file association, single instance
 ```
 
-Why:
-- A GPU stack costs 87 to 149 MB before we draw anything, which alone breaks a 120 MB budget on integrated GPUs. CPU rendering has no device or driver cost; a torrent list redraws about once a second and only where something changed, so the CPU cost is small.
-- One process instead of an engine plus a UI process saves a second runtime and the IPC layer. Destroying the window on close gives the same "tray costs almost nothing" benefit.
-- The engine stays a separate crate behind a typed API, so the Web API, a CLI or a different window can drive it.
+- **Closing to the tray ends the window process**, which frees the GPU device, driver memory and surfaces. The tray-only state is the engine alone, with no GPU (budget under 30 MB).
+- **Opening the window** starts `tt-ui` against a warm engine; it draws the list from the engine's snapshot, so it appears fast (`docs/startup.md`).
+- **Lean mode on by default** (Kitab's single-sampled path texture and two swap-chain buffers), the font and adapter start-up fixes, and a "hardware acceleration off" fallback on WARP for machines where the GPU path misbehaves.
+- **Risk:** on integrated GPUs the GPUI floor alone is near the window-open budget. The spike measures it first; if it breaks 120 MB in Task Manager there, the ladder in `docs/perf/README.md` applies (lean settings, smaller surfaces, adapter choice), and any budget change is the owner's call.
 
-Risks to check in the spike: smoothness of 220 ms transitions on a 4K window on the CPU (fall back to shorter or fewer effects), shadow and blur cost (DESIGN.md already avoids blur), iced's animation support, and font fallback for mixed-script names.
-
-### Spike decides between
-
-1. **iced + tiny-skia** (lead), and
-2. **GPUI lean** (comparison, since Kitab already proves its polish),
-
-on the same screen: 735-row list, sidebar, details with the piece map, status bar, one open menu. Measured on the NVIDIA dGPU and the AMD iGPU, window open and closed. The stack that meets **100 MB hard / 50 MB target** wins; if both do, the lighter one wins.
+Alternatives considered before the decision (for the record): Tauri (measured ~220 to 270 MB in Turbo Reader), egui (same GPU floor as GPUI), iced with CPU rendering (lighter on paper, not measured, new to the team), Slint's software renderer (western-script text only), native per OS (three codebases).
 
 ### Engine
 
@@ -82,7 +73,7 @@ crates/
   tt-ipc        typed API shared by the UI, CLI and Web API
   tt-webapi     qBittorrent-compatible Web API (Sonarr, Radarr, Prowlarr, phone apps)
   tt-mcp        built-in MCP server for AI agents (docs/mcp.md), off by default
-  tt-ui         the window (iced + tiny-skia, or GPUI if the spike says so)
+  tt-ui         the GPUI window process (started when shown, exits when closed to the tray)
   tt-theme      tokens, themes, density, scale, accent maths (DESIGN.md)
   tt-platform   tray, file association, autostart, taskbar progress, notifications
   tt-import     qBittorrent importer
@@ -96,8 +87,8 @@ crates/
 - [ ] Measure: private bytes, Task Manager memory, idle CPU, startup time, handles, threads.
 - [ ] Baseline qBittorrent's startup I/O with `scripts/qb-startup-io.ps1`, then the same for the librqbit spike.
 - [ ] Check each "verify" tag in the feature map against librqbit's source (encryption, IP filter, v2, web seeds, PEX, LSD, move storage, per-torrent limits).
-- [ ] The same window built twice, iced + tiny-skia and GPUI lean, with a 735-row virtual list, sidebar, details and piece map: memory and CPU on the NVIDIA dGPU and the AMD iGPU, window open and closed.
-- [ ] Decide the UI stack against the budget (100 MB hard, 50 MB target, engine and window together); list of librqbit changes.
+- [ ] A GPUI window (lean mode) over IPC with a 735-row virtual list, sidebar, details and piece map: Task Manager memory, private bytes, GPU memory and CPU on the NVIDIA dGPU and the AMD iGPU, window open, and the engine alone with the window closed.
+- [ ] Check the window-open and tray-only budgets on both GPUs; list the librqbit changes.
 
 ### Phase 1: engine
 - [ ] Session, SQLite state, resume data, queueing, speed and seeding limits, slow mode and scheduler.

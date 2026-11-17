@@ -1,6 +1,6 @@
 # Agent instructions
 
-tTorrent is a torrent client with qBittorrent's features and layout, a modern finish, and memory that stays flat. Rust and librqbit; the window is CPU-rendered (iced + tiny-skia) unless the Phase 0 spike picks GPUI. Read `PLAN.md` for the architecture and phases and `DESIGN.md` before touching any UI. **Before reporting any change as done, work through `VERIFY.md`**; `TESTING.md` says which tests each kind of change must run, and `docs/perf/README.md` how speed and memory are compared.
+tTorrent is a torrent client with qBittorrent's features and layout, a modern finish, and memory that stays flat. Rust and librqbit, with a GPUI window (decided). Read `PLAN.md` for the architecture and phases and `DESIGN.md` before touching any UI. **Before reporting any change as done, work through `VERIFY.md`**; `TESTING.md` says which tests each kind of change must run, and `docs/perf/README.md` how speed and memory are compared.
 
 ## Rules that are easy to break
 
@@ -8,7 +8,7 @@ tTorrent is a torrent client with qBittorrent's features and layout, a modern fi
 - **Measure, never guess.** Every memory, CPU or start-up figure in docs, the README, the app or the site comes from a run you can repeat, with the machine, date and method written next to it (see `../kitab/docs/perf/baseline.md` for the format). Compare Task Manager (private working set), working set and private bytes. If you couldn't measure it, say so.
 - **Familiar first.** Layout, menu items, column names, tray menu and shortcuts follow qBittorrent unless DESIGN.md says otherwise. Shortcuts use ⌘ on macOS and Ctrl elsewhere, everywhere.
 - **The UI follows DESIGN.md.** Colours, fonts, sizes and durations come from `tt-theme` tokens, never literals. If the code and DESIGN.md disagree, fix one of them on purpose in the same change.
-- **The budget is engine and window together:** under 50 MB target, 100 to 120 MB hard limit, with 735 torrents and the window open. Nothing loads a GPU device by default. The window is created when shown and destroyed when hidden; the tray, Web API, RSS and scheduling never depend on it.
+- **The engine never loads the GPU.** Torrents, tray, Web API, MCP, RSS and scheduling live in `tt-engine`; the GPUI window is the separate `tt-ui` process, started when shown and ended when closed to the tray. Budgets (Task Manager, both processes together, 735 torrents): window open 100 MB target, 120 MB hard; tray only under 30 MB, 50 MB hard.
 - **Private data stays out of git.** `data/` holds the owner's qBittorrent measurements and torrent statistics. Never commit it, and never put torrent names from the owner's machine in docs, tests, fixtures or screenshots. Use open content (Linux ISOs, Blender open movies, Internet Archive) for examples.
 
 ## Code

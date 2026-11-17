@@ -4,7 +4,7 @@
 
 **A full-featured torrent client that stays fast, light and calm, however many torrents you keep.**
 
-<sub>A desktop torrent client written in Rust on the librqbit engine, with a CPU-rendered window that is freed when you close it to the tray.</sub>
+<sub>A desktop torrent client written in Rust: the librqbit engine runs on its own, and a GPUI window opens only when you need it.</sub>
 
 A **[t21 dev](https://github.com/t21dev)** project, by **[TriptoAfsin](https://github.com/TriptoAfsin)**, from the team behind [Turbo Reader](https://github.com/t21dev/turbo-reader) and [Kitab Reader](https://github.com/t21dev/kitab).
 
@@ -18,8 +18,8 @@ Desktop torrent clients that do everything tend to get heavy: memory climbs with
 
 Targets (to be measured, see [PLAN.md](PLAN.md)):
 
-- Under 50 MB for everything, engine and window together, with hundreds of torrents and the window open.
-- Never above 100 to 120 MB.
+- Under 30 MB while it runs in the tray with hundreds of torrents.
+- About 100 MB with the window open, never above 120 MB.
 - The same on day 7 as on day 1.
 - No disk spike at startup: no rechecks unless a file changed, torrents start in waves, the list shows in under 300 ms.
 - No feature cuts: every limit keeps the usual default and stays a setting.

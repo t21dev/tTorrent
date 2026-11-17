@@ -17,7 +17,7 @@ Budgets live in `PLAN.md` §1. Correctness and layout tests are in `TESTING.md`;
 
 | ID | Metric | Scenario | Budget (PLAN.md) | Regression threshold vs `main` |
 |---|---|---|---|---|
-| **M1** | Task Manager memory and private bytes, engine + window | 735 torrents, window open, 10 min idle | < 50 MB target, 100 to 120 MB hard | +2 MB or +3 %, whichever is larger |
+| **M1** | Task Manager memory and private bytes, engine + window | 735 torrents, window open, 10 min idle | 100 MB target, 120 MB hard (Task Manager; private bytes and GPU memory recorded) | +2 MB or +3 %, whichever is larger |
 | **M2** | Same, window closed (tray only) | 735 torrents, 10 min | < 30 MB, 50 MB hard | +1 MB or +3 % |
 | **M3** | Memory slope | 24 h soak, seeding | flat (day 7 within 10 % of day 1) | any positive trend above noise |
 | **M4** | Idle CPU | 10 min, window open and closed | 0 %, 2 % hard | +0.2 % points |
