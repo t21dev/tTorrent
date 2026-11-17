@@ -1,0 +1,403 @@
+<title>tTorrent Feature Map</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one column of collapsible groups under a summary band; the "piece map" (one square per feature) is the signature. */
+:root{
+  --bg:#f5f6f8; --surface:#ffffff; --sunken:#eef0f3; --fg:#14171c; --muted:#5a6371; --line:#dde1e7;
+  --v1:#2f5bd3; --v1-soft:#e3eafc; --later:#b97a0c; --later-soft:#fbefd6; --skip:#aeb5c0; --skip-soft:#eceef1;
+  --on-v1:#ffffff; --focus:#2f5bd3;
+  --font-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1216; --surface:#161a20; --sunken:#1c2129; --fg:#e7eaef; --muted:#97a1ae; --line:#272d36;
+  --v1:#7096ff; --v1-soft:#1d2a4d; --later:#e3a83c; --later-soft:#3a2c12; --skip:#4a525e; --skip-soft:#20252c;
+  --on-v1:#0f1216; --focus:#7096ff; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0f1216; --surface:#161a20; --sunken:#1c2129; --fg:#e7eaef; --muted:#97a1ae; --line:#272d36;
+  --v1:#7096ff; --v1-soft:#1d2a4d; --later:#e3a83c; --later-soft:#3a2c12; --skip:#4a525e; --skip-soft:#20252c;
+  --on-v1:#0f1216; --focus:#7096ff; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
+.wrap{max-width:920px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1{font-size:26px;line-height:1.2;margin:0;letter-spacing:-.01em;text-wrap:balance}
+.lede{color:var(--muted);margin:6px 0 0;max-width:65ch}
+.mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+button{font:inherit;color:inherit}
+button:focus-visible,input:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+.summary{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:14px}
+.stats{display:flex;flex-wrap:wrap;gap:10px 28px;align-items:baseline}
+.stat{display:flex;flex-direction:column}
+.stat b{font-family:var(--font-mono);font-size:24px;font-weight:500;font-variant-numeric:tabular-nums;line-height:1.1}
+.stat span{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.stat.parity b{color:var(--v1)}
+.target{font-size:13px;color:var(--muted)}
+.target.ok{color:var(--v1)}
+.pieces{display:flex;flex-wrap:wrap;gap:2px}
+.pc{width:11px;height:11px;border-radius:2px;background:var(--skip)}
+.pc.v1{background:var(--v1)} .pc.later{background:var(--later)} .pc.skip{background:var(--skip-soft);box-shadow:inset 0 0 0 1px var(--skip)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--muted);align-items:center}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 12px;font-size:13px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.save{font-size:13px;color:var(--muted);display:flex;gap:10px;align-items:center}
+.linkbtn{background:none;border:none;color:var(--muted);text-decoration:underline;cursor:pointer;padding:0;font-size:13px}
+
+.groups{display:flex;flex-direction:column;gap:8px}
+.group{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.ghead{width:100%;display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:14px 16px;background:none;border:none;text-align:left;cursor:pointer}
+.ghead:hover{background:var(--sunken)}
+.gname{font-weight:600;font-size:16px}
+.gblurb{font-size:13px;color:var(--muted)}
+.gtitle{min-width:0}
+.gcounts{font-size:12px;color:var(--muted);white-space:nowrap}
+.gcounts .n1{color:var(--v1)} .gcounts .nl{color:var(--later)}
+.chev{width:18px;height:18px;transition:transform .15s ease;color:var(--muted)}
+.group.open .chev{transform:rotate(90deg)}
+.gpieces{grid-column:1/-1;margin-top:-2px}
+.gpieces .pc{width:8px;height:8px}
+.gbody{border-top:1px solid var(--line);padding:6px 0 10px}
+.gbulk{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px 16px 6px;font-size:13px;color:var(--muted)}
+.gbulk button{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:3px 10px;cursor:pointer;font-size:13px}
+.gbulk button:hover{background:var(--sunken)}
+.feat{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 14px;align-items:center;padding:10px 16px;border-top:1px solid var(--line)}
+.feat:first-of-type{border-top:none}
+.fname{font-weight:500}
+.fnote{font-size:13px;color:var(--muted)}
+.fmeta{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;align-items:center}
+.tag{font-family:var(--font-mono);font-size:11px;border-radius:4px;padding:1px 6px;background:var(--sunken);color:var(--muted);white-space:nowrap}
+.tag.must{background:var(--v1-soft);color:var(--v1);font-weight:500}
+.tag.diff{background:var(--later-soft);color:var(--later)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;flex-shrink:0}
+.seg button{border:none;background:var(--surface);padding:5px 11px;font-size:13px;cursor:pointer;min-width:52px}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"][data-v="v1"]{background:var(--v1);color:var(--on-v1)}
+.seg button[aria-pressed="true"][data-v="later"]{background:var(--later-soft);color:var(--later);font-weight:600}
+.seg button[aria-pressed="true"][data-v="skip"]{background:var(--skip-soft);color:var(--muted);font-weight:600}
+.empty{padding:10px 16px;color:var(--muted);font-size:13px}
+.extras .gname::after{content:"not in qBittorrent";font-family:var(--font-mono);font-size:11px;font-weight:400;color:var(--muted);margin-left:8px;border:1px solid var(--line);border-radius:4px;padding:1px 6px}
+.foot{font-size:13px;color:var(--muted);max-width:65ch}
+@media (max-width:560px){
+  .feat{grid-template-columns:1fr}
+  .ghead{grid-template-columns:1fr auto}
+  .gcounts{grid-column:1/-1;grid-row:2}
+}
+@media (prefers-reduced-motion:reduce){.chev{transition:none}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>tTorrent Feature Map</h1>
+    <p class="lede">Every qBittorrent 5.2 feature, in 15 groups, plus suggested additions. Each one starts at my recommendation. Set it to <b>v1</b>, <b>Later</b> or <b>Skip</b>. Parity counts v1 and Later together; the goal is 90 to 95 percent.</p>
+  </header>
+
+  <section class="summary" aria-label="Summary">
+    <div class="stats">
+      <div class="stat parity"><b id="sParity">0%</b><span>qBittorrent parity</span></div>
+      <div class="stat"><b id="sV1">0</b><span>In v1</span></div>
+      <div class="stat"><b id="sLater">0</b><span>Later</span></div>
+      <div class="stat"><b id="sSkip">0</b><span>Skipped</span></div>
+      <div class="stat"><b id="sTotal">0</b><span>qBittorrent features</span></div>
+    </div>
+    <div class="target" id="sTarget"></div>
+    <div class="pieces" id="allPieces" aria-hidden="true"></div>
+    <div class="legend">
+      <span><i style="background:var(--v1)"></i>v1</span>
+      <span><i style="background:var(--later)"></i>Later</span>
+      <span><i style="background:var(--skip-soft);box-shadow:inset 0 0 0 1px var(--skip)"></i>Skip</span>
+      <span class="mono">one square = one feature</span>
+    </div>
+  </section>
+
+  <div class="toolbar">
+    <div class="chips" role="group" aria-label="Show">
+      <button class="chip" data-f="all" aria-pressed="true">All</button>
+      <button class="chip" data-f="v1" aria-pressed="false">v1</button>
+      <button class="chip" data-f="later" aria-pressed="false">Later</button>
+      <button class="chip" data-f="skip" aria-pressed="false">Skipped</button>
+      <button class="chip" data-f="diff" aria-pressed="false">Changed by you</button>
+    </div>
+    <div class="save"><span id="saveState">Connecting…</span><button class="linkbtn" id="resetBtn">Reset to recommended</button></div>
+  </div>
+
+  <div class="groups" id="groups"></div>
+
+  <p class="foot">Engine tags say where the work is. <span class="mono">librqbit</span>: already in the engine. <span class="mono">app</span>: we build it in the app. <span class="mono">engine work</span>: has to be added to librqbit. <span class="mono">verify</span>: may be in librqbit; the spike will confirm.</p>
+</div>
+
+<script>
+const ENG={R:"librqbit",B:"app",E:"engine work",V:"verify"};
+const GROUPS=[
+{id:"add",name:"Adding torrents",blurb:"Files, magnets, the add dialog, watched folders",f:[
+["add-file","Open .torrent files","","v1","R"],
+["add-magnet","Magnet links","Fetches the metadata first","v1","R"],
+["add-url","Add from a web link","Downloads the .torrent for you","v1","B"],
+["add-dnd","Drag and drop","Files and magnet text onto the window","v1","B"],
+["add-assoc","Default app for .torrent and magnet links","On Windows, macOS and Linux","v1","B"],
+["add-dialog","Add dialog","Save path, category, tags, start or stop, file picker, priorities","v1","B"],
+["add-layout","Content layout","Original, create subfolder, no subfolder","v1","B"],
+["add-noconfirm","Add without the dialog","Use defaults straight away","v1","B"],
+["add-top","Add to top of queue","","v1","B"],
+["add-skipcheck","Skip hash check","For data already on disk","v1","V"],
+["add-watch","Watched folders","Auto-add .torrent files saved into a folder","v1","B"],
+["add-merge","Merge trackers on duplicates","Adding the same torrent again adds its trackers","v1","B"],
+["add-stopcond","Stop condition","Stop once metadata arrives or files are checked","later","B"],
+["add-delete","Delete .torrent after adding","","later","B"],
+["add-copy","Copy .torrent files to a folder","Plus a folder for finished ones","later","B"]]},
+{id:"list",name:"Transfer list",blurb:"Columns, filters, categories, tags, queue, actions",f:[
+["list-multi","Many torrents at once","Hundreds downloading and seeding side by side; your 735 included","v1","R"],
+["list-cols","Configurable columns","About 40 columns; reorder, resize, hide","v1","B"],
+["list-sort","Sort and multi-select","","v1","B"],
+["list-search","Search by name","Plain text or regex","v1","B"],
+["list-status","Status filters","Downloading, seeding, completed, running, stopped, active, inactive, stalled, checking, moving, errored","v1","B"],
+["list-cat","Categories","Own save path each; nested subcategories","v1","B"],
+["list-tags","Tags","Several per torrent","v1","B"],
+["list-trk","Tracker filter","Group torrents by tracker","v1","B"],
+["list-trkstatus","Tracker status filter","New in 5.2","later","B"],
+["list-queue","Queueing","Max active downloads, uploads and torrents; ignore slow torrents","v1","B"],
+["list-force","Force start","Bypass the queue","v1","B"],
+["list-seq","Sequential download","","v1","R"],
+["list-firstlast","First and last pieces first","Lets a player open a video early","v1","V"],
+["list-rename","Rename torrent","","v1","B"],
+["list-move","Set location","Move files while running","v1","V"],
+["list-copy","Copy name, hash or magnet link","","v1","B"],
+["list-export","Export .torrent","","v1","B"],
+["list-open","Open file or folder","","v1","B"],
+["list-recheck","Force recheck","","v1","R"],
+["list-reannounce","Force reannounce","","v1","V"],
+["list-remove","Remove, with or without files","Files to the recycle bin or deleted for good","v1","B"],
+["list-bar","Status bar","Speeds, DHT nodes, free disk space, connection state","v1","B"],
+["list-preview","Preview file","Open a partly downloaded file in a player","later","B"]]},
+{id:"det",name:"Torrent details",blurb:"The tabs under the list",f:[
+["det-general","General tab","Progress, piece map, ratio, ETA, sizes, dates, hash, comment","v1","B"],
+["det-trackers","Trackers tab","Status per tracker; add, edit, remove, tiers","v1","V"],
+["det-peers","Peers tab","Client, flags, progress, speeds","v1","V"],
+["det-ban","Ban a peer","","v1","V"],
+["det-content","Content tab","File tree, priorities, skip files","v1","R"],
+["det-renamefile","Rename files and folders","Inside a torrent","v1","E"],
+["det-graphs","Speed graphs","Upload, download, payload, overhead","v1","B"],
+["det-addpeer","Add peers by hand","","later","V"],
+["det-webseeds","HTTP sources tab","View, add and remove web seeds","later","V"],
+["det-geo","Peer country flags","Country lookup database","later","B"]]},
+{id:"spd",name:"Speed limits",blurb:"Global, per torrent, slow mode, scheduler",f:[
+["spd-global","Global upload and download limits","","v1","V"],
+["spd-torrent","Per-torrent limits","","v1","V"],
+["spd-alt","Alternative speed limits","One-click slow mode","v1","B"],
+["spd-sched","Slow-mode scheduler","By day and time","v1","B"],
+["spd-title","Speed in title bar and tray","","v1","B"],
+["spd-overhead","Limit uTP, overhead and LAN too","Three switches","later","E"]]},
+{id:"seed",name:"Seeding rules",blurb:"Ratio and time limits, what happens at the limit",f:[
+["seed-ratio","Ratio limit","","v1","B"],
+["seed-time","Seeding time limit","","v1","B"],
+["seed-inactive","Inactive seeding time limit","","v1","B"],
+["seed-action","Action at the limit","Stop, remove, remove with files, super seeding","v1","B"],
+["seed-per","Per-torrent and per-category limits","Per-category is new in 5.2","v1","B"],
+["seed-super","Super seeding","For the first seeder of rare content","later","E"]]},
+{id:"net",name:"Connection and privacy",blurb:"Ports, proxy, VPN binding, block lists, encryption",f:[
+["net-port","Listening port","With a random-port option","v1","R"],
+["net-upnp","UPnP and NAT-PMP","Opens the port on the router","v1","V"],
+["net-utp","uTP and TCP mixed mode","Experimental in librqbit 9","v1","E"],
+["net-conn","Connection limits","Global and per torrent; upload slots","v1","V"],
+["net-proxy","Proxy","SOCKS5, SOCKS4, HTTP with login; choose what uses it","v1","V"],
+["net-bind","Bind to a network interface","Stops traffic if the VPN drops","v1","E"],
+["net-ipfilter","IP filter","Block lists in .dat, .p2p, .p2b","v1","E"],
+["net-banlist","Banned IP list","Edit by hand","v1","E"],
+["net-ipv6","IPv6","","v1","R"],
+["net-dht","DHT","","v1","R"],
+["net-pex","Peer exchange","","v1","V"],
+["net-lsd","Local peer discovery","","v1","E"],
+["net-enc","Encryption","Prefer, require or off","v1","E"],
+["net-anon","Anonymous mode","Hides the client name and local details","later","E"],
+["net-resolve","Resolve peer host names","","later","B"],
+["net-i2p","I2P","Experimental in qBittorrent","skip","E"],
+["net-tracker","Built-in tracker","","skip","E"]]},
+{id:"disk",name:"Files and disk",blurb:"Save paths, unfinished files, moving, cache",f:[
+["disk-prealloc","Pre-allocate disk space","","v1","V"],
+["disk-incomplete","Folder for unfinished downloads","","v1","B"],
+["disk-atm","Automatic torrent management","Save path follows the category; files move when it changes","v1","B"],
+["disk-move","Move when complete","","v1","E"],
+["disk-exclude","Excluded file names","Skip files by pattern, like *.exe","v1","B"],
+["disk-recycle","Delete to the recycle bin","","v1","B"],
+["disk-cache","Disk cache settings","Our capped cache, adjustable","v1","E"],
+["disk-ext","Extension on unfinished files","Like qBittorrent's .!qB","later","E"],
+["disk-check","Recheck on completion","","later","R"]]},
+{id:"rss",name:"RSS",blurb:"Feeds and auto-download rules",f:[
+["rss-feeds","Feeds and folders","","v1","B"],
+["rss-reader","Article list","","v1","B"],
+["rss-rules","Auto-download rules","Must contain, must not contain, wildcards, regex","v1","B"],
+["rss-ep","Episode filter and smart episode filter","Never grabs the same episode twice","v1","B"],
+["rss-assign","Rules set category, tags and save path","","v1","B"],
+["rss-settings","Refresh interval and article limit","","v1","B"],
+["rss-import","Import and export rules","","later","B"]]},
+{id:"auto",name:"Automation and alerts",blurb:"Run programs, notifications, power actions",f:[
+["auto-run-done","Run a program when a torrent finishes","With %N, %F style variables","v1","B"],
+["auto-notify","Desktop notifications","Added, finished, errors","v1","B"],
+["auto-sleep","Keep the computer awake while downloading","","v1","B"],
+["auto-run-add","Run a program when a torrent is added","","later","B"],
+["auto-power","When everything finishes","Shut down, sleep, hibernate, reboot (reboot new in 5.2)","later","B"],
+["auto-email","Email when finished","SMTP","skip","B"],
+["auto-ddns","Dynamic DNS","For reaching the Web UI from outside","skip","B"]]},
+{id:"app",name:"App and interface",blurb:"Tray, log, shortcuts, statistics, languages",f:[
+["app-tray","System tray","Close or minimize to the tray","v1","B"],
+["app-autostart","Start with Windows (and macOS, Linux)","Optionally minimized to the tray","v1","B"],
+["app-confirm","Confirmation dialogs","Delete, exit, recheck","v1","B"],
+["app-log","Execution log","","v1","B"],
+["app-keys","Keyboard shortcuts","","v1","B"],
+["app-update","Update check","","v1","B"],
+["app-single","Single instance and command-line options","--save-path, --category, --skip-dialog and more","v1","B"],
+["app-stats","Statistics window","All-time uploaded, downloaded, ratio","v1","B"],
+["app-lang","Translations","qBittorrent ships about 70 languages","later","B"],
+["app-portable","Portable mode and profiles","","later","B"],
+["app-lock","Lock the window with a password","","skip","B"]]},
+{id:"theme",name:"Theming",blurb:"Themes, accent colours, fonts, icons, density (Kitab's system)",f:[
+["app-themes","Light and dark themes","Follows the system setting","v1","B"],
+["app-customtheme","Custom theme files","qBittorrent loads .qbtheme files; ours are JSON like Kitab's","later","B"],
+["th-presets","Six or more built-in themes","e.g. Light, Dark, Paper, Nord, Ink, Vampire, each with its own accent","v1","B",1],
+["th-accent","Accent presets and any custom colour","Lightness adjusted per theme so it stays readable (Kitab's OKLCH rule)","v1","B",1],
+["th-font","Interface font and size","Any installed font","v1","B",1],
+["th-density","Compact, cozy and comfortable density","Fits more of a long list on screen","v1","B",1],
+["th-appicon","Choose the app icon","Eight icons; changes the taskbar, Dock, tray and title bar","v1","B",1],
+["th-tblabels","Icon, icon + label, or hidden, per toolbar button","","v1","B",1],
+["th-tint","Neutral or tinted surfaces","Plain greys, or the theme's warm tint","v1","B",1],
+["th-custom","Choose what the toolbar, status bar and detail tabs show","Right-click or View menu; items fade in and out","v1","B",1],
+["th-scale","UI scale","80% to 150%, with Ctrl + and Ctrl −","v1","B",1],
+["th-dark","Light and dark for every theme","Each colour re-derived for dark, not inverted","v1","B",1],
+["th-native","Native frame per platform","macOS title bar and system menu bar; Windows title bar with its menu","v1","B",1],
+["th-keys","Full keyboard control","Common shortcuts, arrow-key lists, menu access with Alt or F10, a shortcuts sheet on ?","v1","B",1],
+["th-numfont","Font for numbers","Speeds and sizes in a fixed-width face","later","B",1],
+["th-icons","Icon styles","Hairline, Geometric, Duotone, as in Kitab","later","B",1]]},
+{id:"rem",name:"Remote control",blurb:"Web API, Web UI, login and security",f:[
+["rem-api","Web API, qBittorrent-compatible","Sonarr, Radarr, Prowlarr and phone apps work unchanged","v1","B"],
+["rem-auth","Login, localhost bypass, allowed subnets","","v1","B"],
+["rem-ban","Ban after failed logins","","v1","B"],
+["rem-webui","Web UI","Full control from a browser","later","B"],
+["rem-https","HTTPS for the Web UI","","later","B"],
+["rem-proxy","Reverse proxy support and custom headers","","later","B"],
+["rem-altui","Alternative Web UI folder","","skip","B"]]},
+{id:"srch",name:"Search engine",blurb:"Plugin search; needs Python installed",f:[
+["srch-plugins","Search plugins","Python scripts per site","skip","B"],
+["srch-manage","Install and update plugins","","skip","B"],
+["srch-results","Results list, filters, download from results","","skip","B"]]},
+{id:"tool",name:"Tools",blurb:"Torrent creator and advanced settings",f:[
+["tool-create","Torrent creator","v1, v2 or hybrid; piece size, private flag, trackers, web seeds","later","E"],
+["tool-advanced","Advanced settings","qBittorrent exposes about 80 engine settings; we expose the ones that apply","later","E"]]},
+{id:"pro",name:"Protocol support",blurb:"What the engine must speak",f:[
+["pro-private","Private torrents","No DHT or peer exchange on private trackers (you have 270)","v1","V"],
+["pro-udp","UDP and HTTP(S) trackers","","v1","R"],
+["pro-tiers","Multi-tracker tiers","","v1","V"],
+["pro-scrape","Tracker scrape","Seed and peer counts","v1","V"],
+["pro-fast","Fast extension and partial seeds","","v1","V"],
+["pro-v2","BitTorrent v2 and hybrid torrents","","v1","E"],
+["pro-ssl","SSL torrents","","skip","E"]]},
+{id:"sug",name:"Suggested additions",blurb:"Claude's picks beyond qBittorrent, for daily use",extra:true,f:[
+["sug-torznab","Search through Prowlarr or Jackett","Makes your search-results pick work without Python plugins","v1","B"],
+["sug-tray","Tray menu quick actions","Pause all, resume all, slow mode, live speeds in the tooltip","v1","B"],
+["sug-taskbar","Taskbar and dock progress","Progress bar on the taskbar icon; badge with active count on macOS","v1","B"],
+["sug-diskguard","Disk space guard","Stops downloads before the disk fills, instead of failing","v1","B"],
+["sug-bulk","Bulk edit","Save path, category, tags and tracker URLs for many torrents at once (for passkey changes on your 270 private torrents)","v1","B"],
+["sug-settings-search","Search in settings","qBittorrent's settings are long; type to jump to one","v1","B"],
+["sug-backup","Back up and restore","Settings and the whole torrent list in one file","v1","B"],
+["sug-autoupdate","Update in place","Signed installer updates itself; Store and winget builds like Kitab","v1","B"],
+["sug-metered","Pause on metered networks and battery","Off by default","later","B"],
+["sug-clip","Offer to add copied magnet links","Opt-in clipboard watch","later","B"],
+["sug-dupe","Warn about duplicates","Same files already on disk under another torrent","later","B"],
+["sug-notes","Notes on a torrent","","later","B"]]},
+{id:"x",name:"Our additions",blurb:"Reasons to switch",extra:true,f:[
+["x-import","Import from qBittorrent","Keeps your 735 torrents, categories, tags and progress","v1","B"],
+["x-flat","Memory with a hard ceiling","Stays flat over days; every cap is a setting","v1","E"],
+["x-palette","Command palette","Like Kitab","v1","B"],
+["x-stream","Stream while downloading","librqbit serves files over HTTP to any player","later","R"]]}
+];
+const MUST=new Set(["app-autostart","add-assoc","app-tray","sug-tray","list-multi","th-dark","th-native","th-keys","th-scale","th-density"]);
+const REC={};GROUPS.forEach(g=>g.f.forEach(f=>REC[f[0]]=f[3]));
+let picks={...REC};
+let filter="all";
+const open=new Set();
+try{JSON.parse(localStorage.getItem("ttfm-open")||"[]").forEach(x=>open.add(x))}catch(e){}
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function pieces(list){return list.map(f=>`<span class="pc ${picks[f[0]]}" title="${esc(f[1])}"></span>`).join("")}
+function matches(f){const v=picks[f[0]];if(filter==="all")return true;if(filter==="diff")return v!==REC[f[0]];return v===filter}
+
+function render(){
+  const core=GROUPS.filter(g=>!g.extra).flatMap(g=>g.f).filter(f=>!f[5]);
+  const n={v1:0,later:0,skip:0};core.forEach(f=>n[picks[f[0]]]++);
+  const parity=Math.round((n.v1+n.later)/core.length*1000)/10;
+  $("#sParity").textContent=parity+"%";$("#sV1").textContent=n.v1;$("#sLater").textContent=n.later;$("#sSkip").textContent=n.skip;$("#sTotal").textContent=core.length;
+  const t=$("#sTarget");
+  if(parity<90){t.textContent=`Below the 90–95% goal. Move ${Math.ceil(core.length*0.9)-(n.v1+n.later)} more out of Skip.`;t.className="target"}
+  else if(parity>95){t.textContent="Above 95%: you're keeping some of the extras you called fancy.";t.className="target"}
+  else{t.textContent=`Inside the 90–95% goal. v1 alone covers ${Math.round(n.v1/core.length*100)}%.`;t.className="target ok"}
+  $("#allPieces").innerHTML=pieces(core);
+
+  $("#groups").innerHTML=GROUPS.map(g=>{
+    const c={v1:0,later:0,skip:0};g.f.forEach(f=>c[picks[f[0]]]++);
+    const isOpen=open.has(g.id)||(filter!=="all"&&g.f.some(matches));
+    const shown=g.f.filter(matches);
+    return `<section class="group${g.extra?" extras":""}${isOpen?" open":""}" data-g="${g.id}">
+      <button class="ghead" aria-expanded="${isOpen}" data-toggle="${g.id}">
+        <span class="gtitle"><span class="gname">${esc(g.name)}</span><br><span class="gblurb">${esc(g.blurb)}</span></span>
+        <span class="gcounts mono"><span class="n1">${c.v1} v1</span> · <span class="nl">${c.later} later</span> · ${c.skip} skip</span>
+        <svg class="chev" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M7 4l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="pieces gpieces" aria-hidden="true">${pieces(g.f)}</span>
+      </button>
+      ${isOpen?`<div class="gbody">
+        <div class="gbulk">Whole group: <button data-bulk="v1" data-g="${g.id}">All v1</button><button data-bulk="later" data-g="${g.id}">All later</button><button data-bulk="skip" data-g="${g.id}">All skip</button><button data-bulk="rec" data-g="${g.id}">Recommended</button></div>
+        ${shown.length?shown.map(f=>{const v=picks[f[0]];return `<div class="feat">
+          <div><div class="fname">${esc(f[1])}</div>${f[2]?`<div class="fnote">${esc(f[2])}</div>`:""}
+            <div class="fmeta">${MUST.has(f[0])?`<span class="tag must">must have</span>`:""}<span class="tag">${ENG[f[4]]}</span>${f[5]?`<span class="tag">ours, not in qBittorrent</span>`:""}${v!==REC[f[0]]?`<span class="tag diff">was ${REC[f[0]]}</span>`:""}</div></div>
+          <div class="seg" role="group" aria-label="${esc(f[1])}">${["v1","later","skip"].map(o=>`<button data-id="${f[0]}" data-v="${o}" aria-pressed="${v===o}">${o==="v1"?"v1":o[0].toUpperCase()+o.slice(1)}</button>`).join("")}</div>
+        </div>`}).join(""):`<div class="empty">Nothing in this group matches the filter.</div>`}
+      </div>`:""}
+    </section>`}).join("");
+}
+
+/* ---- saving ---- */
+let db=null,ref=null,timer=null,writing=Promise.resolve(),canSave=false;
+function setSave(s){$("#saveState").textContent=s}
+function overrides(){const o={};for(const k in picks)if(picks[k]!==REC[k])o[k]=picks[k];return o}
+function queueSave(){
+  if(!canSave){setSave("Not saved in this view");return}
+  setSave("Saving…");clearTimeout(timer);
+  timer=setTimeout(()=>{const body={overrides:overrides(),picks:{...picks},updatedAt:new Date().toISOString()};
+    writing=writing.then(()=>ref.set(body)).then(()=>setSave("Saved. Claude can read your picks.")).catch(e=>{setSave(e&&e.code==="invalid_argument"?"Read-only: you can't save here":"Couldn't save. Try again in a moment.")})},700);
+}
+function setPick(id,v){if(picks[id]===v)return;picks[id]=v;render();queueSave()}
+
+document.addEventListener("click",e=>{
+  const tg=e.target.closest("[data-toggle]");
+  if(tg){const id=tg.dataset.toggle;open.has(id)?open.delete(id):open.add(id);try{localStorage.setItem("ttfm-open",JSON.stringify([...open]))}catch(_){}render();return}
+  const sb=e.target.closest(".seg button");if(sb){setPick(sb.dataset.id,sb.dataset.v);return}
+  const bk=e.target.closest("[data-bulk]");
+  if(bk){const g=GROUPS.find(x=>x.id===bk.dataset.g);g.f.forEach(f=>picks[f[0]]=bk.dataset.bulk==="rec"?REC[f[0]]:bk.dataset.bulk);render();queueSave();return}
+  const ch=e.target.closest(".chip");
+  if(ch){filter=ch.dataset.f;document.querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed",c===ch));render();return}
+});
+let armed=false;
+$("#resetBtn").addEventListener("click",()=>{
+  if(!armed){armed=true;$("#resetBtn").textContent="Click again to reset all";setTimeout(()=>{armed=false;$("#resetBtn").textContent="Reset to recommended"},3000);return}
+  armed=false;$("#resetBtn").textContent="Reset to recommended";picks={...REC};render();queueSave();
+});
+
+render();
+(async()=>{
+  try{db=window.claude?.use?await window.claude.use("db"):null}catch(e){db=null}
+  if(!db){setSave("Not saved in this view (open it in claude.ai, signed in)");return}
+  ref=db.doc("picks/main");canSave=true;
+  const slow=setTimeout(()=>setSave("Can't reach saved picks yet"),10000);
+  ref.onSnapshot(s=>{
+    if(!s.metadata.fromCache)clearTimeout(slow);
+    if(s.metadata.hasPendingWrites)return;
+    const d=s.exists?s.data():null;
+    picks={...REC,...(d&&d.overrides?d.overrides:{})};
+    render();setSave(d?"Saved. Claude can read your picks.":"Showing my recommendation");
+  },e=>{clearTimeout(slow);canSave=false;setSave("Saving is unavailable in this view")});
+})();
+</script>

@@ -1,0 +1,15 @@
+# build output
+/target/
+**/*.rs.bk
+
+# private: the owner's qBittorrent measurements and torrent statistics
+/data/
+
+# design tool state
+/.hallmark/
+
+# editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,507 @@
+<title>tTorrent Design Directions</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600&family=DM+Mono:wght@400;500&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Mona+Sans:wdth,wght@100,400;100,500;125,300;125,400&family=Onest:wght@400;500;600&family=Outfit:wght@400;500;600&family=Schibsted+Grotesk:wght@600;700&display=swap">
+<style>
+/* Hallmark · shape: app screen · genre: modern-minimal · theme: four directions, Ultraviolet (deal 1/3, seed desktop-torrent-client-app-29fb·3de39167·2026-11-17·r0), Blueprint (deal 2/3, same seed), Midnight (deal 2/3, seed desktop-torrent-client-dark-1cf1·3de39167·2026-11-17·r1), Dose (deal 3/3, seed r0)
+ * nav: qBittorrent shell (toolbar, filter sidebar, transfer list, details tabs, status bar) · signature: the live piece map in the details panel · states: full, empty filter, errored row, paused toast
+ * axes: mixed per direction · posture: committed · contrast: pass · v2.0.0 */
+/* Hallmark · pre-emit critique: P4 H4 E4 S4 R3 V4 · weakest: R (four worlds share one shell by design, the user asked for qBittorrent familiarity), each direction differs in surface, type and controls instead */
+/* Hallmark · waive 24b · every off-scale value is an even 2px sub-step inside the 13px app shell · a dense desktop torrent list needs 6, 10 and 14px between the 4px stops to fit 40 columns */
+/* Hallmark · waive 37 · each direction uses at most three families · this page compares four torrent-client directions side by side, so their fonts load together */
+/* answered F: tables before cards, transitions on transform/opacity/colour only */
+
+@property --accent { syntax: "<color>"; inherits: true; initial-value: oklch(68% 0.2 290); }
+
+:root{
+  --page-bg: oklch(97.5% 0.006 260); --page-panel: oklch(99.7% 0.005 260); --page-ink: oklch(20% 0.02 260); --page-muted: oklch(48% 0.02 260);
+  --page-rule: oklch(89% 0.01 260); --page-accent: oklch(50% 0.2 285); --page-accent-ink: oklch(99% 0.006 285); --page-focus: oklch(50% 0.2 285);
+  --tile-dark: oklch(18% 0.02 270); --tile-light: oklch(97% 0.008 270); --tile-ink-dark: oklch(97% 0.008 270); --tile-ink-light: oklch(20% 0.02 270);
+  --font-page: "Instrument Sans", ui-sans-serif, system-ui, sans-serif; --font-page-head: "Schibsted Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1); --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-micro: 120ms; --dur-short: 220ms; --dur-long: 420ms;
+  --text-xs: 0.75rem; --text-sm: 0.8125rem; --text-md: 0.9375rem; --text-lg: 1.125rem; --text-xl: 1.375rem; --text-2xl: 1.75rem;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --page-bg: oklch(15% 0.012 265); --page-panel: oklch(19% 0.014 265); --page-ink: oklch(95% 0.008 260); --page-muted: oklch(72% 0.015 260);
+  --page-rule: oklch(28% 0.014 265); --page-accent: oklch(72% 0.16 285); --page-accent-ink: oklch(15% 0.012 265); --page-focus: oklch(72% 0.16 285); color-scheme: dark }}
+:root[data-theme="dark"]{
+  --page-bg: oklch(15% 0.012 265); --page-panel: oklch(19% 0.014 265); --page-ink: oklch(95% 0.008 260); --page-muted: oklch(72% 0.015 260);
+  --page-rule: oklch(28% 0.014 265); --page-accent: oklch(72% 0.16 285); --page-accent-ink: oklch(15% 0.012 265); --page-focus: oklch(72% 0.16 285); color-scheme: dark }
+
+*,*::before,*::after{box-sizing:border-box}
+html,body{overflow-x:clip}
+body{margin:0;background:var(--page-bg);color:var(--page-ink);font-family:var(--font-page);font-size:var(--text-md);line-height:1.5;-webkit-font-smoothing:antialiased;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:32px 72px}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--page-focus);outline-offset:2px}
+svg{display:block}
+.page{max-width:1320px;margin:0 auto;display:flex;flex-direction:column;gap:24px}
+.page-head{display:flex;flex-wrap:wrap;gap:16px 32px;align-items:end;justify-content:space-between}
+.page-head h1{margin:0;font-family:var(--font-page-head);font-weight:700;font-size:var(--text-2xl);letter-spacing:-0.02em;line-height:1.1;overflow-wrap:break-word;min-width:0;text-wrap:balance}
+.page-head p{margin:6px 0 0;color:var(--page-muted);max-width:60ch}
+.dirtabs{display:flex;flex-wrap:wrap;gap:4px;padding:4px;background:var(--page-panel);border:1px solid var(--page-rule);border-radius:12px;position:relative}
+.dirtab{position:relative;z-index:1;border:0;background:transparent;padding:8px 14px;border-radius:9px;cursor:pointer;font-size:var(--text-sm);font-weight:500;color:var(--page-muted);
+  transition:color var(--dur-short) var(--ease-out),background-color var(--dur-short) var(--ease-out),transform var(--dur-micro) var(--ease-out)}
+.dirtab:hover{color:var(--page-ink);background:color-mix(in oklab,var(--page-ink) 6%,transparent)}
+.dirtab:active{transform:scale(.97)}
+.dirtab[aria-selected="true"]{color:var(--page-accent-ink);background:var(--page-accent)}
+.dirpanel{display:flex;flex-direction:column;gap:14px;animation:panelIn var(--dur-long) var(--ease-out)}
+@keyframes panelIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.dirmeta{display:flex;flex-wrap:wrap;gap:12px 28px;align-items:center;justify-content:space-between}
+.dirmeta h2{margin:0;font-family:var(--font-page-head);font-size:var(--text-xl);font-weight:700;letter-spacing:-0.015em}
+.dirmeta p{margin:2px 0 0;color:var(--page-muted);font-size:var(--text-sm);max-width:70ch}
+.swatches{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.swatches span{font-size:var(--text-sm);color:var(--page-muted);margin-right:4px}
+.sw{width:26px;height:26px;border-radius:50%;border:0;cursor:pointer;background:var(--sw);box-shadow:0 0 0 1px color-mix(in oklab,var(--page-ink) 14%,transparent);
+  transition:transform var(--dur-short) var(--ease-out),box-shadow var(--dur-short) var(--ease-out)}
+.sw:hover{transform:scale(1.12)}
+.sw:active{transform:scale(.94)}
+.sw[aria-pressed="true"]{box-shadow:0 0 0 2px var(--page-bg),0 0 0 4px var(--sw)}
+.scroller{overflow-x:auto;border-radius:16px;-webkit-overflow-scrolling:touch}
+.note{font-size:var(--text-sm);color:var(--page-muted)}
+
+/* ================= the app shell, shared by every direction ================= */
+.app{
+  --accent: var(--accent-default);
+  --accent-soft: color-mix(in oklab, var(--accent) 16%, transparent);
+  --accent-line: color-mix(in oklab, var(--accent) 55%, transparent);
+  min-width:1160px;height:780px;display:grid;
+  grid-template-columns:224px minmax(0,1fr);grid-template-rows:56px minmax(0,1fr) 272px 32px;
+  background:var(--bg);color:var(--ink);font-family:var(--font-ui);font-size:13px;line-height:1.4;
+  border:1px solid var(--frame);border-radius:var(--r-frame);overflow:hidden;box-shadow:var(--shadow-frame);
+  transition:--accent var(--dur-long) var(--ease-out);
+}
+.app :focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.app .num{font-family:var(--font-num);font-variant-numeric:tabular-nums}
+.ico{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+
+/* toolbar */
+.tb{grid-column:1/-1;display:flex;align-items:center;gap:6px;padding:0 12px;background:var(--panel);border-bottom:1px solid var(--rule)}
+.brand{display:flex;align-items:center;gap:8px;width:200px;font-family:var(--font-head);font-weight:var(--head-w);font-size:15px;font-stretch:var(--head-stretch,100%);letter-spacing:var(--head-track,0)}
+.brand svg{width:22px;height:22px}
+.sep{width:1px;height:22px;background:var(--rule);margin:0 4px}
+.btn{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 12px;border:1px solid transparent;border-radius:var(--r-btn);background:transparent;cursor:pointer;color:var(--ink-2);font-weight:500;white-space:nowrap;
+  transition:background-color var(--dur-micro) var(--ease-out),color var(--dur-micro) var(--ease-out),border-color var(--dur-micro) var(--ease-out),box-shadow var(--dur-short) var(--ease-out),transform var(--dur-micro) var(--ease-out)}
+.btn:hover{background:var(--hover);color:var(--ink)}
+.btn:active{transform:scale(.96)}
+.btn.icon{width:34px;padding:0;justify-content:center}
+.btn.primary{background:var(--accent);color:var(--accent-ink);box-shadow:var(--primary-shadow)}
+.btn.primary:hover{background:color-mix(in oklab,var(--accent) 88%,var(--ink))}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.btn[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-line)}
+.search{flex:1;max-width:420px;margin-left:auto;display:flex;align-items:center;gap:8px;height:34px;padding:0 10px;border:1px solid var(--rule);border-radius:var(--r-input);background:var(--well);color:var(--muted);
+  transition:border-color var(--dur-short) var(--ease-out),box-shadow var(--dur-short) var(--ease-out),background-color var(--dur-short) var(--ease-out)}
+.search:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);background:var(--panel)}
+.search input{flex:1;min-width:0;border:0;background:transparent;outline:none;color:var(--ink);font-size:13px}
+.search input::placeholder{color:var(--muted)}
+.kbd{font-family:var(--font-num);font-size:11px;padding:1px 6px;border-radius:5px;border:1px solid var(--rule);color:var(--muted)}
+
+/* sidebar */
+.side{grid-row:2/4;background:var(--side);border-right:1px solid var(--rule);overflow:auto;padding:10px 8px 16px;display:flex;flex-direction:column;gap:14px}
+.side .sh{margin:0 0 4px;max-width:none;line-height:1.4;padding:0 10px;font-family:var(--font-ui);font-size:12px;font-weight:500;color:var(--muted);letter-spacing:0;text-transform:none}
+.fl{display:flex;align-items:center;gap:9px;width:100%;height:30px;padding:0 10px;border:0;border-radius:var(--r-item);background:transparent;cursor:pointer;color:var(--ink-2);text-align:left;position:relative;
+  transition:background-color var(--dur-micro) var(--ease-out),color var(--dur-micro) var(--ease-out),transform var(--dur-micro) var(--ease-out)}
+.fl:hover{background:var(--hover);color:var(--ink)}
+.fl:active{transform:scale(.98)}
+.fl .lbl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fl .cnt{font-family:var(--font-num);font-variant-numeric:tabular-nums;font-size:11.5px;color:var(--muted);transition:color var(--dur-micro) var(--ease-out)}
+.fl[aria-current="true"]{background:var(--accent-soft);color:var(--accent)}
+.fl[aria-current="true"] .cnt{color:var(--accent)}
+.fl .ico{opacity:.85}
+
+/* transfer list */
+.list{overflow:auto;background:var(--bg);position:relative}
+table{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed}
+th{position:sticky;top:0;z-index:2;height:34px;padding:0 10px;text-align:left;font-weight:500;font-size:12px;color:var(--muted);background:var(--head);border-bottom:1px solid var(--rule);white-space:nowrap;cursor:pointer;
+  transition:color var(--dur-micro) var(--ease-out)}
+th:hover{color:var(--ink)}
+th.r,td.r{text-align:right}
+td{height:var(--row-h);padding:0 10px;border-bottom:1px solid var(--row-rule);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink-2)}
+tbody tr{cursor:default;transition:background-color var(--dur-micro) var(--ease-out),box-shadow var(--dur-short) var(--ease-out);animation:rowIn var(--dur-short) var(--ease-out) both;animation-delay:calc(var(--i) * 18ms)}
+@keyframes rowIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+tbody tr:hover{background:var(--hover)}
+tbody tr[aria-selected="true"]{background:var(--accent-soft);box-shadow:inset 3px 0 0 var(--accent)}
+tbody tr[aria-selected="true"] td{color:var(--ink)}
+td.name{color:var(--ink);font-weight:500}
+.nm{display:flex;align-items:center;gap:8px;min-width:0}
+.nm span{overflow:hidden;text-overflow:ellipsis}
+.prog{display:flex;align-items:center;gap:8px}
+.bar{flex:1;height:var(--bar-h);border-radius:var(--r-bar);background:var(--track);overflow:hidden;position:relative}
+.bar i{position:absolute;inset:0;transform-origin:left;transform:scaleX(var(--p));background:var(--accent);border-radius:inherit;transition:transform var(--dur-long) var(--ease-out),background-color var(--dur-short) var(--ease-out)}
+.bar i.seed{background:var(--ok)} .bar i.pause{background:var(--muted)} .bar i.err{background:var(--bad)} .bar i.check{background:var(--warn)}
+.prog .num{width:42px;text-align:right;font-size:12px;color:var(--ink-2)}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:12.5px}
+.st .ico{width:14px;height:14px}
+.st.down{color:var(--accent)} .st.seed{color:var(--ok)} .st.pause,.st.queue{color:var(--muted)} .st.err{color:var(--bad)} .st.check,.st.stall{color:var(--warn)} .st.done{color:var(--ink-2)}
+.empty{position:absolute;inset:34px 0 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--muted);text-align:center;animation:panelIn var(--dur-long) var(--ease-out)}
+.empty b{color:var(--ink);font-weight:600;font-size:14px}
+
+/* details */
+.det{display:flex;flex-direction:column;background:var(--panel);border-top:1px solid var(--rule);min-height:0}
+.tabs{display:flex;align-items:center;gap:2px;padding:0 10px;height:40px;border-bottom:1px solid var(--rule);position:relative;flex:none}
+.tab{height:40px;padding:0 12px;border:0;background:transparent;cursor:pointer;color:var(--muted);font-weight:500;transition:color var(--dur-micro) var(--ease-out)}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--ink)}
+.ind{position:absolute;left:0;bottom:-1px;height:2px;width:1px;background:var(--accent);transform-origin:left;transition:transform var(--dur-short) var(--ease-out)}
+.tabs .who{margin-left:auto;color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:46%}
+.pane{flex:1;min-height:0;overflow:auto;padding:14px 16px;animation:paneIn var(--dur-short) var(--ease-out)}
+@keyframes paneIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.gen{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:20px}
+.pm-head{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;margin-bottom:8px}
+.pm{display:grid;grid-template-columns:repeat(48,minmax(0,1fr));gap:2px}
+.pm i{aspect-ratio:1;border-radius:var(--r-piece);background:var(--track);transition:background-color 600ms var(--ease-out),transform var(--dur-short) var(--ease-out)}
+.pm i.h{background:var(--accent)}
+.pm i.p{background:var(--accent-line)}
+.pm i.new{transform:scale(1.35)}
+.kv{display:grid;grid-template-columns:auto minmax(0,1fr) auto minmax(0,1fr);gap:7px 14px;font-size:12.5px;align-content:start}
+.kv dt{color:var(--muted)} .kv dd{margin:0;color:var(--ink);font-family:var(--font-num);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mini{width:100%;table-layout:auto}
+.mini th{position:static;background:transparent;height:28px;cursor:default}
+.mini td{height:30px}
+.spark{width:100%;height:150px}
+.spark .d{fill:none;stroke:var(--accent);stroke-width:1.8}
+.spark .da{fill:var(--accent-soft);stroke:none}
+.spark .u{fill:none;stroke:var(--ok);stroke-width:1.5;stroke-dasharray:4 3}
+.spark .g{stroke:var(--row-rule);stroke-width:1}
+.legend{display:flex;gap:18px;font-size:12px;color:var(--muted);margin-bottom:6px}
+.legend b{color:var(--ink);font-weight:500;font-variant-numeric:tabular-nums}
+.tree td:first-child{padding-left:calc(10px + var(--d,0) * 18px)}
+.prio{font-size:12px;color:var(--muted)}
+
+/* status bar */
+.sb{grid-column:1/-1;display:flex;align-items:center;gap:0;padding:0 6px;background:var(--panel);border-top:1px solid var(--rule);color:var(--muted);font-size:12px}
+.sb > span{display:flex;align-items:center;gap:6px;padding:0 12px;height:18px;border-left:1px solid var(--rule)}
+.sb > span:first-child{border-left:0}
+.sb .ico{width:13px;height:13px}
+.sb b{font-weight:500;color:var(--ink-2);font-family:var(--font-num);font-variant-numeric:tabular-nums}
+.sb .grow{margin-left:auto}
+.sb .ok{color:var(--ok)}
+
+/* toast */
+.toast{position:absolute;left:50%;bottom:48px;transform:translate(-50%,16px);opacity:0;pointer-events:none;display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:var(--r-toast);background:var(--raise);color:var(--ink);border:1px solid var(--rule);box-shadow:var(--shadow-pop);font-size:12.5px;z-index:5;
+  transition:transform var(--dur-short) var(--ease-out),opacity var(--dur-short) var(--ease-out)}
+.toast.on{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.toast button{border:0;background:transparent;color:var(--accent);font-weight:600;cursor:pointer;padding:2px 4px;border-radius:4px;transition:background-color var(--dur-micro) var(--ease-out)}
+.toast button:hover{background:var(--accent-soft)}
+.wrapapp{position:relative}
+
+/* ================= direction A · Ultraviolet night ================= */
+[data-scheme="uv"]{
+  --bg:oklch(15.5% 0.03 295); --side:oklch(17.5% 0.035 295); --panel:oklch(19% 0.038 295); --head:oklch(17% 0.033 295); --raise:oklch(24% 0.045 295); --well:oklch(14% 0.03 295);
+  --ink:oklch(96% 0.012 300); --ink-2:oklch(84% 0.03 300); --muted:oklch(67% 0.05 300); --rule:oklch(28% 0.045 295); --row-rule:oklch(21% 0.038 295); --hover:oklch(22% 0.045 295); --track:oklch(25% 0.045 295); --frame:oklch(30% 0.06 295);
+  --accent-default:oklch(70% 0.19 292); --accent-ink:oklch(15% 0.03 295);
+  --ok:oklch(78% 0.14 160); --warn:oklch(82% 0.13 80); --bad:oklch(70% 0.17 22);
+  --font-ui:"Onest",ui-sans-serif,system-ui,sans-serif; --font-head:"Outfit",ui-sans-serif,system-ui,sans-serif; --font-num:"JetBrains Mono",ui-monospace,monospace; --head-w:500; --head-track:-0.02em;
+  --r-frame:18px; --r-btn:999px; --r-input:999px; --r-item:999px; --r-bar:999px; --r-piece:2px; --r-toast:999px; --row-h:38px; --bar-h:6px;
+  --tb-a:oklch(21% 0.04 295); --tb-b:oklch(19% 0.038 295);
+  --shadow-frame:0 40px 80px -40px oklch(10% 0.08 295 / .8),0 0 0 1px oklch(40% 0.12 295 / .25); --shadow-pop:0 18px 40px -16px oklch(5% 0.05 295 / .8); --primary-shadow:0 6px 18px -6px color-mix(in oklab,var(--accent) 60%,transparent);
+}
+.app[data-dir="uv"] .tb{background:linear-gradient(var(--tb-a),var(--tb-b))}
+.app[data-dir="uv"] .brand span{text-transform:lowercase}
+
+/* ================= direction B · Blueprint ================= */
+[data-scheme="bp"]{
+  --bg:oklch(28% 0.095 258); --side:oklch(31% 0.1 257); --panel:oklch(31% 0.1 257); --head:oklch(29.5% 0.098 258); --raise:oklch(36% 0.105 256); --well:oklch(26% 0.09 258);
+  --ink:oklch(97% 0.012 240); --ink-2:oklch(90% 0.025 242); --muted:oklch(79% 0.045 244); --rule:oklch(93% 0.02 240 / .32); --row-rule:oklch(93% 0.02 240 / .12); --hover:oklch(33% 0.1 257); --track:oklch(93% 0.02 240 / .14); --frame:oklch(93% 0.02 240 / .55);
+  --accent-default:oklch(97% 0.012 240); --accent-ink:oklch(28% 0.1 257);
+  --ok:oklch(85% 0.12 165); --warn:oklch(87% 0.12 85); --bad:oklch(76% 0.14 25);
+  --font-ui:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif; --font-head:"Chakra Petch",ui-sans-serif,sans-serif; --font-num:"IBM Plex Mono",ui-monospace,monospace; --head-w:600; --head-track:-0.01em;
+  --r-frame:0; --r-btn:0; --r-input:0; --r-item:0; --r-bar:0; --r-piece:0; --r-toast:0; --row-h:36px; --bar-h:8px;
+  --grid:oklch(97% 0.01 240 / .06); --stripe:oklch(28% 0.095 258 / .35); --piece-line:oklch(93% 0.02 240 / .1);
+  --shadow-frame:0 0 0 4px oklch(28% 0.095 258),0 0 0 5px oklch(93% 0.02 240 / .35); --shadow-pop:none; --primary-shadow:none;
+}
+.app[data-dir="bp"] .list{background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px}
+.app[data-dir="bp"] .btn{border-color:var(--rule)}
+.app[data-dir="bp"] .btn.icon{border-color:transparent}
+.app[data-dir="bp"] .btn.icon:hover{border-color:var(--rule)}
+.app[data-dir="bp"] .bar{outline:1px solid var(--rule);outline-offset:1px}
+.app[data-dir="bp"] .bar i{background-image:repeating-linear-gradient(90deg,transparent 0 6px,var(--stripe) 6px 7px)}
+.app[data-dir="bp"] .pm i{outline:1px solid var(--piece-line)}
+.app[data-dir="bp"] .det{border-top:2px solid var(--rule)}
+
+/* ================= direction C · Midnight ================= */
+[data-scheme="mn"]{
+  --bg:oklch(14% 0.048 264); --side:oklch(16.5% 0.05 264); --panel:oklch(18.5% 0.052 264); --head:oklch(15.5% 0.05 264); --raise:oklch(23% 0.055 264); --well:oklch(12.5% 0.045 264);
+  --ink:oklch(95% 0.016 250); --ink-2:oklch(86% 0.04 245); --muted:oklch(70% 0.04 256); --rule:oklch(27% 0.058 264); --row-rule:oklch(19.5% 0.052 264); --hover:oklch(20% 0.054 264); --track:oklch(24% 0.056 264); --frame:oklch(29% 0.058 264);
+  --accent-default:oklch(80% 0.11 230); --accent-ink:oklch(15% 0.05 264);
+  --ok:oklch(80% 0.12 170); --warn:oklch(84% 0.12 85); --bad:oklch(72% 0.15 22);
+  --font-ui:"Mona Sans",ui-sans-serif,system-ui,sans-serif; --font-head:"Mona Sans",ui-sans-serif,system-ui,sans-serif; --font-num:"Mona Sans",ui-sans-serif,system-ui,sans-serif; --head-w:300; --head-stretch:125%; --head-track:-0.015em;
+  --r-frame:6px; --r-btn:4px; --r-input:4px; --r-item:4px; --r-bar:1px; --r-piece:1px; --r-toast:6px; --row-h:40px; --bar-h:3px;
+  --shadow-frame:0 48px 96px -48px oklch(6% 0.04 264 / .9); --shadow-pop:0 24px 48px -24px oklch(6% 0.04 264 / .9); --primary-shadow:none;
+}
+.app[data-dir="mn"] .tb{background:var(--bg);border-bottom-color:var(--row-rule)}
+.app[data-dir="mn"] th{font-stretch:110%}
+
+/* ================= direction D · Dose (light) ================= */
+[data-scheme="ds"]{
+  --bg:oklch(98.6% 0.006 88); --side:oklch(96.8% 0.012 120); --panel:oklch(99.4% 0.004 88); --head:oklch(98.6% 0.006 88); --raise:oklch(99.7% 0.006 95); --well:oklch(96.5% 0.01 120);
+  --ink:oklch(21% 0.025 170); --ink-2:oklch(31% 0.02 170); --muted:oklch(49% 0.024 165); --rule:oklch(88% 0.02 140); --row-rule:oklch(93% 0.014 140); --hover:oklch(95.5% 0.02 150); --track:oklch(92% 0.02 150); --frame:oklch(86.5% 0.022 140);
+  --accent-default:oklch(50% 0.13 160); --accent-ink:oklch(99% 0.006 160);
+  --ok:oklch(52% 0.12 150); --warn:oklch(58% 0.13 65); --bad:oklch(55% 0.18 25);
+  --font-ui:"Instrument Sans",ui-sans-serif,system-ui,sans-serif; --font-head:"Schibsted Grotesk",ui-sans-serif,sans-serif; --font-num:"DM Mono",ui-monospace,monospace; --head-w:700; --head-track:-0.03em;
+  --r-frame:20px; --r-btn:10px; --r-input:10px; --r-item:9px; --r-bar:999px; --r-piece:2px; --r-toast:12px; --row-h:40px; --bar-h:7px;
+  --shadow-frame:0 1px 2px oklch(30% 0.03 165 / .08),0 30px 60px -30px oklch(40% 0.08 165 / .35); --shadow-pop:0 1px 1px oklch(30% 0.03 165 / .1),8px 18px 28px -14px oklch(36% 0.06 165 / .32);
+  --glint:oklch(99.8% 0.006 95); --glint-soft:oklch(99.8% 0.006 95 / .35);
+  --primary-shadow:inset 0 1px 0 var(--glint-soft),0 2px 0 color-mix(in oklab,var(--accent) 70%,var(--ink));
+}
+.app[data-dir="ds"] .btn:not(.primary):not(.icon){background:var(--raise);box-shadow:inset 0 1px 0 var(--glint),0 0 0 1px var(--rule),0 2px 0 var(--rule)}
+.app[data-dir="ds"] .btn:not(.primary):not(.icon):hover{background:var(--hover)}
+.app[data-dir="ds"] .btn:active{transform:translateY(1px) scale(.98)}
+.app[data-dir="ds"] .tb{background:var(--panel)}
+
+/* ================= logos ================= */
+.logos{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr));gap:16px;animation:panelIn var(--dur-long) var(--ease-out)}
+.lg{background:var(--page-panel);border:1px solid var(--page-rule);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:14px;transition:transform var(--dur-short) var(--ease-out),box-shadow var(--dur-short) var(--ease-out)}
+.lg:hover{transform:translateY(-3px);box-shadow:0 18px 40px -24px color-mix(in oklab,var(--page-ink) 35%,transparent)}
+.lg h3{margin:0;font-family:var(--font-page-head);font-size:var(--text-lg);font-weight:700;letter-spacing:-0.01em}
+.lg p{margin:0;color:var(--page-muted);font-size:var(--text-sm)}
+.tiles{display:flex;gap:12px;align-items:end;flex-wrap:wrap}
+.tile{width:96px;height:96px;border-radius:24px;display:grid;place-items:center;transition:transform var(--dur-short) var(--ease-out)}
+.tile:hover{transform:scale(1.05) rotate(-2deg)}
+.tile svg{width:60px;height:60px}
+.tile.dark{background:var(--tile-dark);color:var(--tile-ink-dark)}
+.tile.light{background:var(--tile-light);color:var(--tile-ink-light);box-shadow:inset 0 0 0 1px color-mix(in oklab,var(--tile-ink-light) 12%,transparent)}
+.tile.acc{background:var(--mark);color:var(--tile-dark)}
+.sizes{display:flex;gap:12px;align-items:end;color:var(--page-ink)}
+.sizes svg{flex:none}
+.lockup{display:flex;align-items:center;gap:10px;padding-top:12px;border-top:1px solid var(--page-rule)}
+.lockup svg{width:30px;height:30px}
+.lockup b{font-size:22px;letter-spacing:-0.02em}
+.mk-a{fill:var(--mark)} .mk-s{stroke:var(--mark)} .mk-i{fill:currentColor} .mk-is{stroke:currentColor}
+
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-plus" viewBox="0 0 16 16"><path d="M8 3v10M3 8h10"/></symbol>
+  <symbol id="i-magnet" viewBox="0 0 16 16"><path d="M3 3v5a5 5 0 0 0 10 0V3M3 6h3M10 6h3M6 3v5a2 2 0 0 0 4 0V3"/></symbol>
+  <symbol id="i-play" viewBox="0 0 16 16"><path d="M5 3.5v9l7-4.5z"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 16 16"><path d="M5.5 3.5v9M10.5 3.5v9"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 16 16"><path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.6 8.5h5.8l.6-8.5"/></symbol>
+  <symbol id="i-search" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.2"/><path d="M10.2 10.2 13 13"/></symbol>
+  <symbol id="i-gauge" viewBox="0 0 16 16"><path d="M2.5 11a5.5 5.5 0 1 1 11 0"/><path d="M8 11l2.5-3"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 16 16"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.8v2M8 12.2v2M1.8 8h2M12.2 8h2M3.6 3.6l1.4 1.4M11 11l1.4 1.4M3.6 12.4 5 11M11 5l1.4-1.4"/></symbol>
+  <symbol id="i-all" viewBox="0 0 16 16"><rect x="2.5" y="2.5" width="4.5" height="4.5" rx="1"/><rect x="9" y="2.5" width="4.5" height="4.5" rx="1"/><rect x="2.5" y="9" width="4.5" height="4.5" rx="1"/><rect x="9" y="9" width="4.5" height="4.5" rx="1"/></symbol>
+  <symbol id="i-down" viewBox="0 0 16 16"><path d="M8 2.5v10M4 8.5l4 4 4-4"/></symbol>
+  <symbol id="i-up" viewBox="0 0 16 16"><path d="M8 13.5v-10M4 7.5l4-4 4 4"/></symbol>
+  <symbol id="i-check" viewBox="0 0 16 16"><path d="M3 8.5l3 3 7-7"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 16 16"><path d="M9 1.8 3.5 9H8l-1 5.2L12.5 7H8z"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 16 16"><path d="M8 2 14 13H2z"/><path d="M8 6.5v3M8 11.2v.1"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 16 16"><path d="M2 4.5h4l1.5 1.5H14v6.5H2z"/></symbol>
+  <symbol id="i-tag" viewBox="0 0 16 16"><path d="M2.5 2.5h5l6 6-5 5-6-6z"/><circle cx="5.3" cy="5.3" r=".8"/></symbol>
+  <symbol id="i-server" viewBox="0 0 16 16"><rect x="2.5" y="2.5" width="11" height="4.5" rx="1"/><rect x="2.5" y="9" width="11" height="4.5" rx="1"/></symbol>
+  <symbol id="i-file" viewBox="0 0 16 16"><path d="M4 2h5l3 3v9H4z"/><path d="M9 2v3h3"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3l2 1.5"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5"/><path d="M2.5 8h11M8 2.5c2 2 2 9 0 11M8 2.5c-2 2-2 9 0 11"/></symbol>
+  <symbol id="i-chip" viewBox="0 0 16 16"><rect x="4" y="4" width="8" height="8" rx="1.5"/><path d="M6 2v2M10 2v2M6 12v2M10 12v2M2 6h2M2 10h2M12 6h2M12 10h2"/></symbol>
+  <symbol id="i-disk" viewBox="0 0 16 16"><rect x="2" y="4" width="12" height="8" rx="1.5"/><path d="M11 8h.1"/></symbol>
+</svg>
+
+<div class="page">
+  <header class="page-head">
+    <div>
+      <h1>tTorrent design directions</h1>
+      <p>qBittorrent’s layout, kept where people expect it. Four looks to choose from, each with six accents to try. All torrents and figures are example data.</p>
+    </div>
+    <div class="dirtabs" role="tablist" aria-label="Direction" id="dirtabs"></div>
+  </header>
+  <main id="stage"></main>
+</div>
+
+<script>
+const DIRS=[
+ {id:"uv",name:"A. Ultraviolet",line:"Violet night, soft pill controls, Outfit and Onest. Friendly and premium, closest to a consumer app.",
+  acc:[["Violet","oklch(70% 0.19 292)"],["Azure","oklch(78% 0.12 230)"],["Emerald","oklch(77% 0.15 160)"],["Amber","oklch(81% 0.14 75)"],["Rose","oklch(72% 0.17 10)"],["Mono","oklch(92% 0.01 300)"]]},
+ {id:"bp",name:"B. Blueprint",line:"Technical drawing: square keylines, a faint grid, IBM Plex with mono numbers. For people who live in the details.",
+  acc:[["White line","oklch(97% 0.012 240)"],["Cyan","oklch(86% 0.11 210)"],["Mint","oklch(88% 0.12 165)"],["Amber","oklch(87% 0.13 85)"],["Coral","oklch(80% 0.13 30)"],["Lilac","oklch(84% 0.09 300)"]]},
+ {id:"mn",name:"C. Midnight",line:"Deep blue, square-cut, Mona Sans set wide and light. Quiet and sleek, the closest to Kitab’s calm.",
+  acc:[["Azure","oklch(80% 0.11 230)"],["Violet","oklch(74% 0.15 292)"],["Emerald","oklch(79% 0.13 165)"],["Amber","oklch(83% 0.13 78)"],["Rose","oklch(74% 0.15 12)"],["Mono","oklch(93% 0.012 250)"]]},
+ {id:"ds",name:"D. Dose",line:"Light, warm paper with moulded buttons, Schibsted Grotesk and DM Mono. Calm in bright rooms.",
+  acc:[["Green","oklch(50% 0.13 160)"],["Blue","oklch(52% 0.15 250)"],["Violet","oklch(50% 0.2 292)"],["Amber","oklch(57% 0.14 62)"],["Rose","oklch(54% 0.18 15)"],["Ink","oklch(28% 0.02 170)"]]},
+ {id:"logo",name:"Logos"}
+];
+const ROWS=[
+ {n:"ubuntu-24.04.3-desktop-amd64.iso",s:"5.9 GB",p:.62,st:"down",se:412,pe:38,d:8.4,u:.62,eta:"4 min",r:.12,cat:"Linux ISOs",tag:"Keep"},
+ {n:"debian-13.1.0-amd64-DVD-1.iso",s:"3.7 GB",p:1,st:"seed",se:96,pe:14,d:0,u:1.1,eta:"",r:3.41,cat:"Linux ISOs",tag:"Keep"},
+ {n:"Big Buck Bunny (2008) 4K",s:"870 MB",p:1,st:"seed",se:58,pe:6,d:0,u:.31,eta:"",r:1.92,cat:"Films",tag:"Open movies"},
+ {n:"Sintel (2010) 1080p",s:"1.2 GB",p:.23,st:"down",se:144,pe:21,d:3.1,u:.08,eta:"5 min",r:.02,cat:"Films",tag:"Open movies"},
+ {n:"archlinux-2026.11.01-x86_64.iso",s:"1.4 GB",p:1,st:"seed",se:233,pe:9,d:0,u:.22,eta:"",r:2.07,cat:"Linux ISOs",tag:""},
+ {n:"Tears of Steel (2012) 4K",s:"6.3 GB",p:.48,st:"pause",se:0,pe:0,d:0,u:0,eta:"",r:.31,cat:"Films",tag:"Open movies"},
+ {n:"LibreOffice_25.8_Win_x86-64.msi",s:"352 MB",p:1,st:"done",se:0,pe:0,d:0,u:0,eta:"",r:.88,cat:"Software",tag:""},
+ {n:"Fedora-Workstation-Live-43.iso",s:"2.3 GB",p:.71,st:"check",se:0,pe:0,d:0,u:0,eta:"",r:0,cat:"Linux ISOs",tag:""},
+ {n:"blender-4.5-linux-x64.tar.xz",s:"380 MB",p:.88,st:"stall",se:0,pe:3,d:0,u:0,eta:"",r:.04,cat:"Software",tag:""},
+ {n:"Cosmos Laundromat (2015)",s:"2.1 GB",p:.34,st:"err",se:0,pe:0,d:0,u:0,eta:"",r:.01,cat:"Films",tag:"Open movies"},
+ {n:"kali-linux-2026.3-installer.iso",s:"4.1 GB",p:0,st:"queue",se:0,pe:0,d:0,u:0,eta:"",r:0,cat:"Linux ISOs",tag:""},
+ {n:"Prelinger Archives sampler",s:"14 GB",p:1,st:"seed",se:31,pe:4,d:0,u:.17,eta:"",r:5.6,cat:"Films",tag:"Keep"}
+];
+const ST={down:["Downloading","down","i-down"],seed:["Seeding","seed","i-up"],pause:["Stopped","pause","i-pause"],done:["Completed","done","i-check"],check:["Checking","check","i-clock"],stall:["Stalled","stall","i-alert"],err:["Disk full","err","i-alert"],queue:["Queued","queue","i-clock"]};
+const FIL=[
+ ["Status",[["all","All","i-all",r=>true],["down","Downloading","i-down",r=>r.st==="down"||r.st==="stall"],["seed","Seeding","i-up",r=>r.st==="seed"],["done","Completed","i-check",r=>r.p===1],["pause","Stopped","i-pause",r=>r.st==="pause"],["active","Active","i-bolt",r=>r.d>0||r.u>0],["err","Errored","i-alert",r=>r.st==="err"]]],
+ ["Categories",[["c-linux","Linux ISOs","i-folder",r=>r.cat==="Linux ISOs"],["c-films","Films","i-folder",r=>r.cat==="Films"],["c-soft","Software","i-folder",r=>r.cat==="Software"],["c-none","Uncategorized","i-folder",r=>!r.cat]]],
+ ["Tags",[["t-keep","Keep","i-tag",r=>r.tag==="Keep"],["t-open","Open movies","i-tag",r=>r.tag==="Open movies"]]],
+ ["Trackers",[["k-ubuntu","torrent.ubuntu.com","i-server",r=>/ubuntu/.test(r.n)],["k-debian","bttracker.debian.org","i-server",r=>/debian/.test(r.n)],["k-none","Trackerless","i-server",r=>/Prelinger/.test(r.n)]]]
+];
+const TABS=["General","Trackers","Peers","HTTP sources","Content","Speed"];
+const ico=(id,c="ico")=>`<svg class="${c}" aria-hidden="true"><use href="#${id}"/></svg>`;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const sp=v=>v>=1?v.toFixed(1)+" MB/s":v>0?Math.round(v*1000)+" KB/s":"";
+
+const LOGOS=[
+ {id:"pieces",name:"Pieces",line:"A piece map that spells a t. The thing every torrent is made of, and the signature of the details panel.",mark:"oklch(70% 0.19 292)",font:"Outfit",
+  svg:(a)=>{const c=[[0,0],[1,0],[2,0],[1,1],[1,2]];let s="";for(let y=0;y<3;y++)for(let x=0;x<3;x++){const on=c.some(([cx,cy])=>cx===x&&cy===y);s+=`<rect x="${7+x*18}" y="${7+y*18}" width="14" height="14" rx="3" ${on?`class="${a?"mk-a":"mk-i"}"`:`fill="none" class="mk-is" stroke-width="1.6" opacity=".35"`}/>`}return s}},
+ {id:"cap",name:"Ceiling",line:"An arrow that lands on a line: download, with a hard cap. The flat-memory promise in one mark.",mark:"oklch(80% 0.11 230)",font:"Mona Sans",
+  svg:(a)=>`<path d="M32 10v28M21 28l11 11 11-11" fill="none" class="${a?"mk-s":"mk-is"}" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 52h36" fill="none" class="mk-is" stroke-width="6" stroke-linecap="round"/>`},
+ {id:"swarm",name:"Swarm",line:"One node and its peers. Reads at 16 px as a flower of dots, in the hand as a network.",mark:"oklch(77% 0.15 160)",font:"Schibsted Grotesk",
+  svg:(a)=>{let s="";for(let k=0;k<6;k++){const t=k*Math.PI/3-Math.PI/2,x=32+20*Math.cos(t),y=32+20*Math.sin(t);s+=`<path d="M32 32L${x.toFixed(1)} ${y.toFixed(1)}" class="mk-is" stroke-width="2.4" opacity=".45"/><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5" class="${a&&k===0?"mk-a":"mk-i"}"/>`}return s+`<circle cx="32" cy="32" r="7.5" class="${a?"mk-a":"mk-i"}"/>`}},
+ {id:"tdrop",name:"Drop t",line:"A lowercase t whose stem ends in a download arrow. The most literal, and the easiest to own as a name.",mark:"oklch(81% 0.14 75)",font:"Chakra Petch",
+  svg:(a)=>`<path d="M30 9v39" fill="none" class="mk-is" stroke-width="7" stroke-linecap="round"/><path d="M17 23h29" fill="none" class="mk-is" stroke-width="7" stroke-linecap="round"/><path d="M19 39l11 11 11-11" fill="none" class="${a?"mk-s":"mk-is"}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>`}
+];
+const mark=(l,a,sz)=>`<svg viewBox="0 0 64 64" ${sz?`width="${sz}" height="${sz}"`:""} aria-hidden="true">${l.svg(a)}</svg>`;
+
+/* ---------- state per direction ---------- */
+const S={};
+function state(id){return S[id]||(S[id]={rows:ROWS.map(r=>({...r})),filter:"all",sel:0,tab:0,acc:0,pieces:null,hist:Array.from({length:60},(_,i)=>({d:6+3*Math.sin(i/5)+Math.random()*2,u:.8+.3*Math.cos(i/7)}))})}
+
+function appHTML(d){
+  const s=state(d.id);
+  return `<div class="wrapapp"><div class="app" data-dir="${d.id}" data-scheme="${d.id}" style="--accent-default:${d.acc[s.acc][1]}">
+  <div class="tb">
+    <div class="brand">${mark(LOGOS[0],true)}<span>tTorrent</span></div>
+    <button class="btn primary" data-act="add">${ico("i-plus")}Add torrent</button>
+    <button class="btn" data-act="magnet">${ico("i-magnet")}Magnet link</button>
+    <span class="sep"></span>
+    <button class="btn icon" data-act="resume" aria-label="Resume">${ico("i-play")}</button>
+    <button class="btn icon" data-act="pause" aria-label="Pause">${ico("i-pause")}</button>
+    <button class="btn icon" data-act="remove" aria-label="Remove">${ico("i-trash")}</button>
+    <span class="sep"></span>
+    <button class="btn" data-act="alt" aria-pressed="false">${ico("i-gauge")}Slow mode</button>
+    <label class="search">${ico("i-search")}<input id="q-${d.id}" placeholder="Filter torrents or run a command" aria-label="Filter torrents"><span class="kbd">Ctrl K</span></label>
+    <button class="btn icon" aria-label="Settings">${ico("i-gear")}</button>
+  </div>
+  <nav class="side" aria-label="Filters">${FIL.map(([h,items])=>`<div><h2 class="sh">${h}</h2>${items.map(([k,l,ic,fn])=>`<button class="fl" data-f="${k}" aria-current="${s.filter===k}">${ico(ic)}<span class="lbl">${esc(l)}</span><span class="cnt">${s.rows.filter(fn).length}</span></button>`).join("")}</div>`).join("")}</nav>
+  <div class="list" data-list></div>
+  <section class="det"><div class="tabs" role="tablist">${TABS.map((t,i)=>`<button class="tab" role="tab" data-tab="${i}" aria-selected="${s.tab===i}">${t}</button>`).join("")}<span class="ind"></span><span class="who" data-who></span></div><div class="pane" data-pane></div></section>
+  <footer class="sb">
+    <span>${ico("i-globe")}DHT <b data-dht>412</b> nodes</span>
+    <span>${ico("i-down")}<b data-dl></b></span>
+    <span>${ico("i-up")}<b data-ul></b></span>
+    <span>${ico("i-disk")}Free <b>412 GB</b></span>
+    <span class="grow">${ico("i-chip")}Memory <b data-mem>94 MB</b> of 160 MB cap</span>
+    <span class="ok">${ico("i-check")}Port open</span>
+  </footer>
+  </div><div class="toast" role="status"><span data-msg></span><button data-undo>Undo</button></div></div>`;
+}
+
+function fnFor(k){for(const [,items] of FIL)for(const it of items)if(it[0]===k)return it[3];return()=>true}
+function renderList(root,d){
+  const s=state(d.id),q=(root.querySelector(`#q-${d.id}`)?.value||"").toLowerCase();
+  const fn=fnFor(s.filter);const rows=s.rows.map((r,i)=>({r,i})).filter(({r})=>fn(r)&&r.n.toLowerCase().includes(q));
+  const box=root.querySelector("[data-list]");
+  const head=`<thead><tr><th style="width:34%">Name</th><th class="r" style="width:7%">Size</th><th style="width:15%">Progress</th><th style="width:11%">Status</th><th class="r" style="width:6%">Seeds</th><th class="r" style="width:6%">Peers</th><th class="r" style="width:8%">Down</th><th class="r" style="width:7%">Up</th><th class="r" style="width:6%">ETA</th><th class="r">Ratio</th></tr></thead>`;
+  if(!rows.length){box.innerHTML=`<table>${head}</table><div class="empty">${ico("i-folder")}<b>Nothing here yet</b><span>Torrents you add to this filter show up here.<br>Drop a .torrent file anywhere, or press Ctrl O.</span></div>`;return}
+  box.innerHTML=`<table>${head}<tbody>${rows.map(({r,i},k)=>{const st=ST[r.st];const cls=r.st==="seed"||r.st==="done"?"seed":r.st==="pause"||r.st==="queue"?"pause":r.st==="err"?"err":r.st==="check"?"check":"";
+    return `<tr data-i="${i}" style="--i:${k}" aria-selected="${s.sel===i}"><td class="name"><span class="nm">${ico("i-file")}<span>${esc(r.n)}</span></span></td><td class="r num">${r.s}</td>
+    <td><div class="prog"><div class="bar"><i class="${cls}" style="--p:${r.p}"></i></div><span class="num">${(r.p*100).toFixed(r.p===1?0:1)}%</span></div></td>
+    <td><span class="st ${st[1]}">${ico(st[2])}${st[0]}</span></td><td class="r num">${r.se||""}</td><td class="r num">${r.pe||""}</td><td class="r num">${sp(r.d)}</td><td class="r num">${sp(r.u)}</td><td class="r num">${r.eta}</td><td class="r num">${r.r.toFixed(2)}</td></tr>`}).join("")}</tbody></table>`;
+}
+function renderPane(root,d){
+  const s=state(d.id),r=s.rows[s.sel],pane=root.querySelector("[data-pane]");
+  root.querySelector("[data-who]").textContent=r.n;
+  if(!s.pieces||s.pieces.of!==s.sel){const n=48*5;const h=Math.round(r.p*n);const arr=Array.from({length:n},(_,i)=>i<h?(Math.random()<.93?"h":"p"):(Math.random()<.05?"p":""));for(let i=arr.length-1;i>0;i--){if(r.p<1&&Math.random()<.35){const j=Math.floor(Math.random()*n);[arr[i],arr[j]]=[arr[j],arr[i]]}}s.pieces={of:s.sel,a:arr}}
+  let h="";
+  if(s.tab===0){const have=s.pieces.a.filter(x=>x==="h").length;
+    h=`<div class="gen"><div><div class="pm-head"><span>Pieces</span><span class="num" data-have>${have} of ${s.pieces.a.length}</span></div><div class="pm" data-pm>${s.pieces.a.map(x=>`<i class="${x}"></i>`).join("")}</div></div>
+    <dl class="kv"><dt>Downloaded</dt><dd>${r.p===1?r.s:(parseFloat(r.s)*r.p).toFixed(2)+" "+r.s.split(" ")[1]}</dd><dt>Uploaded</dt><dd>${(parseFloat(r.s)*r.r).toFixed(2)} ${r.s.split(" ")[1]}</dd>
+    <dt>Down speed</dt><dd data-kd>${sp(r.d)||"0 KB/s"}</dd><dt>Up speed</dt><dd>${sp(r.u)||"0 KB/s"}</dd><dt>Seeds</dt><dd>${r.se} of 1,204</dd><dt>Peers</dt><dd>${r.pe} of 311</dd>
+    <dt>Ratio</dt><dd>${r.r.toFixed(2)}</dd><dt>ETA</dt><dd>${r.eta||"None"}</dd><dt>Piece size</dt><dd>2 MiB</dd><dt>Save path</dt><dd>D:\\Downloads\\${esc(r.cat)}</dd><dt>Added</dt><dd>17 Nov 2026, 21:24</dd><dt>Category</dt><dd>${esc(r.cat)}</dd></dl></div>`}
+  else if(s.tab===1){h=`<table class="mini"><thead><tr><th>Tier</th><th>Tracker</th><th>Status</th><th class="r">Seeds</th><th class="r">Peers</th><th>Next announce</th></tr></thead><tbody>
+    <tr><td class="num">0</td><td>https://torrent.ubuntu.com/announce</td><td><span class="st seed">${ico("i-check")}Working</span></td><td class="r num">412</td><td class="r num">38</td><td class="num">27:41</td></tr>
+    <tr><td class="num">1</td><td>udp://tracker.opentrackr.org:1337</td><td><span class="st seed">${ico("i-check")}Working</span></td><td class="r num">388</td><td class="r num">52</td><td class="num">12:08</td></tr>
+    <tr><td class="num"></td><td>DHT</td><td><span class="st seed">${ico("i-check")}Working</span></td><td class="r num"></td><td class="r num">119</td><td></td></tr>
+    <tr><td class="num"></td><td>Peer exchange</td><td><span class="st seed">${ico("i-check")}Working</span></td><td class="r num"></td><td class="r num">24</td><td></td></tr>
+    <tr><td class="num"></td><td>Local discovery</td><td><span class="st pause">${ico("i-pause")}Off for private torrents only</span></td><td></td><td></td><td></td></tr></tbody></table>`}
+  else if(s.tab===2){const P=[["185.21.42.10","Germany","qBittorrent 5.1.2","1.4 MB/s","92%"],["77.111.8.203","Netherlands","Transmission 4.0.6","880 KB/s","100%"],["2a02:810::4f1","France","libtorrent 2.0.11","610 KB/s","47%"],["98.44.120.7","United States","Deluge 2.1.1","402 KB/s","100%"],["41.75.12.99","South Africa","tTorrent 0.1","95 KB/s","12%"]];
+    h=`<table class="mini"><thead><tr><th>Address</th><th>Country</th><th>Client</th><th class="r">Down</th><th class="r">Progress</th></tr></thead><tbody>${P.map(p=>`<tr><td class="num">${p[0]}</td><td>${p[1]}</td><td>${p[2]}</td><td class="r num">${p[3]}</td><td class="r num">${p[4]}</td></tr>`).join("")}</tbody></table>`}
+  else if(s.tab===3){h=`<table class="mini"><thead><tr><th>Web seed</th><th>Status</th></tr></thead><tbody><tr><td>https://cdimage.ubuntu.com/releases/24.04.3/</td><td><span class="st seed">${ico("i-check")}Serving</span></td></tr></tbody></table>`}
+  else if(s.tab===4){h=`<table class="mini tree"><thead><tr><th>Name</th><th class="r">Size</th><th>Progress</th><th>Priority</th></tr></thead><tbody>
+    <tr style="--d:0"><td>${ico("i-folder")}</td><td></td><td></td><td></td></tr>`.replace(`<td>${ico("i-folder")}</td>`,`<td><span class="nm">${ico("i-folder")}<span>${esc(r.n.replace(/\.(iso|msi|xz)$/,""))}</span></span></td>`)+
+    `<tr style="--d:1"><td><span class="nm">${ico("i-file")}<span>${esc(r.n)}</span></span></td><td class="r num">${r.s}</td><td><div class="prog"><div class="bar"><i style="--p:${r.p}"></i></div><span class="num">${Math.round(r.p*100)}%</span></div></td><td class="prio">Normal</td></tr>
+    <tr style="--d:1"><td><span class="nm">${ico("i-file")}<span>SHA256SUMS</span></span></td><td class="r num">1 KB</td><td><div class="prog"><div class="bar"><i class="seed" style="--p:1"></i></div><span class="num">100%</span></div></td><td class="prio">High</td></tr>
+    <tr style="--d:1"><td><span class="nm">${ico("i-file")}<span>README.txt</span></span></td><td class="r num">4 KB</td><td><div class="prog"><div class="bar"><i class="pause" style="--p:0"></i></div><span class="num">0%</span></div></td><td class="prio">Skip</td></tr></tbody></table>`}
+  else{h=`<div class="legend"><span>Download <b data-ld></b></span><span>Upload <b data-lu></b></span><span>Last 60 seconds</span></div><svg class="spark" viewBox="0 0 600 150" preserveAspectRatio="none" data-spark></svg>`}
+  pane.innerHTML=h;pane.style.animation="none";void pane.offsetWidth;pane.style.animation="";
+  if(s.tab===5)drawSpark(root,d);
+  moveInd(root,s.tab);
+}
+function drawSpark(root,d){
+  const s=state(d.id),svg=root.querySelector("[data-spark]");if(!svg)return;
+  const W=600,H=150,max=14,n=s.hist.length,x=i=>i/(n-1)*W,y=v=>H-6-(v/max)*(H-16);
+  const pd=s.hist.map((p,i)=>`${i?"L":"M"}${x(i).toFixed(1)} ${y(p.d).toFixed(1)}`).join("");
+  const pu=s.hist.map((p,i)=>`${i?"L":"M"}${x(i).toFixed(1)} ${y(p.u).toFixed(1)}`).join("");
+  svg.innerHTML=[0,1,2,3].map(k=>`<path class="g" d="M0 ${(10+k*(H-16)/3).toFixed(1)}H${W}"/>`).join("")+`<path class="da" d="${pd}L${W} ${H}L0 ${H}Z"/><path class="d" d="${pd}"/><path class="u" d="${pu}"/>`;
+  const last=s.hist[n-1];const ld=root.querySelector("[data-ld]"),lu=root.querySelector("[data-lu]");if(ld)ld.textContent=last.d.toFixed(1)+" MB/s";if(lu)lu.textContent=last.u.toFixed(2)+" MB/s";
+}
+function moveInd(root,i){const t=root.querySelector(`.tab[data-tab="${i}"]`),ind=root.querySelector(".ind");if(!t||!ind)return;ind.style.transform=`translateX(${t.offsetLeft}px) scaleX(${t.offsetWidth})`}
+function statusBar(root,d){const s=state(d.id);const D=s.rows.reduce((a,r)=>a+r.d,0),U=s.rows.reduce((a,r)=>a+r.u,0);root.querySelector("[data-dl]").textContent=D.toFixed(1)+" MB/s";root.querySelector("[data-ul]").textContent=U.toFixed(2)+" MB/s"}
+function counts(root,d){const s=state(d.id);root.querySelectorAll(".fl").forEach(b=>b.querySelector(".cnt").textContent=s.rows.filter(fnFor(b.dataset.f)).length)}
+
+let toastT=null;
+function toast(root,msg,undo){const t=root.querySelector(".toast");t.querySelector("[data-msg]").textContent=msg;t.classList.add("on");t._undo=undo;clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("on"),4000)}
+
+/* ---------- page ---------- */
+let cur="uv";
+function renderTabs(){document.getElementById("dirtabs").innerHTML=DIRS.map(d=>`<button class="dirtab" role="tab" aria-selected="${d.id===cur}" data-dir="${d.id}">${d.name}</button>`).join("")}
+function renderStage(){
+  const stage=document.getElementById("stage"),d=DIRS.find(x=>x.id===cur);
+  if(d.id==="logo"){stage.innerHTML=`<div class="dirpanel"><div class="dirmeta"><div><h2>Logo and app icon concepts</h2><p>Each shown as a dark and a light app icon, with its colour, at small sizes, and next to the name.</p></div></div><div class="logos">${LOGOS.map(l=>`<article class="lg" style="--mark:${l.mark}"><h3>${l.name}</h3><p>${l.line}</p>
+    <div class="tiles"><div class="tile dark">${mark(l,true)}</div><div class="tile light">${mark(l,false)}</div><div class="tile acc">${mark(l,false)}</div></div>
+    <div class="sizes">${mark(l,true,48)}${mark(l,true,32)}${mark(l,false,24)}${mark(l,false,16)}</div>
+    <div class="lockup">${mark(l,true)}<b style="font-family:'${l.font}',ui-sans-serif,sans-serif;font-weight:${l.font==="Mona Sans"?400:600}">tTorrent</b></div></article>`).join("")}</div><p class="note">The marks are drawn on a 64 px grid, so they stay sharp at 16 px in a tray or taskbar.</p></div>`;return}
+  const s=state(d.id);
+  stage.innerHTML=`<div class="dirpanel"><div class="dirmeta"><div><h2>${d.name}</h2><p>${d.line}</p></div>
+    <div class="swatches" role="group" aria-label="Accent"><span>Accent</span>${d.acc.map((a,i)=>`<button class="sw" style="--sw:${a[1]}" aria-label="${a[0]}" title="${a[0]}" aria-pressed="${s.acc===i}" data-acc="${i}"></button>`).join("")}</div></div>
+    <div class="scroller">${appHTML(d)}</div>
+    <p class="note">Click rows, filters and tabs. Pause and resume work, the piece map and speeds move live, and Uncategorized shows the empty state.</p></div>`;
+  const root=stage.querySelector(".wrapapp");renderList(root,d);renderPane(root,d);statusBar(root,d);
+  requestAnimationFrame(()=>moveInd(root,s.tab));
+  document.fonts&&document.fonts.ready.then(()=>moveInd(root,state(d.id).tab));
+}
+
+document.addEventListener("click",e=>{
+  const dt=e.target.closest(".dirtab");if(dt){cur=dt.dataset.dir;renderTabs();renderStage();return}
+  const root=e.target.closest(".wrapapp");const d=DIRS.find(x=>x.id===cur);
+  const sw=e.target.closest(".sw");if(sw){const s=state(d.id);s.acc=+sw.dataset.acc;document.querySelectorAll(".sw").forEach(b=>b.setAttribute("aria-pressed",b===sw));document.querySelector(".app").style.setProperty("--accent-default",d.acc[s.acc][1]);return}
+  if(!root)return;const s=state(d.id);
+  const fl=e.target.closest(".fl");if(fl){s.filter=fl.dataset.f;root.querySelectorAll(".fl").forEach(b=>b.setAttribute("aria-current",b===fl));renderList(root,d);return}
+  const tr=e.target.closest("tbody tr[data-i]");if(tr){s.sel=+tr.dataset.i;root.querySelectorAll("tbody tr").forEach(r=>r.setAttribute("aria-selected",r===tr));renderPane(root,d);return}
+  const tb=e.target.closest(".tab");if(tb){s.tab=+tb.dataset.tab;root.querySelectorAll(".tab").forEach(b=>b.setAttribute("aria-selected",b===tb));renderPane(root,d);return}
+  const ub=e.target.closest("[data-undo]");if(ub){const t=root.querySelector(".toast");t._undo&&t._undo();t.classList.remove("on");return}
+  const b=e.target.closest("[data-act]");if(b){const r=s.rows[s.sel],a=b.dataset.act;
+    if(a==="alt"){const on=b.getAttribute("aria-pressed")!=="true";b.setAttribute("aria-pressed",on);toast(root,on?"Slow mode on: 1 MB/s down, 200 KB/s up":"Slow mode off",null);return}
+    if(a==="pause"&&r.st!=="pause"){const prev={st:r.st,d:r.d,u:r.u};r.st="pause";r.d=0;r.u=0;renderList(root,d);counts(root,d);statusBar(root,d);toast(root,"Stopped "+r.n,()=>{Object.assign(r,prev);renderList(root,d);counts(root,d);statusBar(root,d)});return}
+    if(a==="resume"&&r.st==="pause"){r.st=r.p===1?"seed":"down";r.d=r.p===1?0:2.4;r.u=.12;r.se=r.se||88;r.pe=r.pe||12;r.eta=r.p===1?"":"9 min";renderList(root,d);counts(root,d);statusBar(root,d);toast(root,"Resumed "+r.n,null);return}
+    if(a==="remove"){toast(root,"Remove "+r.n+"? Files stay on disk unless you choose otherwise.",null);return}
+    if(a==="add"||a==="magnet"){toast(root,a==="add"?"Opens the add dialog: save path, category, tags, file picker":"Paste a magnet link, or several on separate lines",null);return}
+  }
+});
+document.addEventListener("input",e=>{if(e.target.matches(".search input")){const d=DIRS.find(x=>x.id===cur);renderList(e.target.closest(".wrapapp"),d)}});
+window.addEventListener("resize",()=>{const root=document.querySelector(".wrapapp");if(root)moveInd(root,state(cur).tab)});
+
+/* live tick */
+setInterval(()=>{
+  const d=DIRS.find(x=>x.id===cur);if(!d||d.id==="logo")return;const root=document.querySelector(".wrapapp");if(!root)return;const s=state(d.id);
+  s.rows.forEach(r=>{if(r.st==="down"){r.d=Math.max(.4,r.d+(Math.random()-.5)*1.2);r.u=Math.max(.02,r.u+(Math.random()-.5)*.08);r.p=Math.min(.999,r.p+r.d/9000)}else if(r.st==="seed"){r.u=Math.max(.05,r.u+(Math.random()-.5)*.1)}});
+  const D=s.rows.reduce((a,r)=>a+r.d,0),U=s.rows.reduce((a,r)=>a+r.u,0);s.hist.push({d:D,u:U});s.hist.shift();
+  statusBar(root,d);
+  const mem=root.querySelector("[data-mem]");if(mem)mem.textContent=(92+Math.round(Math.random()*4))+" MB";
+  root.querySelectorAll("tbody tr[data-i]").forEach(tr=>{const r=s.rows[+tr.dataset.i];const f=tr.querySelector(".bar i");f.style.setProperty("--p",r.p);tr.querySelector(".prog .num").textContent=(r.p*100).toFixed(r.p===1?0:1)+"%";const c=tr.children;c[6].textContent=sp(r.d);c[7].textContent=sp(r.u)});
+  const r=s.rows[s.sel];
+  if(s.tab===0&&r.st==="down"){const pm=root.querySelector("[data-pm]");if(pm){const cells=pm.children;const free=[];s.pieces.a.forEach((x,i)=>{if(x!=="h")free.push(i)});for(let k=0;k<3&&free.length;k++){const i=free.splice(Math.floor(Math.random()*free.length),1)[0];s.pieces.a[i]="h";const c=cells[i];c.className="h new";setTimeout(()=>c.classList.remove("new"),260)}
+    const hv=root.querySelector("[data-have]");if(hv)hv.textContent=s.pieces.a.filter(x=>x==="h").length+" of "+s.pieces.a.length;const kd=root.querySelector("[data-kd]");if(kd)kd.textContent=sp(r.d)}}
+  if(s.tab===5)drawSpark(root,d);
+},1000);
+
+renderTabs();renderStage();
+</script>
