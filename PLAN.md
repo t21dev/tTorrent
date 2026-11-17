@@ -104,6 +104,7 @@ crates/
 - [ ] Hard memory caps (buffers, cache, peers) as settings; memory shown in the status bar.
 - [ ] Startup without a disk spike (`docs/startup.md`): trusted resume data (size and mtime, no rechecks), waves in priority order, one sorted I/O queue per physical disk with HDD/SSD detection, files opened on demand, background I/O priority, incremental resume writes.
 - [ ] qBittorrent import.
+- [ ] Missing and moved content (`docs/missing-files.md`): drive unavailable vs deleted, Locate…, download missing files, can't-access retries, disk full, database backups.
 - [ ] Single instance, file and magnet association, autostart, tray with the qBittorrent-identical menu (DESIGN.md).
 
 ### Phase 2: window

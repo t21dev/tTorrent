@@ -39,6 +39,7 @@
 
 *,*::before,*::after{box-sizing:border-box}
 html,body{overflow-x:clip}
+[hidden]{display:none!important}
 body{margin:0;background:var(--page-bg);color:var(--page-ink);font-family:var(--font-page);font-size:var(--text-md);line-height:1.5;-webkit-font-smoothing:antialiased;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:32px 72px}
 button,input,select{font:inherit;color:inherit}
@@ -125,7 +126,7 @@ svg{display:block}
 .wbtn svg{width:10px;height:10px;stroke:currentColor;stroke-width:1;fill:none}
 
 /* dropdown menus */
-.menu{position:absolute;z-index:20;min-width:260px;padding:5px;background:var(--raise);border:1px solid var(--rule);border-radius:var(--r-menu);box-shadow:var(--shadow-pop);
+.menu{position:absolute;z-index:20;min-width:260px;max-height:calc(100% - 12px);overflow-y:auto;overscroll-behavior:contain;padding:5px;background:var(--raise);border:1px solid var(--rule);border-radius:var(--r-menu);box-shadow:var(--shadow-pop);
   transform-origin:top left;animation:menuIn var(--dur-short) var(--ease-out)}
 @keyframes menuIn{from{opacity:0;transform:translateY(-4px) scale(.98)}to{opacity:1;transform:none}}
 .menu button{display:flex;width:100%;align-items:center;gap:10px;height:28px;padding:0 10px;border:0;border-radius:var(--r-item);background:transparent;color:var(--ink);font-size:12.5px;text-align:left;cursor:default;
@@ -160,7 +161,8 @@ svg{display:block}
 .search{flex:0 1 340px;min-width:180px;display:flex;align-items:center;gap:8px;height:var(--btn-h);padding:0 10px;border:1px solid var(--rule);border-radius:var(--r-input);background:var(--well);color:var(--muted);
   transition:border-color var(--dur-short) var(--ease-out),box-shadow var(--dur-short) var(--ease-out),background-color var(--dur-short) var(--ease-out)}
 .search:focus-within{border-color:var(--accent-fg);box-shadow:0 0 0 3px var(--accent-soft);background:var(--panel)}
-.search input{flex:1;min-width:0;border:0;background:transparent;outline:none;color:var(--ink);font-size:var(--fs)}
+.search input{flex:1;min-width:0;border:0;background:transparent;outline:none;color:var(--ink);font-size:var(--fs);text-overflow:ellipsis}
+.app .search input:focus-visible,.app .ssearch input:focus-visible{outline:none}
 .search input::placeholder{color:var(--muted)}
 .kbd{font-family:var(--font-num);font-size:11px;padding:1px 6px;border-radius:5px;border:1px solid var(--rule);color:var(--muted);white-space:nowrap}
 
@@ -243,9 +245,15 @@ td.name{color:var(--ink);font-weight:500}
 .legend b{color:var(--ink);font-weight:500;font-variant-numeric:tabular-nums}
 
 /* status bar */
-.sb{grid-column:1/-1;display:flex;align-items:center;padding:0 6px;background:var(--panel);border-top:1px solid var(--rule);color:var(--muted);font-size:12px}
+.sb{grid-column:1/-1;display:flex;align-items:center;padding:0 6px;overflow:hidden;white-space:nowrap;background:var(--panel);border-top:1px solid var(--rule);color:var(--muted);font-size:12px}
 .desk.mac .sb{grid-column:2/-1}
-.sb > span{display:flex;align-items:center;gap:6px;padding:0 12px;height:18px;border-left:1px solid var(--rule)}
+.sb > span{display:flex;flex:none;align-items:center;gap:6px;padding:0 12px;height:18px;border-left:1px solid var(--rule);white-space:nowrap}
+.sb > span.sp{flex:1 1 0;min-width:0}
+.sb{container-type:inline-size}
+.sb .sl2{color:var(--muted);font-weight:400}
+@container (max-width:1180px){.sb .sl2{display:none}}
+@container (max-width:1000px){.sb .sl{display:none}}
+@container (max-width:760px){.sb [data-sbi="ratio"],.sb [data-sbi="peers"],.sb [data-sbi="dht"]{display:none}}
 .sb > span:first-child{border-left:0}
 .sb .ico{width:13px;height:13px}
 .sb b{font-weight:500;color:var(--ink-2);font-family:var(--font-num);font-variant-numeric:tabular-nums}
@@ -360,8 +368,13 @@ th.drop-after{box-shadow:inset -2px 0 0 var(--accent-bar)}
 .menu button.bad .mi-ico{color:var(--bad)}
 .menu button.open{background:var(--hover)}
 .menu .subar{margin-left:auto;width:12px;height:12px;opacity:.7}
-.menu.sub{left:calc(100% - 6px);min-width:220px;transform-origin:top left}
-.menu.sub.flip{left:auto;right:calc(100% - 6px);transform-origin:top right}
+.menu.sub{min-width:220px;z-index:21;transform-origin:top left}
+.menu.sub.flip{transform-origin:top right}
+.crow-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 14px}
+.crow{display:flex;align-items:center;gap:8px;height:34px;padding:0 4px;border-bottom:1px solid var(--row-rule);font-size:12.5px;color:var(--ink)}
+.crow .tn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.crow.off .tn,.crow.off > .ico{opacity:.42}
+.menu button.muted{color:var(--muted)}
 
 /* startup */
 .sb .su{color:var(--ink-2)}
@@ -371,6 +384,14 @@ tr.sk td{height:var(--row-h)}
 .skb{display:block;height:8px;border-radius:999px;background:var(--track);animation:skp 1.1s ease-in-out infinite alternate}
 @keyframes skp{from{opacity:.45}to{opacity:1}}
 td.enter{animation:fadeIn var(--dur-short) var(--ease-out)}
+
+/* problem callout */
+.callout{display:flex;align-items:center;gap:12px;margin:0 0 12px;padding:10px 12px;border:1px solid color-mix(in oklab,var(--bad) 40%,var(--rule));border-radius:var(--r-btn);background:color-mix(in oklab,var(--bad) 8%,var(--panel));animation:paneIn var(--dur-short) var(--ease-out)}
+.callout > .ico{color:var(--bad);width:18px;height:18px}
+.callout > div:not(.cacts){flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;font-size:12.5px}
+.callout b{font-weight:600;color:var(--ink);overflow-wrap:anywhere}
+.callout span{color:var(--muted)}
+.cacts{display:flex;gap:6px;flex:none}
 
 /* toast and shortcut sheet */
 .toast{position:absolute;left:50%;bottom:46px;transform:translate(-50%,16px);opacity:0;pointer-events:none;display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:var(--r-toast);background:var(--raise);color:var(--ink);border:1px solid var(--rule);box-shadow:var(--shadow-pop);font-size:12.5px;z-index:15;
@@ -599,11 +620,12 @@ const ROWS=[
  {n:"blender-4.5-linux-x64.tar.xz",a:"11/9/2026 11:40 AM",s:"380 MB",p:.88,st:"stall",se:0,pe:3,d:0,u:0,eta:"∞",r:.04,cat:"Software",tag:""},
  {n:"Cosmos Laundromat (2015)",a:"11/8/2026 4:55 PM",s:"2.1 GB",p:.34,st:"err",se:0,pe:0,d:0,u:0,eta:"",r:.01,cat:"Films",tag:"Open movies"},
  {n:"kali-linux-2026.3-installer.iso",a:"11/17/2026 9:33 PM",s:"4.1 GB",p:0,st:"queue",se:0,pe:0,d:0,u:0,eta:"",r:0,cat:"Linux ISOs",tag:""},
+ {n:"Elephants Dream (2006) 1080p",a:"11/5/2026 10:15 AM",s:"815 MB",p:1,st:"miss",se:0,pe:0,d:0,u:0,eta:"",r:2.4,cat:"Films",tag:"Open movies"},
  {n:"Prelinger Archives sampler",a:"11/2/2026 12:39 PM",s:"14 GB",p:1,st:"seed",se:31,pe:4,d:0,u:.17,eta:"∞",r:5.6,cat:"Films",tag:"Keep"}
 ];
-const ST={down:["Downloading","down","i-down"],seed:["Seeding","seed","i-up"],pause:["Stopped","pause","i-pause"],done:["Completed","done","i-check"],check:["Checking","check","i-clock"],stall:["Stalled","stall","i-alert"],err:["Disk full","err","i-alert"],queue:["Queued","queue","i-clock"],start:["Starting","queue","i-clock"]};
+const ST={down:["Downloading","down","i-down"],seed:["Seeding","seed","i-up"],pause:["Stopped","pause","i-pause"],done:["Completed","done","i-check"],check:["Checking","check","i-clock"],stall:["Stalled","stall","i-alert"],err:["Disk full","err","i-alert"],queue:["Queued","queue","i-clock"],start:["Starting","queue","i-clock"],miss:["Missing files","err","i-alert"],noacc:["Can't access","stall","i-alert"]};
 const FIL=[
- ["Status",[["all","All","i-all",r=>true],["down","Downloading","i-down",r=>r.st==="down"||r.st==="stall"],["seed","Seeding","i-up",r=>r.st==="seed"],["done","Completed","i-check",r=>r.p===1],["pause","Stopped","i-pause",r=>r.st==="pause"],["active","Active","i-bolt",r=>r.d>0||r.u>0],["err","Errored","i-alert",r=>r.st==="err"]]],
+ ["Status",[["all","All","i-all",r=>true],["down","Downloading","i-down",r=>r.st==="down"||r.st==="stall"],["seed","Seeding","i-up",r=>r.st==="seed"],["done","Completed","i-check",r=>r.p===1],["pause","Stopped","i-pause",r=>r.st==="pause"],["active","Active","i-bolt",r=>r.d>0||r.u>0],["err","Errored","i-alert",r=>["err","miss","noacc"].includes(r.st)]]],
  ["Categories",[["c-linux","Linux ISOs","",r=>r.cat==="Linux ISOs"],["c-films","Films","",r=>r.cat==="Films"],["c-soft","Software","",r=>r.cat==="Software"],["c-none","Uncategorized","i-folder",r=>!r.cat]]],
  ["Tags",[["t-keep","Keep","i-tag",r=>r.tag==="Keep"],["t-open","Open movies","i-tag",r=>r.tag==="Open movies"]]],
  ["Trackers",[["k-ubuntu","torrent.ubuntu.com","i-server",r=>/ubuntu/.test(r.n)],["k-debian","bttracker.debian.org","i-server",r=>/debian/.test(r.n)],["k-none","Trackerless","i-server",r=>/Prelinger/.test(r.n)]]]
@@ -657,7 +679,7 @@ const TB_DEF=["add","magnet","resume","pause","remove","alt","search","prefs"];
 const SBI=[["free","Free space"],["dht","DHT nodes"],["down","Download speed"],["up","Upload speed"],["ratio","Session ratio"],["peers","Connected peers"],["mem","Memory"],["port","Port status"]];
 const SB_DEF=["free","dht","down","up","mem","port"];
 const TABS_DEF=[0,1,2,3,4,5];
-const S={};let VIEW={plat:"win",mode:"light",tint:"neutral",dens:"cozy",scale:2,side:true,det:true,labels:false,lab:["add"],appIcon:2,order:TBI.map(t=>t[0]),tb:[...TB_DEF],cols:["name","added","size","progress","status","downloaded","uploaded","down","up","eta","ratio"],newCol:null,sb:[...SB_DEF],tabs:[...TABS_DEF]};
+const S={};let VIEW={plat:"win",mode:"light",tint:"neutral",dens:"cozy",scale:2,side:true,det:true,labels:false,lab:["add"],ctxHide:[],appIcon:2,order:TBI.map(t=>t[0]),tb:[...TB_DEF],cols:["name","added","size","progress","status","downloaded","uploaded","down","up","eta","ratio"],newCol:null,sb:[...SB_DEF],tabs:[...TABS_DEF]};
 function state(id){return S[id]||(S[id]={rows:ROWS.map(r=>({...r})),filter:"all",sort:{k:"added",dir:-1},sel:0,tab:0,acc:0,pieces:null,hist:Array.from({length:60},(_,i)=>({d:6+3*Math.sin(i/5)+Math.random()*2,u:.8+.3*Math.cos(i/7)}))})}
 const isMac=()=>VIEW.plat==="mac";
 const K=k=>isMac()?k.replace(/Ctrl\+/g,"⌘").replace(/Shift\+/g,"⇧").replace(/Alt\+/g,"⌥").replace("Delete","⌫").replace("Enter","↩"):k;
@@ -692,10 +714,10 @@ function appHTML(d){
 }
 
 function tbItem(it){const [id,l,ic,act,sc]=it,off=!VIEW.tb.includes(id)?" hidden":"";
-  if(id==="search")return `<span class="spacer"></span><label class="search" data-tbi="search"${off}>${ico("i-search")}<input id="q" placeholder="Filter torrents or run a command" aria-label="Filter torrents"><span class="kbd">${K("Ctrl+K")}</span></label>`;
+  if(id==="search")return `<span class="spacer"></span><label class="search" data-tbi="search"${off}>${ico("i-search")}<input id="q" placeholder="Filter or run a command" aria-label="Filter torrents"><span class="kbd">${K("Ctrl+K")}</span></label>`;
   return `<button class="btn${id==="add"?" primary":""}${VIEW.lab.includes(id)?"":" iconly"}" data-act="${act}" data-tbi="${id}" aria-label="${l}" title="${l}${sc?" "+K(sc):""}"${id==="alt"?' aria-pressed="false"':""}${off}>${ico(ic)}<span class="lb">${l}</span></button>`}
 function sbHTML(){const V=k=>VIEW.sb.includes(k)?"":" hidden";
-  return `<span data-sbi="startup" class="su" hidden>Starting torrents <b data-su></b><span class="sbar"><i></i></span></span><span data-sbi="free"${V("free")}>${ico("i-disk")}Free space <b>81.05 GB</b></span><span data-sbi="dht"${V("dht")}>${ico("i-globe")}DHT <b data-dht>295</b> nodes</span><span data-sbi="down"${V("down")}>${ico("i-down")}<b data-dl></b></span><span data-sbi="up"${V("up")}>${ico("i-up")}<b data-ul></b></span><span data-sbi="ratio"${V("ratio")}>Ratio <b>1.84</b></span><span data-sbi="peers"${V("peers")}>Peers <b>148</b></span><span class="sp"></span><span data-sbi="mem"${V("mem")}>${ico("i-chip")}Memory <b data-mem>94 MB</b> of 160 MB cap</span><span data-sbi="port"${V("port")} class="ok">${ico("i-check")}Port open</span>`}
+  return `<span data-sbi="startup" class="su" hidden>Starting torrents <b data-su></b><span class="sbar"><i></i></span></span><span data-sbi="free"${V("free")} title="Free space 81.05 GB">${ico("i-disk")}<span class="sl">Free space</span><b>81.05 GB</b></span><span data-sbi="dht"${V("dht")} title="DHT 295 nodes">${ico("i-globe")}<span class="sl">DHT</span><b data-dht>295</b><span class="sl">nodes</span></span><span data-sbi="down"${V("down")}>${ico("i-down")}<b data-dl></b></span><span data-sbi="up"${V("up")}>${ico("i-up")}<b data-ul></b></span><span data-sbi="ratio"${V("ratio")} title="Session ratio 1.84"><span class="sl">Ratio</span><b>1.84</b></span><span data-sbi="peers"${V("peers")} title="148 connected peers"><span class="sl">Peers</span><b>148</b></span><span class="sp"></span><span data-sbi="mem"${V("mem")} title="Memory, capped at 160 MB">${ico("i-chip")}<span class="sl">Memory</span><b data-mem>94 MB</b><span class="sl">of 160 MB cap</span></span><span data-sbi="port"${V("port")} class="ok" title="Port open">${ico("i-check")}<span class="sl">Port open</span></span>`}
 const addedTs=r=>{const m=r.a.match(/(\d+)\/(\d+)\/(\d+) (\d+):(\d+) (AM|PM)/);return new Date(+m[3],+m[1]-1,+m[2],(+m[4]%12)+(m[6]==="PM"?12:0),+m[5]).getTime()};
 const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const fmtTs=t=>{const d=new Date(t);return MON[d.getMonth()]+" "+d.getDate()+", "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")};
@@ -704,49 +726,49 @@ const HOST=r=>/ubuntu/.test(r.n)?"torrent.ubuntu.com":/debian/.test(r.n)?"bttrac
 const HASH=r=>{let h=2166136261;for(const c of r.n)h=Math.imul(h^c.charCodeAt(0),16777619);let o="";for(let k=0;k<5;k++){h=Math.imul(h^(h>>>13),0x5bd1e995);o+=(h>>>0).toString(16).padStart(8,"0")}return o};
 const ACTIVE=["down","stall","check","queue"];
 const QPOS={};ROWS.filter(r=>ACTIVE.includes(r.st)).forEach((r,i)=>QPOS[r.n]=i+1);
-const progHTML=r=>{const cls=r.st==="seed"||r.st==="done"?"seed":r.st==="pause"||r.st==="queue"?"pause":r.st==="err"?"err":r.st==="check"?"check":"";return `<div class="prog"><div class="bar"><i class="${cls}" style="--p:${r.p}"></i></div><span class="num">${(r.p*100).toFixed(r.p===1?0:1)}%</span></div>`};
+const progHTML=r=>{const cls=r.st==="seed"||r.st==="done"?"seed":r.st==="pause"||r.st==="queue"?"pause":["err","miss"].includes(r.st)?"err":r.st==="check"?"check":"";return `<div class="prog"><div class="bar"><i class="${cls}" style="--p:${r.p}"></i></div><span class="num">${(r.p*100).toFixed(r.p===1?0:1)}%</span></div>`};
 const stHTML=r=>{const st=ST[r.st];return `<span class="st ${st[1]}">${ico(st[2])}${st[0]}</span>`};
-const ORD=["down","stall","check","queue","seed","done","pause","err","start"];
+const ORD=["down","stall","check","queue","seed","done","pause","err","miss","noacc","start"];
 /* [key, label, width px, align, value (sorts), format] in qBittorrent's own order */
 const COLS=[
- ["queue","#",44,"r",r=>QPOS[r.n]&&ACTIVE.includes(r.st)?QPOS[r.n]:1e9,v=>v>=1e9?"*":v],
+ ["queue","#",52,"r",r=>QPOS[r.n]&&ACTIVE.includes(r.st)?QPOS[r.n]:1e9,v=>v>=1e9?"*":v],
  ["name","Name",300,"",r=>r.n.toLowerCase(),(v,r)=>`<span class="nm">${ico("i-file")}<span>${esc(r.n)}</span></span>`],
- ["size","Size",80,"r",r=>sizeGB(r),(v,r)=>r.s],
- ["total","Total size",84,"r",r=>sizeGB(r),(v,r)=>r.s],
+ ["size","Size",88,"r",r=>sizeGB(r),(v,r)=>r.s],
+ ["total","Total size",100,"r",r=>sizeGB(r),(v,r)=>r.s],
  ["progress","Progress",150,"",r=>r.p,(v,r)=>progHTML(r)],
- ["status","Status",120,"",r=>ORD.indexOf(r.st),(v,r)=>stHTML(r)],
- ["seeds","Seeds",90,"r",r=>r.se,v=>v?v+" (1204)":""],
- ["peers","Peers",84,"r",r=>r.pe,v=>v?v+" (311)":""],
- ["down","Down speed",96,"r",r=>r.d,v=>sp(v)],
- ["up","Up speed",90,"r",r=>r.u,v=>sp(v)],
- ["eta","ETA",56,"r",r=>r.eta===""?1e9:r.eta==="∞"?1e8:parseInt(r.eta),(v,r)=>r.eta],
- ["ratio","Ratio",60,"r",r=>r.r,v=>v.toFixed(2)],
- ["pop","Popularity",88,"r",r=>r.r*.42,v=>v.toFixed(2)],
+ ["status","Status",156,"",r=>ORD.indexOf(r.st),(v,r)=>stHTML(r)],
+ ["seeds","Seeds",100,"r",r=>r.se,v=>v?v+" (1204)":""],
+ ["peers","Peers",92,"r",r=>r.pe,v=>v?v+" (311)":""],
+ ["down","Down speed",116,"r",r=>r.d,v=>sp(v)],
+ ["up","Up speed",108,"r",r=>r.u,v=>sp(v)],
+ ["eta","ETA",74,"r",r=>r.eta===""?1e9:r.eta==="∞"?1e8:parseInt(r.eta),(v,r)=>r.eta],
+ ["ratio","Ratio",78,"r",r=>r.r,v=>v.toFixed(2)],
+ ["pop","Popularity",106,"r",r=>r.r*.42,v=>v.toFixed(2)],
  ["category","Category",104,"",r=>r.cat,v=>esc(v)],
  ["tags","Tags",104,"",r=>r.tag,v=>esc(v)],
- ["added","Added on",112,"",r=>addedTs(r),v=>fmtTs(v)],
- ["completedon","Completed on",112,"",r=>r.p===1?addedTs(r)+36e5:0,v=>v?fmtTs(v):""],
+ ["added","Added on",140,"",r=>addedTs(r),v=>fmtTs(v)],
+ ["completedon","Completed on",140,"",r=>r.p===1?addedTs(r)+36e5:0,v=>v?fmtTs(v):""],
  ["tracker","Tracker",170,"",HOST,v=>esc(v)],
- ["dlimit","Down limit",84,"r",()=>0,()=>"∞"],
- ["ulimit","Up limit",78,"r",()=>0,()=>"∞"],
- ["downloaded","Downloaded",96,"r",r=>sizeGB(r)*r.p,v=>gb(v)],
- ["uploaded","Uploaded",90,"r",r=>sizeGB(r)*r.r,v=>gb(v)],
- ["sdown","Session download",126,"r",r=>sizeGB(r)*r.p*.3,v=>gb(v)],
- ["sup","Session upload",116,"r",r=>sizeGB(r)*r.r*.2,v=>gb(v)],
- ["left","Remaining",88,"r",r=>sizeGB(r)*(1-r.p),v=>v>0?gb(v):"0 MB"],
- ["active","Time active",104,"",r=>Date.parse("2026-11-17T21:40:00")-addedTs(r),v=>dur(v)],
+ ["dlimit","Down limit",102,"r",()=>0,()=>"∞"],
+ ["ulimit","Up limit",92,"r",()=>0,()=>"∞"],
+ ["downloaded","Downloaded",118,"r",r=>sizeGB(r)*r.p,v=>gb(v)],
+ ["uploaded","Uploaded",106,"r",r=>sizeGB(r)*r.r,v=>gb(v)],
+ ["sdown","Session download",148,"r",r=>sizeGB(r)*r.p*.3,v=>gb(v)],
+ ["sup","Session upload",136,"r",r=>sizeGB(r)*r.r*.2,v=>gb(v)],
+ ["left","Remaining",106,"r",r=>sizeGB(r)*(1-r.p),v=>v>0?gb(v):"0 MB"],
+ ["active","Time active",118,"",r=>Date.parse("2026-11-17T21:40:00")-addedTs(r),v=>dur(v)],
  ["path","Save path",180,"",r=>"D:\\Downloads\\"+r.cat,v=>esc(v)],
- ["done","Completed",88,"r",r=>sizeGB(r)*r.p,v=>gb(v)],
- ["rlimit","Ratio limit",80,"r",()=>0,()=>"None"],
- ["seen","Last seen complete",140,"",r=>addedTs(r)+72e5,v=>fmtTs(v)],
- ["activity","Last activity",98,"r",r=>r.d+r.u>0?0:3600*(1+r.r),v=>v?dur(v*1000)+" ago":"Now"],
- ["avail","Availability",86,"r",r=>r.p<1?1+r.se/300:-1,v=>v<0?"":v.toFixed(3)],
+ ["done","Completed",108,"r",r=>sizeGB(r)*r.p,v=>gb(v)],
+ ["rlimit","Ratio limit",100,"r",()=>0,()=>"None"],
+ ["seen","Last seen complete",164,"",r=>addedTs(r)+72e5,v=>fmtTs(v)],
+ ["activity","Last activity",118,"r",r=>r.d+r.u>0?0:3600*(1+r.r),v=>v?dur(v*1000)+" ago":"Now"],
+ ["avail","Availability",108,"r",r=>r.p<1?1+r.se/300:-1,v=>v<0?"":v.toFixed(3)],
  ["dpath","Incomplete save path",176,"",r=>r.p<1?"D:\\Downloads\\.incomplete":"",v=>esc(v)],
  ["hash1","Info hash v1",320,"",HASH,v=>v],
- ["hash2","Info hash v2",104,"",()=>"",()=>"N/A"],
- ["reann","Reannounce in",104,"r",r=>ACTIVE.includes(r.st)||r.st==="seed"?1661:0,v=>v?Math.floor(v/60)+":"+String(v%60).padStart(2,"0"):""],
- ["private","Private",66,"",r=>/Prelinger|Cosmos/.test(r.n)?1:0,v=>v?"Yes":"No"],
- ["created","Created on",112,"",r=>addedTs(r)-2592e6,v=>fmtTs(v)]
+ ["hash2","Info hash v2",118,"",()=>"",()=>"N/A"],
+ ["reann","Reannounce in",126,"r",r=>ACTIVE.includes(r.st)||r.st==="seed"?1661:0,v=>v?Math.floor(v/60)+":"+String(v%60).padStart(2,"0"):""],
+ ["private","Private",84,"",r=>/Prelinger|Cosmos/.test(r.n)?1:0,v=>v?"Yes":"No"],
+ ["created","Created on",140,"",r=>addedTs(r)-2592e6,v=>fmtTs(v)]
 ];
 const COLMAP=Object.fromEntries(COLS.map(c=>[c[0],c]));
 const TEXTCOL=new Set(["name","progress","status","category","tags","tracker","path","dpath","private"]);
@@ -765,12 +787,12 @@ function renderList(root,d){
 function renderPane(root,d){
   const s=state(d.id),r=s.rows[s.sel],pane=root.querySelector("[data-pane]");
   root.querySelector("[data-who]").textContent=r.n;
-  if(!s.pieces||s.pieces.of!==s.sel){const n=48*5,h=Math.round(r.p*n);const arr=Array.from({length:n},(_,i)=>i<h?(Math.random()<.93?"h":"p"):(Math.random()<.05?"p":""));if(r.p<1)for(let i=n-1;i>0;i--){if(Math.random()<.35){const j=Math.floor(Math.random()*n);[arr[i],arr[j]]=[arr[j],arr[i]]}}s.pieces={of:s.sel,a:arr}}
+  if(!s.pieces||s.pieces.of!==s.sel){const n=48*5,h=r.st==="miss"?0:Math.round(r.p*n);const arr=Array.from({length:n},(_,i)=>i<h?(Math.random()<.93?"h":"p"):(r.st!=="miss"&&Math.random()<.05?"p":""));if(r.p<1)for(let i=n-1;i>0;i--){if(Math.random()<.35){const j=Math.floor(Math.random()*n);[arr[i],arr[j]]=[arr[j],arr[i]]}}s.pieces={of:s.sel,a:arr}}
   let h="";const g=sizeGB(r);
   if(s.tab===0){const have=s.pieces.a.filter(x=>x==="h").length;
-    h=`<div class="gen"><div><div class="pm-head"><span>Pieces</span><span class="num" data-have>${have} of ${s.pieces.a.length}</span></div><div class="pm" data-pm>${s.pieces.a.map(x=>`<i class="${x}"></i>`).join("")}</div></div>
+    h=(r.st==="miss"?`<div class="callout" role="alert">${ico("i-alert")}<div><b>The folder D:\\Downloads\\${esc(r.cat)}\\${esc(r.n)} is gone.</b><span>Ratio, seeding time, category and tags are kept. Nothing is downloaded again unless you choose to.</span></div><div class="cacts"><button class="btn primary" data-fix="locate">Locate…</button><button class="btn" data-fix="again">Download again</button><button class="btn" data-fix="remove">Remove torrent</button></div></div>`:r.st==="err"?`<div class="callout" role="alert">${ico("i-alert")}<div><b>Drive D: is full.</b><span>Downloads on this drive are paused; seeding continues. They resume when space is free.</span></div><div class="cacts"><button class="btn" data-fix="move">Move torrent…</button></div></div>`:"")+`<div class="gen"><div><div class="pm-head"><span>Pieces</span><span class="num" data-have>${have} of ${s.pieces.a.length}</span></div><div class="pm" data-pm>${s.pieces.a.map(x=>`<i class="${x}"></i>`).join("")}</div></div>
     <dl class="kv"><dt>Downloaded</dt><dd>${gb(g*r.p)}</dd><dt>Uploaded</dt><dd>${gb(g*r.r)}</dd><dt>Down speed</dt><dd data-kd>${sp(r.d)}</dd><dt>Up speed</dt><dd>${sp(r.u)}</dd><dt>Seeds</dt><dd>${r.se} of 1,204</dd><dt>Peers</dt><dd>${r.pe} of 311</dd>
-    <dt>Ratio</dt><dd>${r.r.toFixed(2)}</dd><dt>ETA</dt><dd>${r.eta||"None"}</dd><dt>Piece size</dt><dd>2 MiB</dd><dt>Save path</dt><dd>D:\\Downloads\\${esc(r.cat)}</dd><dt>Added on</dt><dd>${r.a}</dd><dt>Category</dt><dd>${esc(r.cat)}</dd></dl></div>`}
+    <dt>Ratio</dt><dd>${r.r.toFixed(2)}</dd><dt>ETA</dt><dd>${r.eta||"None"}</dd><dt>Piece size</dt><dd>2 MiB</dd><dt>Save path</dt><dd>D:\\Downloads\\${esc(r.cat)}</dd><dt>Added on</dt><dd>${fmtDate(r.a)}</dd><dt>Category</dt><dd>${esc(r.cat)}</dd></dl></div>`}
   else if(s.tab===1){h=`<table class="mini"><thead><tr><th>Tier</th><th>Tracker</th><th>Status</th><th class="r">Seeds</th><th class="r">Peers</th><th>Next announce</th></tr></thead><tbody>
     <tr><td class="num">0</td><td>https://torrent.ubuntu.com/announce</td><td><span class="st seed">${ico("i-check")}Working</span></td><td class="r num">412</td><td class="r num">38</td><td class="num">27:41</td></tr>
     <tr><td class="num">1</td><td>udp://tracker.opentrackr.org:1337</td><td><span class="st seed">${ico("i-check")}Working</span></td><td class="r num">388</td><td class="r num">52</td><td class="num">12:08</td></tr>
@@ -793,7 +815,7 @@ function drawSpark(root,d){const s=state(d.id),svg=root.querySelector("[data-spa
   svg.innerHTML=[0,1,2,3].map(k=>`<path class="g" d="M0 ${(10+k*(H-16)/3).toFixed(1)}H${W}"/>`).join("")+`<path class="da" d="${pd}L${W} ${H}L0 ${H}Z"/><path class="d" d="${pd}"/><path class="u" d="${pu}"/>`;
   const last=s.hist[n-1];const ld=root.querySelector("[data-ld]"),lu=root.querySelector("[data-lu]");if(ld)ld.textContent=last.d.toFixed(1)+" MB/s";if(lu)lu.textContent=last.u.toFixed(2)+" MB/s"}
 function moveInd(root,i){const t=root.querySelector(`.tab[data-tab="${i}"]`),ind=root.querySelector(".ind");if(!t||!ind)return;ind.style.transform=`translateX(${t.offsetLeft}px) scaleX(${t.offsetWidth})`}
-function statusBar(root,d){const s=state(d.id);const D=s.rows.reduce((a,r)=>a+r.d,0),U=s.rows.reduce((a,r)=>a+r.u,0);if(!root.querySelector("[data-dl]"))return;root.querySelector("[data-dl]").textContent=sp(D)+" (4.1 GB)";root.querySelector("[data-ul]").textContent=sp(U)+" (2.20 GB)"}
+function statusBar(root,d){const s=state(d.id);const D=s.rows.reduce((a,r)=>a+r.d,0),U=s.rows.reduce((a,r)=>a+r.u,0);if(!root.querySelector("[data-dl]"))return;root.querySelector("[data-dl]").innerHTML=sp(D)+'<span class="sl2"> (4.1 GB)</span>';root.querySelector("[data-ul]").innerHTML=sp(U)+'<span class="sl2"> (2.20 GB)</span>'}
 function counts(root,d){const s=state(d.id);root.querySelectorAll(".fl").forEach(b=>b.querySelector(".cnt").textContent=s.rows.filter(fnFor(b.dataset.f)).length)}
 let toastT=null;
 function toast(msg,undo){const t=document.querySelector(".toast");if(!t)return;t.querySelector("[data-msg]").textContent=msg;t.querySelector("[data-undo]").hidden=!undo;t.classList.add("on");t._undo=undo;clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("on"),3600)}
@@ -810,6 +832,7 @@ function showMenu(btn,focusFirst){
   const hr=host.getBoundingClientRect(),br=btn.getBoundingClientRect(),z=btn.closest(".macbar")?1:SCALES[VIEW.scale];
   el.style.left=((br.left-hr.left)/z)+"px";el.style.top=((br.bottom-hr.top)/z+4)+"px";
   host.appendChild(el);btn.setAttribute("aria-expanded","true");openMenu=btn;
+  {const hw=hr.width/z,ew=el.offsetWidth;const l=parseFloat(el.style.left);if(l+ew>hw-6)el.style.left=Math.max(6,hw-ew-6)+"px"}
   if(focusFirst)el.querySelector("[data-row],button")?.focus();
 }
 
@@ -883,6 +906,7 @@ const SET=[
  ["Appearance","theme look colour",[["Theme","Light, dark, or follow the system","seg:Light|*Dark|System"],["Surfaces","Neutral greys or the theme's warm tint","seg:*Neutral|Tinted"],["Density","How much fits on screen","seg:Compact|*Cozy|Comfortable"],["UI scale","Size of text and controls","seg:90%|*100%|110%|125%"],["Interface font","Any installed font","text:Instrument Sans"]]],
  ["App icon","app icon logo taskbar dock tray installer",[]],
  ["Toolbar","toolbar buttons labels icons order reorder drag customize",[]],
+ ["Torrent menu","right click context menu items customize hide show",[]],
  ["Behaviour","startup tray windows",[["Start with Windows","Open tTorrent when you sign in","sw:1"],["Start minimized to the tray","","sw:1"],["Close to the tray","Downloads keep going when the window closes","sw:1"],["Confirm before removing torrents","","sw:1"],["Default app for .torrent files and magnet links","","sw:1"],["Keep the computer awake while downloading","","sw:0"]]],
  ["Downloads","save path folder files",[["Default save path","","text:D:\\Downloads"],["Keep unfinished downloads in","","text:D:\\Downloads\\.incomplete"],["Pre-allocate disk space","Reserves space up front","sw:0"],["Add torrents without the dialog","","sw:0"],["Delete .torrent files after adding","","sw:0"],["Excluded file names","Skip files that match","text:*.exe, *.lnk"]]],
  ["Connection","network port vpn proxy",[["Listening port","","text:51413"],["UPnP and NAT-PMP port forwarding","","sw:1"],["Encryption","","seg:*Prefer|Require|Off"],["Bind to network interface","Stops traffic if the VPN drops","text:Any interface"],["Proxy","SOCKS5, SOCKS4 or HTTP","text:None"]]],
@@ -897,6 +921,7 @@ function ctlHTML(c,l){const [t,v]=[c.slice(0,c.indexOf(":")),c.slice(c.indexOf("
   return `<input class="sinput" value="${esc(v)}" aria-label="${esc(l)}">`}
 function secHTML(g,i){const [name,kw,rows]=g;let body;
   if(name==="App icon")body=`<div class="icons" role="group" aria-label="App icon">${ICONS.map((ic,j)=>`<button class="icopt" data-icon="${j}" aria-pressed="${VIEW.appIcon===j}">${iconTile(j)}<span>${ic.n}</span></button>`).join("")}</div>`;
+  else if(name==="Torrent menu")body=`<p class="sub">Choose what the right-click menu on a torrent shows. Hidden items are still in the Torrent menu and their shortcuts still work.</p>${ctxEditor()}`;
   else if(name==="Toolbar")body=`<p class="sub">Drag to reorder. Each button can be hidden, icon only, or icon and label.</p>${tbEditor()}${triAll}`;
   else body=rows.map(([l,d,c])=>`<div class="srow" data-k="${esc((l+" "+d).toLowerCase())}"><div class="sl"><b data-lbl="${esc(l)}">${esc(l)}</b>${d?`<span>${esc(d)}</span>`:""}</div>${ctlHTML(c,l)}</div>`).join("");
   return `<section class="st-sec" data-sec="${i}" data-k="${esc((name+" "+kw).toLowerCase())}"><h4>${name}</h4>${body}</section>`}
@@ -916,6 +941,10 @@ function searchSettings(q){q=q.trim().toLowerCase();let any=false;
   document.querySelector(".snone").hidden=any}
 
 /* ---------- row context menu (qBittorrent's items and order) ---------- */
+const CTXDEF=[["startstop","Stop / Start","i-stop"],["force","Force start","i-ff"],["remove","Remove","i-trash"],["setloc","Set location…","i-move"],["rename","Rename…","i-pencil"],["manage","Manage content…","i-file"],["trackers","Edit trackers…","i-server"],["cat","Category","i-folder"],["tags","Tags","i-tag"],["atm","Automatic torrent management","i-check"],["queue","Queue","i-qup"],["opts","Torrent options…","i-gear"],["super","Super seeding mode","i-check"],["preview","Preview file…","i-eye"],["recheck","Force recheck","i-refresh"],["reannounce","Force reannounce","i-signal"],["open","Open destination folder","i-folder"],["copy","Copy","i-copy"],["export","Export .torrent…","i-file"]];
+const ctxKey=it=>it[5]||(it[2]==="resume"||it[2]==="pause"?"startstop":it[2]);
+function ctxVisible(items){const out=[];for(const it of items){if(it==="-"){if(out.length&&out[out.length-1]!=="-")out.push("-");continue}if(!VIEW.ctxHide.includes(ctxKey(it)))out.push(it)}while(out[out.length-1]==="-")out.pop();return out}
+function ctxEditor(){return `<div class="crow-grid" data-cedit>${CTXDEF.map(([id,l,ic])=>{const on=!VIEW.ctxHide.includes(id);return `<div class="crow${on?"":" off"}">${ico(ic)}<span class="tn">${l}</span><button class="switch" role="switch" aria-checked="${on}" aria-label="Show ${l}" data-ctog="${id}"></button></div>`}).join("")}</div><div class="tall"><button data-creset>Show all</button></div>`}
 function ctxItems(r){const paused=r.st==="pause"||r.st==="queue";return [
  [paused?"Start":"Stop",paused?"Ctrl+S":"Ctrl+P",paused?"resume":"pause",paused?"i-play":"i-stop"],
  ["Force start","","force","i-ff"],"-",
@@ -926,6 +955,7 @@ function ctxItems(r){const paused=r.st==="pause"||r.st==="queue";return [
  ["Preview file…","","preview","i-eye"],"-",
  ["Force recheck","Ctrl+R","recheck","i-refresh"],["Force reannounce","","reannounce","i-signal"],"-",
  ["Open destination folder","Ctrl+Enter","open","i-folder"],["Copy","","","i-copy",null,"copy"],["Export .torrent…","","export","i-file"]]}
+function ctxMenuItems(r){return [...ctxVisible(ctxItems(r)),"-",["Customize this menu…","","ctx-edit","i-pencil",null,null,"muted"]]}
 function ctxSub(k,r){
  if(k==="cat")return [["New category…","","cat-new","i-plus"],["Reset","","cat-reset",""],"-",...["Linux ISOs","Films","Software"].map(c=>[c,"","cat:"+c,"",()=>r.cat===c])];
  if(k==="tags")return [["Add tags…","","tag-add","i-plus"],["Remove all","","tag-clear",""],"-",...["Keep","Open movies"].map(t=>[t,"","tag:"+t,"",()=>r.tag===t])];
@@ -934,13 +964,16 @@ function ctxSub(k,r){
 const ctxHTML=items=>items.map(it=>{if(it==="-")return "<hr>";const [l,sc,c,ic,chk,sub,cls]=it;const on=chk&&chk();
   return `<button role="${chk?"menuitemcheckbox":"menuitem"}"${chk?` aria-checked="${!!on}"`:""} class="${cls||""}" ${sub?`data-sub="${sub}" aria-haspopup="true"`:`data-ccmd="${c}"`}><span class="mi-ico">${ic?ico(ic):on?ico("i-check"):""}</span>${l}${sc?`<span class="sc">${K(sc)}</span>`:""}${sub?ico("i-chev","ico subar"):""}</button>`}).join("");
 function ctxOpen(x,y){closeMenus();const app=document.querySelector(".app"),d=DIRS.find(q=>q.id===cur),r=state(d.id).rows[state(d.id).sel];
-  const el=document.createElement("div");el.className="menu";el.dataset.ctx="1";el.setAttribute("role","menu");el.setAttribute("aria-label","Torrent");el.innerHTML=ctxHTML(ctxItems(r));app.appendChild(el);
+  const el=document.createElement("div");el.className="menu";el.dataset.ctx="1";el.setAttribute("role","menu");el.setAttribute("aria-label","Torrent");el.innerHTML=ctxHTML(ctxMenuItems(r));app.appendChild(el);
   const ar=app.getBoundingClientRect(),z=SCALES[VIEW.scale],w=el.offsetWidth,h=el.offsetHeight;
   el.style.left=Math.max(6,Math.min((x-ar.left)/z,ar.width/z-w-6))+"px";el.style.top=Math.max(6,Math.min((y-ar.top)/z,ar.height/z-h-6))+"px";el.querySelector("button").focus()}
-function ctxSubOpen(btn,focus){const main=btn.closest(".menu");main.querySelectorAll(".menu.sub").forEach(m=>m.remove());main.querySelectorAll("button.open").forEach(b=>b.classList.remove("open"));
+function ctxSubOpen(btn,focus){const app=document.querySelector(".app"),main=btn.closest(".menu");app.querySelectorAll(".menu.sub").forEach(m=>m.remove());main.querySelectorAll("button.open").forEach(b=>{b.classList.remove("open");b.removeAttribute("aria-expanded")});
   const d=DIRS.find(q=>q.id===cur),r=state(d.id).rows[state(d.id).sel];const sub=document.createElement("div");sub.className="menu sub";sub.setAttribute("role","menu");sub.innerHTML=ctxHTML(ctxSub(btn.dataset.sub,r));
-  sub.style.top=(btn.offsetTop-6)+"px";main.appendChild(sub);btn.classList.add("open");btn.setAttribute("aria-expanded","true");
-  const app=document.querySelector(".app").getBoundingClientRect(),sr=sub.getBoundingClientRect();if(sr.right>app.right)sub.classList.add("flip");if(sr.bottom>app.bottom)sub.style.top=(btn.offsetTop-6-(sr.bottom-app.bottom)/SCALES[VIEW.scale]-8)+"px";
+  app.appendChild(sub);btn.classList.add("open");btn.setAttribute("aria-expanded","true");
+  const z=SCALES[VIEW.scale],ar=app.getBoundingClientRect(),br=btn.getBoundingClientRect(),W=ar.width/z,H=ar.height/z,w=sub.offsetWidth,h=sub.offsetHeight;
+  let left=(br.right-ar.left)/z-6,top=(br.top-ar.top)/z-6;
+  if(left+w>W-6){left=(br.left-ar.left)/z-w+6;sub.classList.add("flip")}
+  sub.style.left=Math.max(6,left)+"px";sub.style.top=Math.max(6,Math.min(top,H-h-6))+"px";
   if(focus)sub.querySelector("button")?.focus()}
 function ctxCmd(c){const app=document.querySelector(".app"),d=DIRS.find(q=>q.id===cur),s=state(d.id),r=s.rows[s.sel];
   const refresh=()=>{renderList(app,d);counts(app,d);statusBar(app,d);renderPane(app,d)};
@@ -955,10 +988,11 @@ function ctxCmd(c){const app=document.querySelector(".app"),d=DIRS.find(q=>q.id=
    opts:()=>"Opens torrent options: speed limits, ratio and seeding limits, save path",super:()=>{r.sup=!r.sup;return r.sup?"Super seeding on":"Super seeding off"},
    preview:()=>"Pick a file to open in your player",reannounce:()=>"Reannounced to 2 trackers, DHT and peer exchange",
    "copy-name":()=>"Copied the name","copy-h1":()=>"Copied info hash v1","copy-h2":()=>"No v2 hash for this torrent","copy-id":()=>"Copied the torrent ID","copy-comment":()=>"Copied the comment",export:()=>"Saves "+r.n+".torrent"};
+  if(c==="ctx-edit"){settingsSheet();const sec=[...document.querySelectorAll(".st-sec")].find(x=>x.querySelector("h4")?.textContent==="Torrent menu");sec?.scrollIntoView({block:"start"});const nb=document.querySelector(`[data-goto="${sec?.dataset.sec}"]`);if(nb){document.querySelectorAll("[data-goto]").forEach(b=>b.setAttribute("aria-current",b===nb))}return}
   if(T[c])toast(T[c]())}
 document.addEventListener("contextmenu",e=>{const tr=e.target.closest&&e.target.closest(".app tbody tr[data-i]");if(!tr)return;e.preventDefault();e.stopImmediatePropagation();
   const d=DIRS.find(q=>q.id===cur),s=state(d.id),app=document.querySelector(".app");s.sel=+tr.dataset.i;app.querySelectorAll("tbody tr").forEach(x=>x.setAttribute("aria-selected",x===tr));renderPane(app,d);ctxOpen(e.clientX,e.clientY)},true);
-document.addEventListener("mouseover",e=>{const b=e.target.closest&&e.target.closest(".menu[data-ctx] > button");if(!b)return;if(b.dataset.sub){if(!b.classList.contains("open"))ctxSubOpen(b,false)}else{const m=b.closest(".menu");m.querySelectorAll(".menu.sub").forEach(x=>x.remove());m.querySelectorAll("button.open").forEach(x=>x.classList.remove("open"))}});
+document.addEventListener("mouseover",e=>{const b=e.target.closest&&e.target.closest(".menu[data-ctx] > button");if(!b)return;if(b.dataset.sub){if(!b.classList.contains("open"))ctxSubOpen(b,false)}else{document.querySelectorAll(".app .menu.sub").forEach(x=>x.remove());b.closest(".menu").querySelectorAll("button.open").forEach(x=>x.classList.remove("open"))}});
 
 /* ---------- startup replay (docs/startup.md) ---------- */
 let startT=null;
@@ -1056,6 +1090,8 @@ function cmd(c){
 document.addEventListener("click",e=>{
   const dt=e.target.closest(".dirtab");if(dt){cur=dt.dataset.dir;closeMenus();renderTabs();renderStage();return}
   const mb=e.target.closest("[data-menu]");if(mb){openMenu===mb?closeMenus():showMenu(mb,false);return}
+  const ct=e.target.closest("[data-ctog]");if(ct){const id=ct.dataset.ctog,on=!VIEW.ctxHide.includes(id);if(on&&CTXDEF.length-VIEW.ctxHide.length<=1){toast("Keep at least one item");return}VIEW.ctxHide=on?[...VIEW.ctxHide,id]:VIEW.ctxHide.filter(x=>x!==id);ct.setAttribute("aria-checked",!on);ct.closest(".crow").classList.toggle("off",on);return}
+  const cr=e.target.closest("[data-creset]");if(cr){VIEW.ctxHide=[];document.querySelectorAll("[data-ctog]").forEach(b=>{b.setAttribute("aria-checked","true");b.closest(".crow").classList.remove("off")});return}
   const swb=e.target.closest(".switch");if(swb){swb.setAttribute("aria-checked",swb.getAttribute("aria-checked")!=="true");return}
   const sgb=e.target.closest(".sseg button");if(sgb){sgb.parentElement.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b===sgb));return}
   const gt=e.target.closest("[data-goto]");if(gt){document.querySelectorAll("[data-goto]").forEach(b=>b.setAttribute("aria-current",b===gt));document.querySelector(`.st-sec[data-sec="${gt.dataset.goto}"]`)?.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});return}
@@ -1078,6 +1114,10 @@ document.addEventListener("click",e=>{
   const fl=e.target.closest(".fl");if(fl){s.filter=fl.dataset.f;root.querySelectorAll(".fl").forEach(b=>b.setAttribute("aria-current",b===fl));renderList(root,d);renderPane(root,d);return}
   const tr=e.target.closest("tbody tr[data-i]");if(tr){s.sel=+tr.dataset.i;root.querySelectorAll("tbody tr").forEach(x=>x.setAttribute("aria-selected",x===tr));renderPane(root,d);return}
   const tb=e.target.closest(".tab");if(tb){setTab(+tb.dataset.tab);return}
+  const fx=e.target.closest("[data-fix]");if(fx){const r=s.rows[s.sel],f=fx.dataset.fix,done=()=>{renderList(root,d);counts(root,d);renderPane(root,d)};
+    if(f==="locate"){toast("Choose the folder that has these files. tTorrent checks sizes and a few pieces, then resumes.");setTimeout(()=>{r.st="seed";r.u=.2;r.eta="∞";done();toast("Found all files in D:\\Films. Seeding again, ratio kept.")},1600)}
+    else if(f==="again"){r.st="down";r.p=0;r.d=3.2;r.eta="6m";s.pieces=null;done();toast("Downloading "+r.s+" again into the same folder")}
+    else if(f==="remove"){cmd("remove")}else toast("Choose a drive with free space; the torrent moves while paused");return}
   const ub=e.target.closest("[data-undo]");if(ub){const t=root.querySelector(".toast");t._undo&&t._undo();t.classList.remove("on");return}
 });
 function setTab(i){const d=DIRS.find(x=>x.id===cur),s=state(d.id),root=document.querySelector(".app");s.tab=i;root.querySelectorAll(".tab").forEach(b=>{const on=+b.dataset.tab===i;b.setAttribute("aria-selected",on);b.tabIndex=on?0:-1});renderPane(root,d)}

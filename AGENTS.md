@@ -1,6 +1,6 @@
 # Agent instructions
 
-tTorrent is a torrent client with qBittorrent's features and layout, a modern finish, and memory that stays flat. Rust and librqbit; the window is CPU-rendered (iced + tiny-skia) unless the Phase 0 spike picks GPUI. Read `PLAN.md` for the architecture and phases and `DESIGN.md` before touching any UI.
+tTorrent is a torrent client with qBittorrent's features and layout, a modern finish, and memory that stays flat. Rust and librqbit; the window is CPU-rendered (iced + tiny-skia) unless the Phase 0 spike picks GPUI. Read `PLAN.md` for the architecture and phases and `DESIGN.md` before touching any UI. **Before reporting any change as done, work through `VERIFY.md`**; `TESTING.md` says which tests each kind of change must run, and `docs/perf/README.md` how speed and memory are compared.
 
 ## Rules that are easy to break
 

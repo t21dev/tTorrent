@@ -164,6 +164,8 @@ The **piece map** in the General tab: 48 columns of small squares, filled in the
 
 ## Customization
 
+- **Torrent menu**: Settings › Torrent menu shows or hides each item; the menu ends with "Customize this menu…". Hidden items stay in the main Torrent menu and keep their shortcuts.
+
 - **Toolbar**: 15 available items, drag to reorder, each set to Hidden, Icon only, or Icon and label using three icon buttons. From right-click on the toolbar, View › Customize toolbar, or Settings › Toolbar. Keyboard: Alt and the arrow keys move a focused item.
 - **Status bar** and **details tabs**: right-click to show or hide items (at least one tab stays).
 - Items appear and leave with a 220 ms fade and scale; neighbours slide into place (transform only).
@@ -228,11 +230,22 @@ Navigation: ↑ ↓ Home End move the selection; Enter moves to the details tabs
 
 ## States
 
+Problem states for content (Drive unavailable, Missing files, Can't access, Disk full) appear in the Status column and as a callout in Details › General with one primary fix; see `docs/missing-files.md`.
+
 Every region that loads data has four states: loading (a skeleton in the shape of the rows), empty (what belongs here and the one action that fills it: "Drop a .torrent file anywhere, or press Ctrl+O"), error (what broke and what to do, e.g. "Disk full: free space or move the torrent"), and full. Destructive actions confirm or offer Undo in a toast.
 
 ## Startup
 
 The list appears from the last snapshot within 300 ms; torrents not started yet show "Starting" in the muted colour with their last progress, and switch to live state in waves (downloading first) with a short fade. Row order and selection never jump. The status bar shows "Starting torrents 240 of 735" with a 64 px bar, then fades out. Skeleton rows appear only when there is no snapshot. No spinner over the list and no modal. Spec: `docs/startup.md`; try it with Replay startup in the mockup.
+
+## Overlays never clip
+
+- Menus are limited to the window height and scroll inside if needed; they open at the pointer and shift to stay inside the window.
+- Submenus attach to the window, not to their parent menu, so a scrolling parent can't clip them; they open to the right and flip left at the edge.
+- Menu-bar dropdowns shift left at the window edge. Sheets take at most 88 % of the window height and scroll inside.
+- The status bar never wraps or scrolls: as it narrows it drops session totals first, then text labels (icons and values stay, full text in tooltips), then DHT, ratio and peers.
+- Columns start wide enough for their header, the sort arrow and their widest value at the current density and scale; double-click a header edge to fit it, or right-click › Resize all columns to contents.
+- Checked by the layout matrix in `TESTING.md`.
 
 ## Accessibility
 
