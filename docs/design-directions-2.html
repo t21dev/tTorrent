@@ -879,6 +879,7 @@ const SET=[
  ["Connection","network port vpn proxy",[["Listening port","","text:51413"],["UPnP and NAT-PMP port forwarding","","sw:1"],["Encryption","","seg:*Prefer|Require|Off"],["Bind to network interface","Stops traffic if the VPN drops","text:Any interface"],["Proxy","SOCKS5, SOCKS4 or HTTP","text:None"]]],
  ["Speed","limits bandwidth slow",[["Download limit","0 means unlimited","text:0 KB/s"],["Upload limit","","text:0 KB/s"],["Slow mode download","","text:1024 KB/s"],["Slow mode upload","","text:200 KB/s"],["Slow mode schedule","","text:Weekdays 09:00 to 18:00"]]],
  ["Seeding","ratio share limits",[["Stop seeding at ratio","","text:2.0"],["Stop seeding after","","text:24 hours"],["When a limit is reached","","seg:*Stop|Remove|Super seed"]]],
+ ["AI agents","mcp ai agent claude codex cursor api keys automation",[["Allow AI agents to connect","Off until you turn it on. Localhost only.","sw:1"],["Address","For Claude Code, Codex, Cursor and others","text:http://127.0.0.1:7812/mcp"],["Claude Code on laptop","Manage scope, last used 2 min ago","seg:Read|*Manage|Full"],["Ask before deleting files","An in-app prompt names the agent and the torrents","sw:1"],["Ask before changing more than 20 torrents","","sw:1"],["Allow search through my Prowlarr","Separate permission per key","sw:0"]]],
  ["Memory","cache ram cap",[["Memory cap","tTorrent stays under this","text:160 MB"],["Disk cache","Part of the cap","text:48 MB"]]]
 ];
 function ctlHTML(c,l){const [t,v]=[c.slice(0,c.indexOf(":")),c.slice(c.indexOf(":")+1)];

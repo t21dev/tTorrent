@@ -169,6 +169,10 @@ The **piece map** in the General tab: 48 columns of small squares, filled in the
 - Items appear and leave with a 220 ms fade and scale; neighbours slide into place (transform only).
 - **Settings** has a search field (focused on open, Ctrl/⌘ F) that filters rows and sections live and highlights matches, plus a section list.
 
+## AI agents
+
+Settings › AI agents follows Turbo Reader's page: an on/off switch (off by default), the address, API keys (name, scope, last used; shown once), ready-to-copy connect commands per agent, and **Activity**. When an agent wants to delete files or change more than 20 torrents, tTorrent shows a confirmation sheet naming the agent and the torrents, with Allow and Deny. Agent actions appear in the status bar briefly ("Claude Code paused 3 torrents") with Undo. Spec: `docs/mcp.md`.
+
 ## App icon and logo
 
 The logo is **Sprout arrow**: a solid circle with a sprout cut out, its stem ending in a download arrowhead. Grows up, downloads down. The default app icon is Sprout arrow on the light cream tile (`oklch(97% 0.012 90)`) with an ink circle (`oklch(19% 0.012 160)`).

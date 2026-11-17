@@ -309,12 +309,13 @@ const GROUPS=[
 ["sug-dupe","Warn about duplicates","Same files already on disk under another torrent","later","B"],
 ["sug-notes","Notes on a torrent","","later","B"]]},
 {id:"x",name:"Our additions",blurb:"Reasons to switch",extra:true,f:[
+["x-mcp","Built-in MCP server for AI agents","Ask an agent why a torrent is stuck, what to remove to free space, or your private-tracker ratios. Off by default, keys per agent (docs/mcp.md)","v1","B"],
 ["x-import","Import from qBittorrent","Keeps your 735 torrents, categories, tags and progress","v1","B"],
 ["x-flat","Memory with a hard ceiling","Stays flat over days; every cap is a setting","v1","E"],
 ["x-palette","Command palette","Like Kitab","v1","B"],
 ["x-stream","Stream while downloading","librqbit serves files over HTTP to any player","later","R"]]}
 ];
-const MUST=new Set(["app-autostart","add-assoc","app-tray","sug-tray","list-multi","th-dark","th-native","th-keys","th-scale","th-density"]);
+const MUST=new Set(["x-mcp","app-autostart","add-assoc","app-tray","sug-tray","list-multi","th-dark","th-native","th-keys","th-scale","th-density"]);
 const REC={};GROUPS.forEach(g=>g.f.forEach(f=>REC[f[0]]=f[3]));
 let picks={...REC};
 let filter="all";

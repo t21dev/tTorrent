@@ -31,6 +31,7 @@ Targets (to be measured, see [PLAN.md](PLAN.md)):
 - A toolbar you arrange yourself: drag to reorder, each button hidden, icon only, or icon and label.
 - Native frames: the system menu bar on macOS, the title bar menu on Windows. ⌘ on macOS, Ctrl elsewhere.
 - Start with Windows, default app for `.torrent` files and magnet links, keeps running in the tray.
+- **A built-in MCP server for AI agents.** Ask Claude, Codex or Cursor why a torrent is stuck, what to remove to free 50 GB, or whether you're safe on your private trackers. Off by default, a key per agent, and file deletion always asks you first. See [docs/mcp.md](docs/mcp.md).
 - A qBittorrent-compatible Web API, so Sonarr, Radarr, Prowlarr and phone remotes work unchanged.
 
 Windows first, then macOS and Linux.
@@ -44,6 +45,7 @@ Windows first, then macOS and Linux.
 | [AGENTS.md](AGENTS.md) | Rules for anyone (or any agent) working in this repo |
 | [docs/design-directions-2.html](docs/design-directions-2.html) | The interactive mockup (open in a browser) |
 | [docs/feature-map.html](docs/feature-map.html) | Every qBittorrent feature, picked v1 / later / skip |
+| [docs/mcp.md](docs/mcp.md) | The MCP server for AI agents: use cases, scopes, tools, safety |
 
 ## Licence
 

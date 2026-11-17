@@ -79,6 +79,7 @@ crates/
   tt-engine     session, storage, limits, scheduler, RSS, watched folders
   tt-ipc        typed API shared by the UI, CLI and Web API
   tt-webapi     qBittorrent-compatible Web API (Sonarr, Radarr, Prowlarr, phone apps)
+  tt-mcp        built-in MCP server for AI agents (docs/mcp.md), off by default
   tt-ui         the window (iced + tiny-skia, or GPUI if the spike says so)
   tt-theme      tokens, themes, density, scale, accent maths (DESIGN.md)
   tt-platform   tray, file association, autostart, taskbar progress, notifications
@@ -109,6 +110,13 @@ crates/
 
 ### Phase 3: v1 feature parity
 - [ ] Every v1 item in the feature map, group by group: adding, list, details, speed, seeding, connection, disk, RSS, automation, app, theming, remote, tools, protocol, suggestions.
+
+### Phase 3b: AI agents (MCP), the unique feature
+- [ ] `tt-mcp` with rmcp: stdio (`ttorrent --mcp`) and streamable HTTP on localhost, per-agent keys with Read, Manage, Full and Search scopes.
+- [ ] Agent-shaped tools: `diagnose_torrent`, `plan_disk_cleanup`, `seeding_report`, `check_connection`, plus the full manage set (docs/mcp.md).
+- [ ] Events: completed, errored, stalled, disk low, ratio reached.
+- [ ] Settings › AI agents, in-app confirmation for file deletion and bulk changes, Activity log with Undo.
+- [ ] Skill file and connect commands for Claude Code, Claude Desktop, Codex and Cursor.
 
 ### Phase 4: Windows release
 - [ ] Signed installer, portable zip, Microsoft Store, winget, auto-update in place.
