@@ -21,6 +21,7 @@ Targets (to be measured, see [PLAN.md](PLAN.md)):
 - Under 50 MB for everything, engine and window together, with hundreds of torrents and the window open.
 - Never above 100 to 120 MB.
 - The same on day 7 as on day 1.
+- No disk spike at startup: no rechecks unless a file changed, torrents start in waves, the list shows in under 300 ms.
 - No feature cuts: every limit keeps qBittorrent's default.
 
 ## What it will have
@@ -45,6 +46,7 @@ Windows first, then macOS and Linux.
 | [AGENTS.md](AGENTS.md) | Rules for anyone (or any agent) working in this repo |
 | [docs/design-directions-2.html](docs/design-directions-2.html) | The interactive mockup (open in a browser) |
 | [docs/feature-map.html](docs/feature-map.html) | Every qBittorrent feature, picked v1 / later / skip |
+| [docs/startup.md](docs/startup.md) | Starting with hundreds of torrents without a disk spike, and a list on screen in 300 ms |
 | [docs/mcp.md](docs/mcp.md) | The MCP server for AI agents: use cases, scopes, tools, safety |
 
 ## Licence

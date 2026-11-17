@@ -363,6 +363,15 @@ th.drop-after{box-shadow:inset -2px 0 0 var(--accent-bar)}
 .menu.sub{left:calc(100% - 6px);min-width:220px;transform-origin:top left}
 .menu.sub.flip{left:auto;right:calc(100% - 6px);transform-origin:top right}
 
+/* startup */
+.sb .su{color:var(--ink-2)}
+.sbar{position:relative;width:64px;height:4px;border-radius:999px;background:var(--track);overflow:hidden}
+.sbar i{position:absolute;inset:0;background:var(--accent-bar);transform-origin:left;transform:scaleX(var(--p,0));transition:transform var(--dur-short) var(--ease-out)}
+tr.sk td{height:var(--row-h)}
+.skb{display:block;height:8px;border-radius:999px;background:var(--track);animation:skp 1.1s ease-in-out infinite alternate}
+@keyframes skp{from{opacity:.45}to{opacity:1}}
+td.enter{animation:fadeIn var(--dur-short) var(--ease-out)}
+
 /* toast and shortcut sheet */
 .toast{position:absolute;left:50%;bottom:46px;transform:translate(-50%,16px);opacity:0;pointer-events:none;display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:var(--r-toast);background:var(--raise);color:var(--ink);border:1px solid var(--rule);box-shadow:var(--shadow-pop);font-size:12.5px;z-index:15;
   transition:transform var(--dur-short) var(--ease-out),opacity var(--dur-short) var(--ease-out)}
@@ -592,7 +601,7 @@ const ROWS=[
  {n:"kali-linux-2026.3-installer.iso",a:"11/17/2026 9:33 PM",s:"4.1 GB",p:0,st:"queue",se:0,pe:0,d:0,u:0,eta:"",r:0,cat:"Linux ISOs",tag:""},
  {n:"Prelinger Archives sampler",a:"11/2/2026 12:39 PM",s:"14 GB",p:1,st:"seed",se:31,pe:4,d:0,u:.17,eta:"∞",r:5.6,cat:"Films",tag:"Keep"}
 ];
-const ST={down:["Downloading","down","i-down"],seed:["Seeding","seed","i-up"],pause:["Stopped","pause","i-pause"],done:["Completed","done","i-check"],check:["Checking","check","i-clock"],stall:["Stalled","stall","i-alert"],err:["Disk full","err","i-alert"],queue:["Queued","queue","i-clock"]};
+const ST={down:["Downloading","down","i-down"],seed:["Seeding","seed","i-up"],pause:["Stopped","pause","i-pause"],done:["Completed","done","i-check"],check:["Checking","check","i-clock"],stall:["Stalled","stall","i-alert"],err:["Disk full","err","i-alert"],queue:["Queued","queue","i-clock"],start:["Starting","queue","i-clock"]};
 const FIL=[
  ["Status",[["all","All","i-all",r=>true],["down","Downloading","i-down",r=>r.st==="down"||r.st==="stall"],["seed","Seeding","i-up",r=>r.st==="seed"],["done","Completed","i-check",r=>r.p===1],["pause","Stopped","i-pause",r=>r.st==="pause"],["active","Active","i-bolt",r=>r.d>0||r.u>0],["err","Errored","i-alert",r=>r.st==="err"]]],
  ["Categories",[["c-linux","Linux ISOs","",r=>r.cat==="Linux ISOs"],["c-films","Films","",r=>r.cat==="Films"],["c-soft","Software","",r=>r.cat==="Software"],["c-none","Uncategorized","i-folder",r=>!r.cat]]],
@@ -648,7 +657,7 @@ const TB_DEF=["add","magnet","resume","pause","remove","alt","search","prefs"];
 const SBI=[["free","Free space"],["dht","DHT nodes"],["down","Download speed"],["up","Upload speed"],["ratio","Session ratio"],["peers","Connected peers"],["mem","Memory"],["port","Port status"]];
 const SB_DEF=["free","dht","down","up","mem","port"];
 const TABS_DEF=[0,1,2,3,4,5];
-const S={};let VIEW={plat:"win",mode:"light",tint:"neutral",dens:"cozy",scale:2,side:true,det:true,labels:false,lab:["add"],appIcon:2,order:TBI.map(t=>t[0]),tb:[...TB_DEF],cols:[...COL_DEF],newCol:null,sb:[...SB_DEF],tabs:[...TABS_DEF]};
+const S={};let VIEW={plat:"win",mode:"light",tint:"neutral",dens:"cozy",scale:2,side:true,det:true,labels:false,lab:["add"],appIcon:2,order:TBI.map(t=>t[0]),tb:[...TB_DEF],cols:["name","added","size","progress","status","downloaded","uploaded","down","up","eta","ratio"],newCol:null,sb:[...SB_DEF],tabs:[...TABS_DEF]};
 function state(id){return S[id]||(S[id]={rows:ROWS.map(r=>({...r})),filter:"all",sort:{k:"added",dir:-1},sel:0,tab:0,acc:0,pieces:null,hist:Array.from({length:60},(_,i)=>({d:6+3*Math.sin(i/5)+Math.random()*2,u:.8+.3*Math.cos(i/7)}))})}
 const isMac=()=>VIEW.plat==="mac";
 const K=k=>isMac()?k.replace(/Ctrl\+/g,"⌘").replace(/Shift\+/g,"⇧").replace(/Alt\+/g,"⌥").replace("Delete","⌫").replace("Enter","↩"):k;
@@ -686,7 +695,7 @@ function tbItem(it){const [id,l,ic,act,sc]=it,off=!VIEW.tb.includes(id)?" hidden
   if(id==="search")return `<span class="spacer"></span><label class="search" data-tbi="search"${off}>${ico("i-search")}<input id="q" placeholder="Filter torrents or run a command" aria-label="Filter torrents"><span class="kbd">${K("Ctrl+K")}</span></label>`;
   return `<button class="btn${id==="add"?" primary":""}${VIEW.lab.includes(id)?"":" iconly"}" data-act="${act}" data-tbi="${id}" aria-label="${l}" title="${l}${sc?" "+K(sc):""}"${id==="alt"?' aria-pressed="false"':""}${off}>${ico(ic)}<span class="lb">${l}</span></button>`}
 function sbHTML(){const V=k=>VIEW.sb.includes(k)?"":" hidden";
-  return `<span data-sbi="free"${V("free")}>${ico("i-disk")}Free space <b>81.05 GB</b></span><span data-sbi="dht"${V("dht")}>${ico("i-globe")}DHT <b data-dht>295</b> nodes</span><span data-sbi="down"${V("down")}>${ico("i-down")}<b data-dl></b></span><span data-sbi="up"${V("up")}>${ico("i-up")}<b data-ul></b></span><span data-sbi="ratio"${V("ratio")}>Ratio <b>1.84</b></span><span data-sbi="peers"${V("peers")}>Peers <b>148</b></span><span class="sp"></span><span data-sbi="mem"${V("mem")}>${ico("i-chip")}Memory <b data-mem>94 MB</b> of 160 MB cap</span><span data-sbi="port"${V("port")} class="ok">${ico("i-check")}Port open</span>`}
+  return `<span data-sbi="startup" class="su" hidden>Starting torrents <b data-su></b><span class="sbar"><i></i></span></span><span data-sbi="free"${V("free")}>${ico("i-disk")}Free space <b>81.05 GB</b></span><span data-sbi="dht"${V("dht")}>${ico("i-globe")}DHT <b data-dht>295</b> nodes</span><span data-sbi="down"${V("down")}>${ico("i-down")}<b data-dl></b></span><span data-sbi="up"${V("up")}>${ico("i-up")}<b data-ul></b></span><span data-sbi="ratio"${V("ratio")}>Ratio <b>1.84</b></span><span data-sbi="peers"${V("peers")}>Peers <b>148</b></span><span class="sp"></span><span data-sbi="mem"${V("mem")}>${ico("i-chip")}Memory <b data-mem>94 MB</b> of 160 MB cap</span><span data-sbi="port"${V("port")} class="ok">${ico("i-check")}Port open</span>`}
 const addedTs=r=>{const m=r.a.match(/(\d+)\/(\d+)\/(\d+) (\d+):(\d+) (AM|PM)/);return new Date(+m[3],+m[1]-1,+m[2],(+m[4]%12)+(m[6]==="PM"?12:0),+m[5]).getTime()};
 const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const fmtTs=t=>{const d=new Date(t);return MON[d.getMonth()]+" "+d.getDate()+", "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")};
@@ -697,7 +706,7 @@ const ACTIVE=["down","stall","check","queue"];
 const QPOS={};ROWS.filter(r=>ACTIVE.includes(r.st)).forEach((r,i)=>QPOS[r.n]=i+1);
 const progHTML=r=>{const cls=r.st==="seed"||r.st==="done"?"seed":r.st==="pause"||r.st==="queue"?"pause":r.st==="err"?"err":r.st==="check"?"check":"";return `<div class="prog"><div class="bar"><i class="${cls}" style="--p:${r.p}"></i></div><span class="num">${(r.p*100).toFixed(r.p===1?0:1)}%</span></div>`};
 const stHTML=r=>{const st=ST[r.st];return `<span class="st ${st[1]}">${ico(st[2])}${st[0]}</span>`};
-const ORD=["down","stall","check","queue","seed","done","pause","err"];
+const ORD=["down","stall","check","queue","seed","done","pause","err","start"];
 /* [key, label, width px, align, value (sorts), format] in qBittorrent's own order */
 const COLS=[
  ["queue","#",44,"r",r=>QPOS[r.n]&&ACTIVE.includes(r.st)?QPOS[r.n]:1e9,v=>v>=1e9?"*":v],
@@ -951,6 +960,21 @@ document.addEventListener("contextmenu",e=>{const tr=e.target.closest&&e.target.
   const d=DIRS.find(q=>q.id===cur),s=state(d.id),app=document.querySelector(".app");s.sel=+tr.dataset.i;app.querySelectorAll("tbody tr").forEach(x=>x.setAttribute("aria-selected",x===tr));renderPane(app,d);ctxOpen(e.clientX,e.clientY)},true);
 document.addEventListener("mouseover",e=>{const b=e.target.closest&&e.target.closest(".menu[data-ctx] > button");if(!b)return;if(b.dataset.sub){if(!b.classList.contains("open"))ctxSubOpen(b,false)}else{const m=b.closest(".menu");m.querySelectorAll(".menu.sub").forEach(x=>x.remove());m.querySelectorAll("button.open").forEach(x=>x.classList.remove("open"))}});
 
+/* ---------- startup replay (docs/startup.md) ---------- */
+let startT=null;
+function replayStartup(){const d=DIRS.find(q=>q.id===cur),s=state(d.id),app=document.querySelector(".app"),box=app.querySelector("[data-list]");clearInterval(startT);closeMenus();
+  s.rows.forEach(r=>{if(r.st!=="start"){r.st0=r.st;r.d0=r.d;r.u0=r.u}});
+  renderList(app,d);const tb=box.querySelector("tbody");
+  if(tb){const cols=VIEW.cols.map(k=>COLMAP[k]);tb.innerHTML=Array.from({length:12},(_,i)=>`<tr class="sk">${cols.map(c=>`<td><i class="skb" style="width:${35+((i*13+c[2])%45)}%"></i></td>`).join("")}</tr>`).join("")}
+  setTimeout(()=>{s.rows.forEach(r=>{r.st="start";r.d=0;r.u=0});renderList(app,d);counts(app,d);statusBar(app,d);renderPane(app,d);
+    const su=app.querySelector('[data-sbi="startup"]'),N=s.rows.length,pri=st=>["down","stall"].includes(st)?0:["check","queue"].includes(st)?1:st==="seed"?2:3;
+    const order=s.rows.map((r,i)=>i).sort((a,b)=>pri(s.rows[a].st0)-pri(s.rows[b].st0));let k=0;
+    const upd=()=>{su.querySelector("[data-su]").textContent=k+" of "+N;su.querySelector(".sbar").style.setProperty("--p",k/N)};upd();anim(su,true);
+    startT=setInterval(()=>{for(let j=0;j<2&&k<order.length;j++,k++){const i=order[k],r=s.rows[i];r.st=r.st0;r.d=r.d0;r.u=r.u0;const tr=box.querySelector(`tr[data-i="${i}"]`);
+        ["status","down","up","eta"].forEach(c=>{const td=tr&&tr.querySelector(`[data-c="${c}"]`);if(td){td.innerHTML=COLMAP[c][5](COLMAP[c][4](r),r);td.classList.remove("enter");void td.offsetWidth;td.classList.add("enter")}})}
+      upd();counts(app,d);statusBar(app,d);
+      if(k>=order.length){clearInterval(startT);setTimeout(()=>anim(su,false),700);renderPane(app,d)}},320)},450)}
+
 /* ---------- shortcut sheet ---------- */
 function sheet(){
   const app=document.querySelector(".app");if(!app||app.querySelector(".sheet-bg"))return;
@@ -981,7 +1005,7 @@ function renderStage(){
       <div class="ctl">${segs("dens",[["compact","Compact"],["cozy","Cozy"],["comfortable","Comfortable"]])}</div>
       <div class="ctl">Scale ${segs("scale",SCALES.map((v,i)=>[i,Math.round(v*100)+"%"]))}</div>
       <div class="ctl" role="group" aria-label="Accent">${d.acc.map((a,i)=>`<button class="sw" style="--sw:${a[VIEW.mode==="dark"?2:1]}" aria-label="${a[0]}" title="${a[0]}" aria-pressed="${s.acc===i}" data-acc="${i}"></button>`).join("")}</div>
-      <button class="pbtn" data-act="cust-tb">Customize toolbar</button><button class="pbtn" data-act="keys">Keyboard shortcuts <span class="kb">?</span></button>
+      <button class="pbtn" data-act="replay">Replay startup</button><button class="pbtn" data-act="cust-tb">Customize toolbar</button><button class="pbtn" data-act="keys">Keyboard shortcuts <span class="kb">?</span></button>
     </div>
     <div class="scroller"><div class="desk ${VIEW.plat}">${isMac()?`<div class="macbar" role="menubar"><button class="mm appname" data-menu="0" aria-haspopup="true" aria-expanded="false">tTorrent</button>${MENUS().slice(1).map((m,i)=>`<button class="mm" data-menu="${i+1}" aria-haspopup="true" aria-expanded="false">${m[0]}</button>`).join("")}</div>`:""}${appHTML(d)}</div></div>
     <p class="note">Right-click the column headers (all 38 qBittorrent columns), toolbar, status bar or detail tabs to choose what shows; drag headers to reorder; View has the same options. Try the keyboard: click the list, then ↑ ↓, Space to pause, ${K("Ctrl+1")} to ${K("Ctrl+6")} for tabs, ${K("Ctrl+B")} for the sidebar, ${K("Ctrl+=")} to zoom, ? for every shortcut. ${isMac()?"The menu bar sits at the top of the screen, as on a Mac.":"Alt or F10 opens the menu, arrows move through it."}</p></div>`;
@@ -1008,6 +1032,7 @@ function cmd(c){
    case"remove":toast("Remove "+r.n+"? Files stay on disk.",null);break;
    case"removef":toast("Remove "+r.n+" and delete its files? They go to the Recycle Bin.",null);break;
    case"keys":sheet();break;
+   case"replay":replayStartup();break;
    case"labels":toggleItem("labels","");break;
    case"cust-tb":case"cust-sb":case"cust-tabs":case"cust-cols":{const k=c.slice(5);const reg=root.querySelector(`[data-region="${k}"]`);const r=reg.getBoundingClientRect();checkMenu(k,r.left+40,k==="sb"?r.top-300:r.bottom);break}
    case"qup":toast("Moved up in queue");break;case"qdown":toast("Moved down in queue");break;case"rss":toast("Opens the RSS reader");break;case"create":toast("Opens the torrent creator");break;

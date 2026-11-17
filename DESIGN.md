@@ -230,6 +230,10 @@ Navigation: ↑ ↓ Home End move the selection; Enter moves to the details tabs
 
 Every region that loads data has four states: loading (a skeleton in the shape of the rows), empty (what belongs here and the one action that fills it: "Drop a .torrent file anywhere, or press Ctrl+O"), error (what broke and what to do, e.g. "Disk full: free space or move the torrent"), and full. Destructive actions confirm or offer Undo in a toast.
 
+## Startup
+
+The list appears from the last snapshot within 300 ms; torrents not started yet show "Starting" in the muted colour with their last progress, and switch to live state in waves (downloading first) with a short fade. Row order and selection never jump. The status bar shows "Starting torrents 240 of 735" with a 64 px bar, then fades out. Skeleton rows appear only when there is no snapshot. No spinner over the list and no modal. Spec: `docs/startup.md`; try it with Replay startup in the mockup.
+
 ## Accessibility
 
 Contrast 4.5:1 for text and 3:1 for marks in every theme, mode and accent. Every control is reachable by keyboard with a visible 2 px accent focus ring. The list is a grid with row selection announced. Reduced motion turns every transition into an instant change.

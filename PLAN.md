@@ -17,6 +17,8 @@ Every memory figure is **engine and window together**, with 735 torrents, measur
 | Over time | flat: day 7 equals day 1 within 10 % | no growth trend | `scripts/qb-mem-log.ps1`-style log |
 | Idle CPU (seeding, window closed or open and idle) | 0 % | 1 to 2 % | Process Explorer, 10 min |
 | Cold start to list on screen | under 300 ms | 500 ms | External timing, as in Kitab |
+| Startup disk reads, 735 torrents, first 60 s (excluding pieces peers asked for) | under 50 MB | 200 MB | `scripts/qb-startup-io.ps1`; see `docs/startup.md` |
+| Full hash checks at startup when no file changed | 0 | 0 | Engine log |
 | Throughput | equal to qBittorrent on the same torrent | within 5 % | Same swarm, same machine |
 
 **Baseline to beat** (this machine, 17 November 2026): qBittorrent 5.2.4 with 735 torrents uses ~214 MB private right after start and grows to ~1.3 GB with uptime. Its likely causes: libtorrent 2.x memory-mapped files, peer lists of up to ~3,000 per torrent, heap fragmentation, everything loaded at start. A 24-hour log is in `data/qb-mem.csv` (not committed).
@@ -92,6 +94,7 @@ crates/
 ### Phase 0: spike (1 to 2 weeks)
 - [ ] librqbit headless: load a **copy** of the 735-torrent `BT_backup`, seed for 24 h, log memory every 5 min alongside qBittorrent's log. No downloading of new content needed.
 - [ ] Measure: private bytes, Task Manager memory, idle CPU, startup time, handles, threads.
+- [ ] Baseline qBittorrent's startup I/O with `scripts/qb-startup-io.ps1`, then the same for the librqbit spike.
 - [ ] Check each "verify" tag in the feature map against librqbit's source (encryption, IP filter, v2, web seeds, PEX, LSD, move storage, per-torrent limits).
 - [ ] The same window built twice, iced + tiny-skia and GPUI lean, with a 735-row virtual list, sidebar, details and piece map: memory and CPU on the NVIDIA dGPU and the AMD iGPU, window open and closed.
 - [ ] Decide the UI stack against the budget (100 MB hard, 50 MB target, engine and window together); list of librqbit changes.
@@ -99,10 +102,12 @@ crates/
 ### Phase 1: engine
 - [ ] Session, SQLite state, resume data, queueing, speed and seeding limits, slow mode and scheduler.
 - [ ] Hard memory caps (buffers, cache, peers) as settings; memory shown in the status bar.
+- [ ] Startup without a disk spike (`docs/startup.md`): trusted resume data (size and mtime, no rechecks), waves in priority order, one sorted I/O queue per physical disk with HDD/SSD detection, files opened on demand, background I/O priority, incremental resume writes.
 - [ ] qBittorrent import.
 - [ ] Single instance, file and magnet association, autostart, tray with the qBittorrent-identical menu (DESIGN.md).
 
 ### Phase 2: window
+- [ ] List from the SQLite snapshot in under 300 ms, rows going live in waves, startup progress in the status bar, skeleton only with no snapshot (`docs/startup.md`).
 - [ ] Shell: menus per OS, toolbar, sidebar, transfer list (virtual, sortable, all qBittorrent columns), details tabs, status bar.
 - [ ] Themes: Dose light and dark, neutral and tinted, six accents and custom, density, scale, app icon choice.
 - [ ] Customization: toolbar order and label mode with drag and drop, status bar and tab visibility.
