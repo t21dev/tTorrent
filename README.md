@@ -60,4 +60,4 @@ Windows first, then macOS and Linux.
 
 ## Licence
 
-To be decided.
+[MIT](LICENSE). tTorrent builds on [librqbit](https://github.com/ikatson/rqbit) (Apache-2.0) and [GPUI](https://github.com/zed-industries/zed/tree/main/crates/gpui) (Apache-2.0).

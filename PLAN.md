@@ -123,8 +123,12 @@ crates/
 - [ ] macOS: menu bar, Dock badge, notarized DMG, Homebrew cask.
 - [ ] Linux: AppImage, deb, rpm, Flatpak, tray via StatusNotifierItem.
 
-## 4. Open decisions
+## 4. Decisions
 
-- Licence (MIT like Turbo Reader, or AGPL like Kitab; librqbit is Apache-2.0, so both work).
+- **Licence: MIT** (18 November 2026), like Turbo Reader. Dependencies must be MIT/Apache-2.0 compatible; check new ones with `cargo deny`.
+- **UI: GPUI** (18 November 2026), see §2.
+
+## 5. Open decisions
+
 - Name: tTorrent is also the name of tagsoft's Android torrent client (since about 2012). Trademark check before branding.
 - Landing site, following `kitab-landing`.

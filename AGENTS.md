@@ -13,6 +13,7 @@ tTorrent is a torrent client with qBittorrent's features and layout, a modern fi
 
 ## Code
 
+- MIT licence. Only add dependencies with MIT, Apache-2.0, BSD, ISC or Zlib licences; `cargo deny check licenses` must pass.
 - Rust 2024, `unsafe_code = "deny"` and clippy `unwrap_used` / `expect_used` as warnings, like Kitab. Release profile: thin LTO, one codegen unit, stripped symbols.
 - `cargo fmt`, `cargo clippy --all-targets`, and `cargo test` pass before a change is done.
 - Conventional commits, as in Kitab: `feat(engine): …`, `fix(ui): …`, `docs(perf): …`.
