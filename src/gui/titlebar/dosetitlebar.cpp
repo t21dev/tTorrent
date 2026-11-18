@@ -57,7 +57,7 @@ QWK--WindowBar#dose-dialog-bar {
 QWK--WindowBar QMenuBar#win-menu-bar {
     background: transparent;
     border: none;
-    padding: 0 2px;
+    padding: 5px 2px 0 2px;
 }
 QWK--WindowBar QMenuBar#win-menu-bar::item {
     padding: 5px 10px;
@@ -83,7 +83,6 @@ QWK--WindowButton#icon-button {
     max-width: 40px;
 }
 QWK--WindowButton#icon-button:hover { background: transparent; }
-QWK--WindowBar QMenuBar#win-menu-bar { min-height: 38px; max-height: 38px; }
 QWK--WindowButton:hover {
     background: palette(alternate-base);
 }
@@ -204,9 +203,6 @@ void DoseTitleBar::install(QMainWindow *window, QMenuBar *menuBar)
     auto *title = new QLabel;
     title->setAlignment(Qt::AlignCenter);
     title->setObjectName(QStringLiteral("win-title-label"));
-    // Room for the title, so it never collapses to a dot between the menus.
-    title->setMinimumWidth(title->fontMetrics().horizontalAdvance(QStringLiteral("tTorrent — 0.0 MiB/s")) + 24);
-    title->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     bar->setTitleLabel(title);
 
 #ifndef Q_OS_MACOS
@@ -214,9 +210,9 @@ void DoseTitleBar::install(QMainWindow *window, QMenuBar *menuBar)
     // title bar holds it from here on.
     window->layout()->setMenuBar(nullptr);
     menuBar->setObjectName(QStringLiteral("win-menu-bar"));
+    // Its natural height, so the bar's layout centres it beside the logo.
+    menuBar->setSizePolicy(menuBar->sizePolicy().horizontalPolicy(), QSizePolicy::Fixed);
     bar->setMenuBar(menuBar);
-    if (bar->layout())
-        bar->layout()->setAlignment(menuBar, Qt::AlignVCenter);
 
     auto *iconButton = new QWK::WindowButton;
     iconButton->setObjectName(QStringLiteral("icon-button"));

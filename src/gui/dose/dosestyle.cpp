@@ -113,6 +113,8 @@ void DoseStyle::polish(QWidget *widget)
         widget->setWindowFlag(Qt::FramelessWindowHint);
         widget->setWindowFlag(Qt::NoDropShadowWindowHint);
         widget->installEventFilter(FadeIn::instance());
+        if (auto *menu = qobject_cast<QMenu *>(widget); menu && (menu->actions().size() > 16))
+            menu->setProperty("doseDense", true);
         if (qobject_cast<QMenu *>(widget) && !widget->graphicsEffect())
         {
             // A soft float shadow in the stylesheet's margin around the menu.

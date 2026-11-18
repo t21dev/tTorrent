@@ -26,7 +26,7 @@ QToolButton {
     color: @text@;
 }
 QToolBar QToolButton { padding: 4px; min-height: 22px; max-height: 30px; }
-QToolBar QLineEdit { padding: 3px 10px; min-height: 22px; max-height: 30px; }
+QToolBar QLineEdit { padding: 0 10px; min-height: 22px; max-height: 30px; }
 QToolButton:hover { background: @hover@; }
 QToolButton:pressed { background: @panel@; }
 QToolButton:checked { background: @select@; }
@@ -37,24 +37,26 @@ QMenuBar::item:selected { background: @hover@; color: @text@; }
 QMenuBar::item:pressed { background: @select@; color: @text@; }
 /* Menus: room for icons on the left and shortcuts on the right, so nothing
    is clipped; rounded 14 px with 10 px items. */
+/* Menus: compact rows like the system's, a visible hover, room for a
+   soft shadow (drawn by DoseStyle in the margin). */
 QMenu {
     background: @raised@;
     border: 1px solid @line@;
     border-top-color: @edgeHi@;
-    border-radius: 14px;
-    padding: 6px;
-    margin: 6px 12px 18px 12px;
-    min-width: 220px;
+    border-radius: 10px;
+    padding: 4px;
+    margin: 4px 10px 14px 10px;
+    min-width: 200px;
 }
 QMenu::item {
-    padding: @padV@px 22px @padV@px 12px;
-    margin: 1px 0;
-    border-radius: 9px;
-    min-height: 20px;
+    padding: 5px 20px 5px 10px;
+    margin: 0;
+    border-radius: 6px;
 }
-QMenu::item:selected { background: @hover@; color: @text@; }
+QMenu[doseDense="true"]::item { padding: 3px 20px 3px 10px; }
+QMenu::item:selected { background: @menuHover@; color: @text@; }
 QMenu::item:disabled { color: @ring@; }
-QMenu::separator { height: 1px; background: @line@; margin: 6px 10px; }
+QMenu::separator { height: 1px; background: @line@; margin: 4px 8px; }
 QMenu::icon { padding-left: 10px; }
 QMenu::indicator { width: 14px; height: 14px; left: 10px; }
 QMenu::right-arrow { image: url(@chevronRight@); width: 12px; height: 12px; right: 12px; }
@@ -151,25 +153,23 @@ QSpinBox::down-arrow, QDoubleSpinBox::down-arrow, QDateTimeEdit::down-arrow { im
 
 /* Raised buttons: lit from above, a darker bottom edge; pressed sinks in. */
 QPushButton {
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 @raisedTop@, stop:1 @raisedBottom@);
+    background: @raised@;
     border: 1px solid @line@;
-    border-top-color: @edgeHi@;
     border-bottom-color: @edgeLo@;
     border-radius: @radius@px;
     padding: @padV@px 16px;
     min-width: 64px;
     color: @text@;
 }
-QPushButton:hover { background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 @raisedTop@, stop:1 @hover@); border-color: @ring@; border-bottom-color: @edgeLo@; }
+QPushButton:hover { background: @hover@; border-color: @ring@; }
 QPushButton:pressed { background: @well@; border-top-color: @edgeLo@; border-bottom-color: @line@; padding-top: @padV@px; }
 QPushButton:default {
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 @accentTop@, stop:1 @accentBottom@);
-    border: 1px solid @accentBottom@;
-    border-top-color: @accentTop@;
+    background: @accent@;
+    border: 1px solid @accent@;
     color: @onAccent@;
     font-weight: 600;
 }
-QPushButton:default:hover { background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 @accentTop@, stop:1 @accent@); }
+QPushButton:default:hover { background: @accentHover@; border-color: @accentHover@; }
 QPushButton:default:pressed { background: @accentBottom@; }
 QPushButton:disabled { color: @ring@; }
 
@@ -274,15 +274,14 @@ QPushButton[doseTab="true"]:pressed, QPushButton[doseTab="true"]:checked {
 
 /* Primary toolbar button: Add torrent (DESIGN.md › Toolbar). */
 QToolButton#dosePrimary {
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 @accentTop@, stop:1 @accentBottom@);
+    background: @accent@;
     color: @onAccent@;
     font-weight: 600;
-    border: 1px solid @accentBottom@;
-    border-top-color: @accentTop@;
+    border: 1px solid @accent@;
     padding: 3px 14px 3px 10px;
     margin-right: 6px;
 }
-QToolButton#dosePrimary:hover { background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 @accentTop@, stop:1 @accent@); }
+QToolButton#dosePrimary:hover { background: @accentHover@; border-color: @accentHover@; }
 QToolButton#dosePrimary:pressed { background: @accentBottom@; }
 
 /* Status bar: short dividers, items as quiet buttons. */
@@ -329,3 +328,5 @@ QGroupBox QGroupBox::title { left: 0; top: 0; color: @muted@; }
 QPushButton#trackerUpButton, QPushButton#trackerDownButton {
     min-width: 0; padding: 4px; margin: 2px 4px;
 }
+
+QPushButton[doseTab="true"][doseCollapsed="true"] { color: @text@; border-bottom: 2px solid @ring@; }

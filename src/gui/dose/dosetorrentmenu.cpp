@@ -110,7 +110,7 @@ void DoseTorrentMenu::shape(QMenu *menu, const QHash<QString, QAction *> &named,
 
     group(u"files"_s, QMenu::tr("Files"), u"folder-documents"_s
         , {u"setLocation"_s, u"rename"_s, u"manageContent"_s, u"preview"_s, u"recheck"_s, u"export"_s});
-    group(u"download"_s, QMenu::tr("Download"), u"download"_s
+    group(u"download"_s, QMenu::tr("Download"), u"go-down"_s
         , {u"options"_s, u"sequential"_s, u"firstLast"_s, u"autoTMM"_s, u"superSeeding"_s});
     group(u"trackers"_s, QMenu::tr("Trackers"), u"trackers"_s, {u"editTrackers"_s, u"reannounce"_s});
     if (queue && shown(u"queue"_s))

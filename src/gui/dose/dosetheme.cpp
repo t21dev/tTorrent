@@ -255,6 +255,8 @@ DoseThemeSource::DoseThemeSource(const QJsonObject &theme, const QString &accent
     m_tokens[u"card"_s] = mix(raisedColour, bg, m_dark ? 0.45 : 0.6);
     m_tokens[u"accentTop"_s] = mix(white, accentColor, 0.12);
     m_tokens[u"accentBottom"_s] = mix(black, accentColor, 0.10);
+    // Menu hover: a step lighter than the menu in dark themes, darker in light.
+    m_tokens[u"menuHover"_s] = mix(text, raisedColour, m_dark ? 0.10 : 0.06);
 
     const QColor muted = token(u"muted"_s), faint = token(u"faint"_s), ring = token(u"ring"_s);
     const QColor ok = token(u"ok"_s), warn = token(u"warn"_s), bad = token(u"bad"_s);

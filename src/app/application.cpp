@@ -97,6 +97,7 @@
 
 #ifndef DISABLE_GUI
 #include "gui/dose/dosebrand.h"
+#include "gui/dose/doseimport.h"
 #include "gui/desktopintegration.h"
 #include "gui/mainwindow.h"
 #include "gui/shutdownconfirmdialog.h"
@@ -336,6 +337,9 @@ Application::Application(int &argc, char **argv)
     const Path profileDir = portableModeEnabled ? portableProfilePath : m_commandLineArgs.profileDir;
     Profile::initInstance(profileDir, m_commandLineArgs.configurationName,
                         (m_commandLineArgs.relativeFastresumePaths || portableModeEnabled));
+#ifndef DISABLE_GUI
+    DoseImport::runPending(); // tTorrent: a pending import from qBittorrent, before settings load
+#endif
 
     m_instanceManager = new ApplicationInstanceManager(Profile::instance()->location(SpecialFolder::Config), this);
 

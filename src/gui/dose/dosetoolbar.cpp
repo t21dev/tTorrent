@@ -200,7 +200,9 @@ void DoseToolbar::polishFilter(QLineEdit *edit, QComboBox *columns)
     const auto fill = [menu, columns]
     {
         menu->clear();
-        menu->addSection(QToolBar::tr("Filter by"));
+        QAction *heading = menu->addAction(QToolBar::tr("Filter by"));
+        heading->setEnabled(false);
+        menu->addSeparator();
         for (int i = 0; i < columns->count(); ++i)
         {
             QAction *choice = menu->addAction(columns->itemText(i));

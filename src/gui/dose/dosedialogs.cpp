@@ -48,6 +48,7 @@
 
 #include "base/settingsstorage.h"
 #include "gui/uithememanager.h"
+#include "doseimport.h"
 #include "dosetheme.h"
 #include "dosethemeeditor.h"
 #include "dosetoolbar.h"
@@ -63,7 +64,7 @@ QWidget#doseSidebar {
 QLabel#doseSettingsTitle {
     font-size: 17px;
     font-weight: 700;
-    padding: 2px 6px 6px 6px;
+    padding: 0 6px 4px 6px;
 }
 QWidget#doseSidebar QListWidget {
     background: transparent;
@@ -85,7 +86,7 @@ QWidget#doseSidebar QListWidget::item:hover:!selected {
 QLabel#dosePageTitle {
     font-size: 16px;
     font-weight: 700;
-    padding: 16px 24px 12px 24px;
+    padding: 6px 24px 10px 24px;
     border-bottom: 1px solid palette(mid);
 }
 QLabel#doseNoResults {
@@ -402,6 +403,23 @@ QGroupBox#doseInfoBox { border: none; margin-top: 0; padding: 0 0 0 22px; }
         form->setColumnStretch(1, 1);
 
         pageLayout->insertWidget(pageLayout->indexOf(first), group);
+
+        // Moving from qBittorrent: one button, explained in a line.
+        auto *move = new QGroupBox(QDialog::tr("Move from qBittorrent"));
+        auto *moveRow = new QHBoxLayout(move);
+        moveRow->setSpacing(12);
+        const int count = DoseImport::qbittorrentTorrentCount();
+        auto *moveText = new QLabel((count >= 0)
+            ? QDialog::tr("Bring over %1 torrents with their progress, plus categories, tags, RSS and settings.").arg(count)
+            : QDialog::tr("No qBittorrent profile found on this computer."));
+        moveText->setWordWrap(true);
+        auto *moveButton = new QPushButton(QDialog::tr("Import from qBittorrent…"));
+        moveButton->setAutoDefault(false);
+        moveButton->setEnabled(count >= 0);
+        QObject::connect(moveButton, &QPushButton::clicked, move, [move] { DoseImport::askAndRestart(move->window()); });
+        moveRow->addWidget(moveText, 1);
+        moveRow->addWidget(moveButton);
+        pageLayout->insertWidget(pageLayout->indexOf(first), move);
     }
 
     // Moves a widget into a new layout (Qt takes it out of its old one).
@@ -419,11 +437,18 @@ void DoseDialogs::decorateOptions(QDialog *dialog, QSplitter *splitter, QListWid
     if ((splitter->indexOf(sections) != 0) || (splitter->indexOf(pages) != 1))
         return;
 
+    // The title bar sits right above: no extra top margin in the dialog.
+    if (QLayout *outer = dialog->layout())
+    {
+        const QMargins m = outer->contentsMargins();
+        outer->setContentsMargins(m.left(), 0, m.right(), m.bottom());
+    }
+
     // Sidebar: heading, search, sections.
     auto *sidebar = new QWidget;
     sidebar->setObjectName(QStringLiteral("doseSidebar"));
     auto *side = new QVBoxLayout(sidebar);
-    side->setContentsMargins(12, 16, 12, 12);
+    side->setContentsMargins(12, 4, 12, 12);
     side->setSpacing(8);
     auto *heading = new QLabel(QDialog::tr("Settings"));
     heading->setObjectName(QStringLiteral("doseSettingsTitle"));

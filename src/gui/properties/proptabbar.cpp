@@ -29,12 +29,27 @@
 #include "proptabbar.h"
 
 #include <QButtonGroup>
+#include <QStyle>
 #include <QKeySequence>
 #include <QPushButton>
 #include <QSpacerItem>
 
 #include "base/global.h"
 #include "gui/uithememanager.h"
+
+namespace
+{
+    // tTorrent: the current tab while the pane is collapsed gets a quieter
+    // underline (DESIGN.md › Details tabs), so it's clear which one it is.
+    void markCollapsed(QAbstractButton *button, const bool on)
+    {
+        if (!button || (button->property("doseCollapsed").toBool() == on))
+            return;
+        button->setProperty("doseCollapsed", on);
+        button->style()->unpolish(button);
+        button->style()->polish(button);
+    }
+}
 
 PropTabBar::PropTabBar(QWidget *parent)
     : QHBoxLayout(parent)
@@ -124,6 +139,7 @@ void PropTabBar::setCurrentIndex(int index)
         if (m_currentIndex >= 0)
         {
           m_btnGroup->button(m_currentIndex)->setDown(false);
+          markCollapsed(m_btnGroup->button(m_currentIndex), true); // tTorrent: keep showing which tab it was
           m_currentIndex = -1;
           emit visibilityToggled(false);
         }
@@ -140,6 +156,8 @@ void PropTabBar::setCurrentIndex(int index)
         emit visibilityToggled(true);
     }
     // Select the new button
+    for (QAbstractButton *button : m_btnGroup->buttons())
+        markCollapsed(button, false); // tTorrent
     m_btnGroup->button(index)->setDown(true);
     m_currentIndex = index;
     // Emit the signal

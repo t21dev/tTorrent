@@ -78,6 +78,7 @@ Q_IMPORT_PLUGIN(QICOPlugin)
 #include "signalhandler.h"
 
 #ifndef DISABLE_GUI
+#include "gui/dose/doseimport.h"
 #include "gui/utils.h"
 #else
 #ifndef Q_OS_WIN
@@ -205,6 +206,7 @@ int main(int argc, char *argv[])
 #endif
 
 #ifndef DISABLE_GUI
+    DoseImport::waitForPreviousInstance(); // tTorrent: a restart waits for the old copy
     applyInterfaceScale();
 #endif
 
