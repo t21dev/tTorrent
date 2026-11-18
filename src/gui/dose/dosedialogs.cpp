@@ -29,6 +29,7 @@
 #include <QListWidget>
 #include <QRegularExpression>
 #include <QRegularExpressionValidator>
+#include <QScrollArea>
 #include <QSplitter>
 #include <QStackedWidget>
 #include <QToolButton>
@@ -314,6 +315,36 @@ void DoseDialogs::decorateOptions(QDialog *dialog, QSplitter *splitter, QListWid
     side->addWidget(heading);
     side->addWidget(search);
     side->addWidget(sections, 1);
+
+    // Sections as a list (16 px icon beside the name), not icon-over-label
+    // tiles that cut names short.
+    sections->setViewMode(QListView::ListMode);
+    sections->setFlow(QListView::TopToBottom);
+    sections->setWrapping(false);
+    sections->setIconSize({16, 16});
+    sections->setSpacing(1);
+    sections->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    sections->setMinimumWidth(196);
+    for (int i = 0; i < sections->count(); ++i)
+    {
+        QListWidgetItem *item = sections->item(i);
+        item->setTextAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+        item->setSizeHint({0, 34});
+    }
+    sidebar->setMinimumWidth(220);
+
+    // Pages scroll up and down only; the look is chosen in Look, so the
+    // platform style picker would only fight it.
+    for (QScrollArea *area : pages->findChildren<QScrollArea *>())
+        area->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    if (UIThemeManager::instance()->usesDoseTheme())
+    {
+        for (const char *name : {"labelStyle", "comboStyle", "labelStyleHint"})
+        {
+            if (auto *w = dialog->findChild<QWidget *>(QLatin1String(name)))
+                w->hide();
+        }
+    }
 
     // Content: the current section's name over its page.
     auto *content = new QWidget;

@@ -1,0 +1,87 @@
+/*
+ * Bittorrent Client using Qt and libtorrent.
+ * Copyright (C) 2026  t21 dev
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+#include "dosedev.h"
+
+#include <QAction>
+#include <QApplication>
+#include <QDialog>
+#include <QDir>
+#include <QMainWindow>
+#include <QMenu>
+#include <QMenuBar>
+#include <QPainter>
+#include <QPixmap>
+#include <QTimer>
+
+#include "base/global.h"
+
+namespace
+{
+    // A grab with the window's own background behind translucent corners.
+    void save(QWidget *widget, const QString &path)
+    {
+        widget->ensurePolished();
+        if (!widget->isVisible())
+            widget->resize(widget->sizeHint().expandedTo(widget->minimumSizeHint()));
+        const QPixmap shot = widget->grab();
+        QPixmap out {shot.size()};
+        out.setDevicePixelRatio(shot.devicePixelRatio());
+        out.fill(QColor(128, 128, 128));
+        QPainter painter {&out};
+        painter.drawPixmap(0, 0, shot);
+        painter.end();
+        out.save(path);
+    }
+}
+
+void DoseDev::scheduleShots(QMainWindow *window)
+{
+    const QString dir = qEnvironmentVariable("TTORRENT_UISHOT_DIR");
+    if (dir.isEmpty())
+        return;
+    QDir().mkpath(dir);
+
+    QTimer::singleShot(4000, window, [window, dir]
+    {
+        save(window, dir + u"/main.png");
+        for (QMenuBar *bar : window->findChildren<QMenuBar *>())
+        {
+            for (QAction *action : bar->actions())
+            {
+                if (QMenu *menu = action->menu())
+                {
+                    QString name = action->text();
+                    name.remove(u'&');
+                    save(menu, dir + u"/menu-" + name.toLower() + u".png");
+                }
+            }
+        }
+        if (auto *options = window->findChild<QAction *>(u"actionOptions"_s))
+            options->trigger();
+        QTimer::singleShot(1500, window, [dir]
+        {
+            for (QWidget *top : QApplication::topLevelWidgets())
+            {
+                if (auto *dialog = qobject_cast<QDialog *>(top); dialog && dialog->isVisible())
+                {
+                    save(dialog, dir + u"/options.png");
+                    dialog->close();
+                }
+            }
+            QTimer::singleShot(300, qApp, &QApplication::quit);
+        });
+    });
+}

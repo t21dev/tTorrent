@@ -43,7 +43,7 @@ QMenu {
     min-width: 220px;
 }
 QMenu::item {
-    padding: @padV@px 40px @padV@px 12px;
+    padding: @padV@px 22px @padV@px 12px;
     margin: 1px 0;
     border-radius: 9px;
     min-height: 20px;

@@ -100,6 +100,7 @@
 #include "transferlistfilterswidget.h"
 #include "transferlistmodel.h"
 #include "transferlistwidget.h"
+#include "dose/dosedev.h"
 #include "dose/dosetoolbar.h"
 #include "titlebar/dosetitlebar.h"
 #include "ui_mainwindow.h"
@@ -177,6 +178,7 @@ MainWindow::MainWindow(IGUIApplication *app, const WindowState initialState, con
 
     addToolbarContextMenu();
     DoseToolbar::install(m_ui->toolBar, m_toolbarMenu);
+    DoseDev::scheduleShots(this); // tTorrent: developer screenshots, off unless TTORRENT_UISHOT_DIR is set
 
     m_ui->actionOpen->setIcon(UIThemeManager::instance()->getIcon(u"list-add"_s));
     m_ui->actionDownloadFromURL->setIcon(UIThemeManager::instance()->getIcon(u"insert-link"_s));
