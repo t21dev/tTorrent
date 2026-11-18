@@ -38,6 +38,7 @@
 #include <QScrollArea>
 #include <QSplitter>
 #include <QStackedWidget>
+#include <QTimer>
 #include <QToolButton>
 #include <QTreeWidget>
 #include <QTreeWidgetItemIterator>
@@ -490,6 +491,19 @@ void DoseDialogs::decorateAddTorrent(QDialog *dialog)
     if (auto *split = dialog->findChild<QSplitter *>(QStringLiteral("splitter")))
     {
         split->setHandleWidth(14);
+        split->setStretchFactor(0, 4);
+        split->setStretchFactor(1, 5);
+        QTimer::singleShot(0, split, [split]
+        {
+            const int total = split->width();
+            if (total > 200)
+                split->setSizes({total * 45 / 100, total * 55 / 100});
+        });
+        for (const char *name : {"buttonSelectAll", "buttonSelectNone"})
+        {
+            if (auto *b = dialog->findChild<QWidget *>(QLatin1String(name)))
+                b->setMinimumWidth(b->sizeHint().width());
+        }
         for (int i = 0; i < split->count(); ++i)
         {
             if (QLayout *l = split->widget(i)->layout())

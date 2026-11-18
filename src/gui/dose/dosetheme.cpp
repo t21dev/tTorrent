@@ -173,9 +173,9 @@ namespace
         // From Kitab's DESIGN.md › Density: control height 26 / 30 / 36,
         // UI text 12.5 (rounded to 12) / 13 / 14 px, radius 7 / 8 / 9.
         static const QList<Density> list {
-            {u"dense"_s, QT_TRANSLATE_NOOP("DoseTheme", "Dense"), 12, 4, 10, 4, 9, 4},
-            {u"compact"_s, QT_TRANSLATE_NOOP("DoseTheme", "Compact"), 13, 6, 12, 6, 10, 6},
-            {u"standard"_s, QT_TRANSLATE_NOOP("DoseTheme", "Standard"), 14, 9, 14, 9, 11, 8},
+            {u"dense"_s, QT_TRANSLATE_NOOP("DoseTheme", "Dense"), 12, 4, 10, 4, 9, 2},
+            {u"compact"_s, QT_TRANSLATE_NOOP("DoseTheme", "Compact"), 13, 6, 12, 6, 10, 3},
+            {u"standard"_s, QT_TRANSLATE_NOOP("DoseTheme", "Standard"), 14, 9, 14, 9, 11, 5},
         };
         return list;
     }
@@ -241,6 +241,20 @@ DoseThemeSource::DoseThemeSource(const QJsonObject &theme, const QString &accent
     m_tokens[u"track"_s] = mix(text, bg, m_dark ? 0.14 : 0.09);
     m_tokens[u"rowRule"_s] = mix(token(u"line"_s), bg, 0.6);
     m_tokens[u"accentHover"_s] = mix(m_dark ? QColor(Qt::white) : QColor(Qt::black), accentColor, 0.08);
+
+    // Depth (DESIGN.md › Depth): raised controls are lit from above with a
+    // darker bottom edge; fields are recessed wells; group cards sit a step up.
+    const QColor white {Qt::white}, black {Qt::black};
+    const QColor raisedColour = token(u"raised"_s), lineColour = token(u"line"_s);
+    m_tokens[u"raisedTop"_s] = m_dark ? mix(white, raisedColour, 0.05) : raisedColour;
+    m_tokens[u"raisedBottom"_s] = m_dark ? mix(black, raisedColour, 0.06) : mix(black, raisedColour, 0.035);
+    m_tokens[u"edgeHi"_s] = m_dark ? mix(white, lineColour, 0.09) : lineColour;
+    m_tokens[u"edgeLo"_s] = m_dark ? mix(black, lineColour, 0.45) : mix(black, lineColour, 0.16);
+    m_tokens[u"well"_s] = m_dark ? mix(black, bg, 0.22) : mix(black, bg, 0.022);
+    m_tokens[u"wellEdge"_s] = m_dark ? mix(black, lineColour, 0.5) : mix(black, lineColour, 0.14);
+    m_tokens[u"card"_s] = mix(raisedColour, bg, m_dark ? 0.45 : 0.6);
+    m_tokens[u"accentTop"_s] = mix(white, accentColor, 0.12);
+    m_tokens[u"accentBottom"_s] = mix(black, accentColor, 0.10);
 
     const QColor muted = token(u"muted"_s), faint = token(u"faint"_s), ring = token(u"ring"_s);
     const QColor ok = token(u"ok"_s), warn = token(u"warn"_s), bad = token(u"bad"_s);

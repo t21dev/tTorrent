@@ -15,16 +15,18 @@ QToolBar {
     background: @bg@;
     border: none;
     border-bottom: 1px solid @line@;
-    padding: @toolPad@px 12px;
-    spacing: 6px;
+    padding: @toolPad@px 10px;
+    spacing: 4px;
 }
-QToolBar::separator { width: 1px; background: @line@; margin: 8px 8px; }
+QToolBar::separator { width: 1px; background: @line@; margin: 7px 6px; }
 QToolButton {
     border: 1px solid transparent;
     border-radius: @radius@px;
     padding: @toolPad@px;
     color: @text@;
 }
+QToolBar QToolButton { padding: 4px; min-height: 22px; max-height: 30px; }
+QToolBar QLineEdit { padding: 3px 10px; min-height: 22px; max-height: 30px; }
 QToolButton:hover { background: @hover@; }
 QToolButton:pressed { background: @panel@; }
 QToolButton:checked { background: @select@; }
@@ -38,8 +40,10 @@ QMenuBar::item:pressed { background: @select@; color: @text@; }
 QMenu {
     background: @raised@;
     border: 1px solid @line@;
+    border-top-color: @edgeHi@;
     border-radius: 14px;
     padding: 6px;
+    margin: 6px 12px 18px 12px;
     min-width: 220px;
 }
 QMenu::item {
@@ -103,8 +107,9 @@ QTabBar::tab:hover { color: @text@; }
 QTabBar::tab:selected { color: @text@; border-bottom: 2px solid @accent@; }
 
 QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox, QDateTimeEdit, QPlainTextEdit, QTextEdit, QKeySequenceEdit {
-    background: @panel@;
+    background: @well@;
     border: 1px solid @line@;
+    border-top-color: @wellEdge@;
     border-radius: @radius@px;
     padding: @padV@px @padH@px;
     color: @text@;
@@ -144,22 +149,28 @@ QSpinBox::up-button:hover, QDoubleSpinBox::up-button:hover, QSpinBox::down-butto
 QSpinBox::up-arrow, QDoubleSpinBox::up-arrow, QDateTimeEdit::up-arrow { image: url(@chevronUp@); width: 11px; height: 11px; }
 QSpinBox::down-arrow, QDoubleSpinBox::down-arrow, QDateTimeEdit::down-arrow { image: url(@chevronDown@); width: 11px; height: 11px; }
 
+/* Raised buttons: lit from above, a darker bottom edge; pressed sinks in. */
 QPushButton {
-    background: @raised@;
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 @raisedTop@, stop:1 @raisedBottom@);
     border: 1px solid @line@;
+    border-top-color: @edgeHi@;
+    border-bottom-color: @edgeLo@;
     border-radius: @radius@px;
     padding: @padV@px 16px;
     min-width: 64px;
     color: @text@;
 }
-QPushButton:hover { background: @hover@; }
-QPushButton:pressed { background: @panel@; }
+QPushButton:hover { background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 @raisedTop@, stop:1 @hover@); border-color: @ring@; border-bottom-color: @edgeLo@; }
+QPushButton:pressed { background: @well@; border-top-color: @edgeLo@; border-bottom-color: @line@; padding-top: @padV@px; }
 QPushButton:default {
-    background: @accent@;
-    border-color: @accent@;
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 @accentTop@, stop:1 @accentBottom@);
+    border: 1px solid @accentBottom@;
+    border-top-color: @accentTop@;
     color: @onAccent@;
     font-weight: 600;
 }
+QPushButton:default:hover { background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 @accentTop@, stop:1 @accent@); }
+QPushButton:default:pressed { background: @accentBottom@; }
 QPushButton:disabled { color: @ring@; }
 
 QCheckBox, QRadioButton { spacing: 8px; }
@@ -181,10 +192,11 @@ QRadioButton::indicator:checked { background: @accent@; border-color: @accent@; 
 /* Group title above a rounded box, not on its border (DESIGN.md › Settings). */
 QGroupBox {
     border: 1px solid @line@;
+    border-top-color: @edgeHi@;
     border-radius: 14px;
     margin-top: 32px;
     padding: 14px 14px 12px 14px;
-    background: transparent;
+    background: @card@;
 }
 QGroupBox::title {
     subcontrol-origin: margin;
@@ -206,9 +218,9 @@ QProgressBar {
 }
 QProgressBar::chunk { background: @accent@; border-radius: 4px; }
 
-QScrollBar:vertical { background: transparent; width: 10px; margin: 0; }
-QScrollBar:horizontal { background: transparent; height: 10px; margin: 0; }
-QScrollBar::handle { background: @line@; border-radius: 4px; margin: 2px; }
+QScrollBar:vertical { background: transparent; width: 9px; margin: 0; border: none; }
+QScrollBar:horizontal { background: transparent; height: 9px; margin: 0; border: none; }
+QScrollBar::handle { background: @line@; border-radius: 3px; margin: 2px; }
 QScrollBar::handle:vertical { min-height: 28px; }
 QScrollBar::handle:horizontal { min-width: 28px; }
 QScrollBar::handle:hover { background: @ring@; }
@@ -262,14 +274,16 @@ QPushButton[doseTab="true"]:pressed, QPushButton[doseTab="true"]:checked {
 
 /* Primary toolbar button: Add torrent (DESIGN.md › Toolbar). */
 QToolButton#dosePrimary {
-    background: @accent@;
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 @accentTop@, stop:1 @accentBottom@);
     color: @onAccent@;
     font-weight: 600;
-    border: 1px solid @accent@;
-    padding: 4px 14px 4px 10px;
+    border: 1px solid @accentBottom@;
+    border-top-color: @accentTop@;
+    padding: 3px 14px 3px 10px;
     margin-right: 6px;
 }
-QToolButton#dosePrimary:hover { background: @accentHover@; border-color: @accentHover@; }
+QToolButton#dosePrimary:hover { background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 @accentTop@, stop:1 @accent@); }
+QToolButton#dosePrimary:pressed { background: @accentBottom@; }
 
 /* Status bar: short dividers, items as quiet buttons. */
 QStatusBar QFrame[frameShape="5"] { max-height: 14px; min-height: 14px; }
@@ -303,3 +317,15 @@ QTableView QComboBox, QTableView QSpinBox, QTableView QDoubleSpinBox, QTableView
     padding: 0 8px; border-radius: 6px; min-height: 0; margin: 2px 0;
 }
 QTableView QComboBox { padding-right: 26px; }
+
+QGroupBox[flat="true"] { background: transparent; border: none; }
+
+/* Nested group boxes: one card is enough. Inner groups lose their frame and
+   are indented instead, so borders never stack (DESIGN.md › Settings). */
+QGroupBox QGroupBox { border: none; background: transparent; margin-top: 24px; padding: 4px 0 0 18px; }
+QGroupBox QGroupBox::title { left: 0; top: 0; color: @muted@; }
+
+/* Small icon buttons beside lists (tracker tier up/down). */
+QPushButton#trackerUpButton, QPushButton#trackerDownButton {
+    min-width: 0; padding: 4px; margin: 2px 4px;
+}

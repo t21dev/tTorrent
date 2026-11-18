@@ -15,11 +15,14 @@
 
 #include "dosedev.h"
 
+#include <functional>
+
 #include <QAction>
 #include <QApplication>
 #include <QDialog>
 #include <QDir>
 #include <QLayout>
+#include <QListWidget>
 #include <QMainWindow>
 #include <QMenu>
 #include <QMenuBar>
@@ -27,13 +30,14 @@
 #include <QPixmap>
 #include <QPushButton>
 #include <QTimer>
+#include <QTreeView>
 
 #include "base/global.h"
 #include "dosethemeeditor.h"
 
 namespace
 {
-    // A grab with the window's own background behind translucent corners.
+    // A grab with a neutral grey behind translucent corners.
     void save(QWidget *widget, const QString &path)
     {
         widget->ensurePolished();
@@ -48,6 +52,30 @@ namespace
         painter.end();
         out.save(path);
     }
+
+    QList<QDialog *> openDialogs()
+    {
+        QList<QDialog *> list;
+        for (QWidget *top : QApplication::topLevelWidgets())
+        {
+            if (auto *dialog = qobject_cast<QDialog *>(top); dialog && dialog->isVisible())
+                list.append(dialog);
+        }
+        return list;
+    }
+
+    // Runs the steps one after another, `gap` ms apart.
+    void chain(QObject *context, QList<std::function<void ()>> steps, const int gap)
+    {
+        if (steps.isEmpty())
+            return;
+        const auto step = steps.takeFirst();
+        QTimer::singleShot(gap, context, [context, step, steps, gap]
+        {
+            step();
+            chain(context, steps, gap);
+        });
+    }
 }
 
 void DoseDev::scheduleShots(QMainWindow *window)
@@ -57,58 +85,93 @@ void DoseDev::scheduleShots(QMainWindow *window)
         return;
     QDir().mkpath(dir);
 
-    QTimer::singleShot(4000, window, [window, dir]
+    const auto clickTab = [window](const QString &name)
     {
+        for (QPushButton *tab : window->findChildren<QPushButton *>())
+        {
+            if (tab->property("doseTab").toBool() && tab->text().remove(u'&').contains(name, Qt::CaseInsensitive))
+                tab->click();
+        }
+    };
+
+    QList<std::function<void ()>> steps;
+    // An Add torrent dialog opened from the command line: shoot it, then add.
+    steps << [dir]
+    {
+        for (QDialog *dialog : openDialogs())
+        {
+            save(dialog, dir + u"/add-dialog.png");
+            dialog->accept();
+        }
+    };
+    steps << [window, dir]
+    {
+        // Select the first torrent so the details tabs have content.
+        for (QTreeView *view : window->findChildren<QTreeView *>())
+        {
+            if (view->inherits("TransferListWidget") && view->model() && (view->model()->rowCount() > 0))
+                view->setCurrentIndex(view->model()->index(0, 0));
+        }
         save(window, dir + u"/main.png");
         for (QMenuBar *bar : window->findChildren<QMenuBar *>())
         {
             for (QAction *action : bar->actions())
             {
-                if (QMenu *menu = action->menu())
-                {
-                    QString name = action->text();
-                    name.remove(u'&');
-                    save(menu, dir + u"/menu-" + name.toLower() + u".png");
-                }
+                if (QMenu *menu = action->menu(); menu && action->isVisible())
+                    save(menu, dir + u"/menu-" + action->text().remove(u'&').toLower() + u".png");
             }
         }
-        // The Speed tab of the details pane.
-        for (QPushButton *tab : window->findChildren<QPushButton *>())
+    };
+    for (const QString &tab : {u"General"_s, u"Trackers"_s, u"Peers"_s, u"Content"_s, u"Speed"_s})
+    {
+        steps << [window, dir, clickTab, tab]
         {
-            if (tab->property("doseTab").toBool() && tab->text().contains(u"Speed"))
-                tab->click();
-        }
-        QApplication::processEvents();
-        save(window, dir + u"/main-speed.png");
+            clickTab(tab);
+            QApplication::processEvents();
+            save(window, dir + u"/tab-" + tab.toLower() + u".png");
+        };
+    }
+    steps << [window]
+    {
         if (auto *options = window->findChild<QAction *>(u"actionOptions"_s))
             options->trigger();
-        const auto shootDialogs = [](const QString &path)
+    };
+    steps << [dir]
+    {
+        for (QDialog *dialog : openDialogs())
         {
-            for (QWidget *top : QApplication::topLevelWidgets())
+            save(dialog, dir + u"/options.png");
+            // The last section (Advanced) too.
+            if (auto *sections = dialog->findChild<QListWidget *>(u"tabSelection"_s))
             {
-                if (auto *dialog = qobject_cast<QDialog *>(top); dialog && dialog->isVisible())
-                {
-                    save(dialog, path);
-                    dialog->close();
-                }
+                sections->setCurrentRow(sections->count() - 1);
+                QApplication::processEvents();
+                save(dialog, dir + u"/options-advanced.png");
+                sections->setCurrentRow(1);
+                QApplication::processEvents();
+                save(dialog, dir + u"/options-downloads.png");
             }
-        };
-        QTimer::singleShot(1500, window, [window, dir, shootDialogs]
+            dialog->close();
+        }
+    };
+    steps << [window]
+    {
+        if (auto *about = window->findChild<QAction *>(u"actionAbout"_s))
+            about->trigger();
+    };
+    steps << [dir]
+    {
+        for (QDialog *dialog : openDialogs())
         {
-            shootDialogs(dir + u"/options.png");
-            if (auto *about = window->findChild<QAction *>(u"actionAbout"_s))
-                about->trigger();
-            QTimer::singleShot(1200, window, [dir, shootDialogs]
-            {
-                shootDialogs(dir + u"/about.png");
-                // The theme editor, rendered without showing it.
-                DoseThemeEditor editor {u"dark"_s};
-                editor.resize(900, 620);
-                editor.ensurePolished();
-                editor.layout()->activate();
-                editor.grab().save(dir + u"/theme-editor.png");
-                QTimer::singleShot(300, qApp, &QApplication::quit);
-            });
-        });
-    });
+            save(dialog, dir + u"/about.png");
+            dialog->close();
+        }
+        DoseThemeEditor editor {u"dark"_s};
+        editor.resize(900, 620);
+        editor.ensurePolished();
+        editor.layout()->activate();
+        editor.grab().save(dir + u"/theme-editor.png");
+    };
+    steps << [] { QApplication::quit(); };
+    chain(window, steps, 1500);
 }

@@ -44,6 +44,7 @@
 #include <QShortcut>
 #include <QWheelEvent>
 
+#include "dose/dosetorrentmenu.h"
 #include "base/bittorrent/session.h"
 #include "base/bittorrent/torrent.h"
 #include "base/bittorrent/trackerentrystatus.h"
@@ -1332,6 +1333,16 @@ void TransferListWidget::displayListMenu()
 
     actionExportTorrent->setToolTip(tr("Exported torrent is not necessarily the same as the imported"));
     listMenu->addAction(actionExportTorrent);
+
+    // tTorrent: everyday actions on top, the rest grouped, and customizable.
+    DoseTorrentMenu::shape(listMenu, {
+        {u"start"_s, actionStart}, {u"stop"_s, actionStop}, {u"forceStart"_s, actionForceStart}, {u"remove"_s, actionDelete},
+        {u"openFolder"_s, actionOpenDestinationFolder}, {u"setLocation"_s, actionSetTorrentPath}, {u"rename"_s, actionRename},
+        {u"manageContent"_s, actionManageContent}, {u"preview"_s, actionPreviewFile}, {u"recheck"_s, actionForceRecheck},
+        {u"export"_s, actionExportTorrent}, {u"options"_s, actionTorrentOptions}, {u"sequential"_s, actionSequentialDownload},
+        {u"firstLast"_s, actionFirstLastPiecePrio}, {u"autoTMM"_s, actionAutoTMM}, {u"superSeeding"_s, actionSuperSeedingMode},
+        {u"editTrackers"_s, actionEditTracker}, {u"reannounce"_s, actionForceReannounce},
+    }, categoryMenu, tagsMenu, copySubMenu);
 
     listMenu->popup(QCursor::pos());
 }

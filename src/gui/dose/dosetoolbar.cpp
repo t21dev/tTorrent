@@ -182,6 +182,7 @@ void DoseToolbar::polishFilter(QLineEdit *edit, QComboBox *columns)
     if (!edit || !columns || !UIThemeManager::instance()->usesDoseTheme())
         return;
     edit->setFixedWidth(300);
+    edit->setFixedHeight(30);
     edit->setPlaceholderText(QToolBar::tr("Filter torrents  (Ctrl+F)"));
     columns->hide();
     if (QWidget *row = columns->parentWidget())

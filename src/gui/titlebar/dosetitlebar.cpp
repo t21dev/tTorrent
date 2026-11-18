@@ -204,6 +204,9 @@ void DoseTitleBar::install(QMainWindow *window, QMenuBar *menuBar)
     auto *title = new QLabel;
     title->setAlignment(Qt::AlignCenter);
     title->setObjectName(QStringLiteral("win-title-label"));
+    // Room for the title, so it never collapses to a dot between the menus.
+    title->setMinimumWidth(title->fontMetrics().horizontalAdvance(QStringLiteral("tTorrent — 0.0 MiB/s")) + 24);
+    title->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     bar->setTitleLabel(title);
 
 #ifndef Q_OS_MACOS
