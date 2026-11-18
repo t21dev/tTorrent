@@ -4,7 +4,7 @@
    colour only for the accent and states. */
 
 * {
-    font-family: "Instrument Sans", "Segoe UI Variable Text", "Segoe UI", sans-serif;
+    font-family: @uiFont@;
     font-size: @font@px;
 }
 
@@ -314,7 +314,7 @@ QAbstractItemView#doseSideList::item:selected { background: @select@; color: @te
 QStatusBar QPushButton#doseDown { color: @accent@; }
 QStatusBar QPushButton#doseUp { color: @ok@; }
 
-*[doseNumber="true"] { font-family: "DM Mono", "Cascadia Mono", monospace; font-size: @fontSmall@px; }
+*[doseNumber="true"] { font-family: @numFont@; font-size: @fontSmall@px; }
 
 /* Editors inside tables (Advanced settings): no extra padding, so the value
    is never sliced by the row height. */
@@ -369,9 +369,9 @@ QSplitter#splitter::handle:horizontal {
     background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 transparent, stop:0.46 transparent, stop:0.47 @line@, stop:0.53 @line@, stop:0.54 transparent, stop:1 transparent);
 }
 
-/* Keyboard shortcuts: keys drawn as caps (DM Mono on a well, deeper bottom edge). */
+/* Keyboard shortcuts: keys drawn as caps (the number face on a well, deeper bottom edge). */
 QLabel[doseKeycap="true"], QKeySequenceEdit[doseKeycap="true"] QLineEdit {
-    background: @well@; color: @muted@; font-family: "DM Mono"; font-size: @fontSmall@px;
+    background: @well@; color: @muted@; font-family: @numFont@; font-size: @fontSmall@px;
     border: 1px solid @line@; border-bottom: 2px solid @line@; border-radius: 6px; padding: 2px 8px; min-height: 0;
 }
 QKeySequenceEdit[doseKeycap="true"] QLineEdit:hover { border-color: @ring@; color: @text@; }
@@ -396,8 +396,8 @@ QLabel#doseCardText { color: @muted@; }
 QPushButton#doseCardButton { padding: 2px 10px; min-width: 0; }
 QToolButton#doseCardClose { border: none; border-radius: 6px; }
 QToolButton#doseCardClose:hover { background: @hover@; }
-QLabel#dosePairLink { font-family: "DM Mono"; color: @text@; }
+QLabel#dosePairLink { font-family: @numFont@; color: @text@; }
 
 /* Memory card: opened from the status bar's Memory label. */
 QFrame#doseMemoryCard { background: @raised@; border: 1px solid @line@; border-top-color: @edgeHi@; border-radius: 12px; }
-QLabel#doseMemoryValue { font-family: "DM Mono"; color: @text@; }
+QLabel#doseMemoryValue { font-family: @numFont@; color: @text@; }

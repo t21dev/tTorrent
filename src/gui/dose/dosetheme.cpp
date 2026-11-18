@@ -27,6 +27,7 @@
 #include "base/global.h"
 #include "base/path.h"
 #include "base/profile.h"
+#include "base/settingsstorage.h"
 
 namespace
 {
@@ -339,6 +340,38 @@ void DoseThemeSource::clearIconCache()
     QDir(Profile::instance()->location(SpecialFolder::Cache).data() + u"/dose-icons"_s).removeRecursively();
 }
 
+QString DoseThemeSource::fontKey()
+{
+    return u"Appearance/Font"_s;
+}
+
+QString DoseThemeSource::fontChoice()
+{
+    const QString font = SettingsStorage::instance()->loadValue<QString>(fontKey(), u"system"_s);
+    return (font == u"instrument") ? font : u"system"_s;
+}
+
+QString DoseThemeSource::uiFamily()
+{
+    return (fontChoice() == u"instrument") ? u"Instrument Sans"_s : u"Segoe UI Variable Text"_s;
+}
+
+QString DoseThemeSource::numberFamily()
+{
+    return numbersMonospace() ? u"DM Mono"_s : uiFamily();
+}
+
+bool DoseThemeSource::numbersMonospace()
+{
+    return fontChoice() == u"instrument";
+}
+
+QList<DoseThemeSource::Choice> DoseThemeSource::fonts()
+{
+    return {{u"system"_s, QCoreApplication::translate("DoseThemeSource", "Segoe UI (Windows, sharpest)")}
+        , {u"instrument"_s, QCoreApplication::translate("DoseThemeSource", "Instrument Sans with DM Mono")}};
+}
+
 QByteArray DoseThemeSource::readStyleSheet()
 {
     QFile file {u":/dosetheme/stylesheet.qss"_s};
@@ -348,6 +381,9 @@ QByteArray DoseThemeSource::readStyleSheet()
     for (auto it = m_tokens.cbegin(); it != m_tokens.cend(); ++it)
         qss.replace(u'@' + it.key() + u'@', it.value().name());
     const Density &d = densityFor(m_density);
+    // Font tokens, with Windows' faces as the fallback either way.
+    qss.replace(u"@uiFont@"_s, u"\"%1\", \"Segoe UI Variable Text\", \"Segoe UI\", sans-serif"_s.arg(uiFamily()));
+    qss.replace(u"@numFont@"_s, u"\"%1\", \"Segoe UI Variable Text\", \"Segoe UI\", sans-serif"_s.arg(numberFamily()));
     qss.replace(u"@fontSmall@"_s, QString::number(d.font - 1));
     qss.replace(u"@font@"_s, QString::number(d.font));
     qss.replace(u"@padV@"_s, QString::number(d.padV));

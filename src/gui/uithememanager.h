@@ -82,6 +82,7 @@ public:
     QString lookTheme() const;
     QString lookAccent() const;
     QString lookDensity() const;
+    void setLookFont(const QString &font); // tTorrent: Appearance/Font
     // The theme actually shown ("system" resolved).
     QString resolvedTheme() const;
     bool usesDoseTheme() const;
@@ -102,6 +103,7 @@ private:
     void applyStyleSheet() const;
     void onColorSchemeChanged();
     void applyDose();
+    void applyDoseFont(); // tTorrent
     bool systemIsDark() const;
 
 #ifdef QBT_HAS_COLORSCHEME_OPTION

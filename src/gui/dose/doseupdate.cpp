@@ -67,7 +67,14 @@ namespace
         return override.isEmpty() ? DEFAULT_REPO : override;
     }
 
-    // "v0.3.0", "release-5.3.0" and "0.3.0-rc1" all become {0, 3, 0}.
+    // tTorrent's own release tags are "v0.3.0"; the repository also holds
+    // qBittorrent's tags (release-5.3.0) from the fork, which aren't ours.
+    bool isOurTag(const QString &tag)
+    {
+        return tag.startsWith(u'v') && (tag.size() > 1) && tag.at(1).isDigit();
+    }
+
+    // "v0.3.0" and "0.3.0-rc1" become {0, 3, 0}.
     QList<int> versionOf(const QString &text)
     {
         static const QRegularExpression pattern {u"(\\d+)\\.(\\d+)(?:\\.(\\d+))?"_s};
@@ -139,7 +146,7 @@ namespace
                 else if (xml.isEndElement() && (xml.name() == u"entry"))
                 {
                     const QString tag = link.section(u'/', -1);
-                    const QList<int> version = versionOf(tag);
+                    const QList<int> version = isOurTag(tag) ? versionOf(tag) : QList<int> {};
                     if (!newer(version, bestVersion))
                         continue;
                     bestVersion = version;
@@ -189,7 +196,8 @@ namespace
                 const QJsonObject r = value.toObject();
                 if (r.value(u"draft"_s).toBool() || (r.value(u"prerelease"_s).toBool() && !previews))
                     continue;
-                const QList<int> version = versionOf(r.value(u"tag_name"_s).toString());
+                const QString tag = r.value(u"tag_name"_s).toString();
+                const QList<int> version = isOurTag(tag) ? versionOf(tag) : QList<int> {};
                 if (!newer(version, bestVersion))
                     continue;
                 bestVersion = version;

@@ -376,7 +376,7 @@ void StatusBar::applyItemVisibility()
     {
         // Speeds in the number font; down in the accent, up in `ok`.
         for (QWidget *w : {static_cast<QWidget *>(m_dlSpeedLbl), static_cast<QWidget *>(m_upSpeedLbl)})
-            w->setProperty("doseNumber", true); // DM Mono via the stylesheet
+            w->setProperty("doseNumber", true); // tTorrent: the number face via the stylesheet
         m_dlSpeedLbl->setObjectName(u"doseDown"_s);
         m_upSpeedLbl->setObjectName(u"doseUp"_s);
     }

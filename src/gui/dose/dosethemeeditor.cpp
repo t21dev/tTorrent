@@ -301,7 +301,7 @@ DoseThemeEditor::DoseThemeEditor(const QString &startFrom, QWidget *parent)
             names->addWidget(t.ratio);
             t.hex = new QLineEdit;
             t.hex->setFixedWidth(100);
-            t.hex->setStyleSheet(u"padding: 0 6px; font-family: \"DM Mono\";"_s);
+            t.hex->setStyleSheet(u"padding: 0 6px; font-family: \"%1\";"_s.arg(DoseThemeSource::numberFamily()));
             t.hex->setMaxLength(7);
             t.hex->setValidator(new QRegularExpressionValidator(hexPattern, t.hex));
             row->addWidget(t.swatch);
@@ -435,7 +435,7 @@ void DoseThemeEditor::refresh()
             const double r = DoseThemeSource::contrastRatio(c, bg);
             it->ratio->setText(u"%1:1"_s.arg(r, 0, 'f', 1));
             const QColor mark = UIThemeManager::instance()->doseToken((r >= needs) ? u"ok"_s : u"bad"_s);
-            it->ratio->setStyleSheet(u"font-family: \"DM Mono\"; font-size: 11px; color: %1;"_s.arg(mark.name()));
+            it->ratio->setStyleSheet(u"font-family: \"%2\"; font-size: 11px; color: %1;"_s.arg(mark.name(), DoseThemeSource::numberFamily()));
         }
         else
         {

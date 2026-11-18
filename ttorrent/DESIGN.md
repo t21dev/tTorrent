@@ -46,9 +46,11 @@ Progress bars use `accent`, `bad` on error or missing files, `muted` when stoppe
 
 | Role | Face | Size |
 |---|---|---|
-| UI | Instrument Sans 400/500/600, no hinting, antialiased | 13 px (12 Dense, 14 Standard) |
-| Numbers | DM Mono 400/500, tabular | UI size − 1 px; every size, speed, ratio, count, ETA, IP, date and key cap |
-| Headings (dialogs) | Instrument Sans 600 | 15 to 16 px |
+| UI | Segoe UI Variable (Windows' own), system hinting | 13 px (12 Dense, 14 Standard) |
+| Numbers | Segoe UI Variable (its figures are tabular) | UI size; every size, speed, ratio, count, ETA, IP, date and key cap |
+| Headings (dialogs) | Segoe UI Variable semibold | 15 to 16 px |
+
+Settings › Look › Font can switch to the bundled Instrument Sans with DM Mono numbers (unhinted, numbers 1 px smaller); those fonts load only when chosen. Default changed on 2026-11-18 at the owner's request: Instrument Sans looked choppy on Windows.
 
 Table headers and labels are sentence case, never tracked capitals.
 

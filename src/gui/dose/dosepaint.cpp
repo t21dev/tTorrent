@@ -158,11 +158,14 @@ QColor DosePaint::token(const QString &name)
 
 QFont DosePaint::numberFont(const QFont &base)
 {
-    QFont font {u"DM Mono"_s};
-    font.setStyleHint(QFont::Monospace, QFont::PreferAntialias);
-    font.setHintingPreference(QFont::PreferNoHinting);
+    const bool mono = DoseThemeSource::numbersMonospace();
+    QFont font {DoseThemeSource::numberFamily()};
+    font.setStyleHint(mono ? QFont::Monospace : QFont::SansSerif, QFont::PreferAntialias);
+    // Segoe UI is hinted for the screen; DM Mono's thin strokes look better unhinted.
+    font.setHintingPreference(mono ? QFont::PreferNoHinting : QFont::PreferDefaultHinting);
     const int px = (base.pixelSize() > 0) ? base.pixelSize() : qRound(base.pointSizeF() * 96.0 / 72.0);
-    font.setPixelSize(std::max(9, px - 1));
+    // A monospace face looks larger than the UI face at the same size.
+    font.setPixelSize(std::max(9, mono ? (px - 1) : px));
     return font;
 }
 

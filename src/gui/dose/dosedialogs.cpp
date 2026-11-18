@@ -313,6 +313,17 @@ QGroupBox#doseInfoBox { border: none; margin-top: 0; padding: 0 0 0 22px; }
         form->addWidget(new QLabel(QDialog::tr("Density:")), row, 0);
         form->addWidget(density, row++, 1, Qt::AlignLeft);
 
+        auto *font = new QComboBox;
+        for (const DoseThemeSource::Choice &c : DoseThemeSource::fonts())
+            font->addItem(c.name, c.id);
+        font->setCurrentIndex(std::max(0, font->findData(DoseThemeSource::fontChoice())));
+        form->addWidget(new QLabel(QDialog::tr("Font:")), row, 0);
+        form->addWidget(font, row++, 1, Qt::AlignLeft);
+        QObject::connect(font, &QComboBox::activated, group, [font](int)
+        {
+            UIThemeManager::instance()->setLookFont(font->currentData().toString());
+        });
+
         auto *icons = new QComboBox;
         for (const auto &[px, name] : {std::pair {16, QDialog::tr("Small")}, std::pair {20, QDialog::tr("Medium")}, std::pair {24, QDialog::tr("Large")}})
             icons->addItem(name, px);

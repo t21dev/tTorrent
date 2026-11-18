@@ -131,19 +131,6 @@ UIThemeManager::UIThemeManager()
     const bool doseDefault = !m_themeSource;
     if (doseDefault)
     {
-        for (const QString &font : {u":/dosetheme/fonts/InstrumentSans-Regular.ttf"_s
-                , u":/dosetheme/fonts/InstrumentSans-Medium.ttf"_s
-                , u":/dosetheme/fonts/InstrumentSans-SemiBold.ttf"_s
-                , u":/dosetheme/fonts/DMMono-Regular.ttf"_s, u":/dosetheme/fonts/DMMono-Medium.ttf"_s})
-        {
-            QFontDatabase::addApplicationFont(font);
-        }
-        // tTorrent: smooth text. Full hinting snaps Instrument Sans's thin
-        // strokes to whole pixels, which looks choppy on Windows.
-        QFont appFont = QApplication::font();
-        appFont.setHintingPreference(QFont::PreferNoHinting);
-        appFont.setStyleStrategy(QFont::PreferAntialias);
-        QApplication::setFont(appFont);
         m_doseTheme = true;
         DoseThemeSource::clearIconCache();
         applyDose();
@@ -166,6 +153,7 @@ bool UIThemeManager::systemIsDark() const
 
 void UIThemeManager::applyDose()
 {
+    applyDoseFont();
     const QString theme = lookTheme();
     m_doseResolved = DoseThemeSource::resolveTheme(theme, systemIsDark());
     DoseStyle::install();
@@ -183,6 +171,41 @@ void UIThemeManager::applyDose()
         qApp->styleHints()->setColorScheme(dark ? Qt::ColorScheme::Dark : Qt::ColorScheme::Light);
     applyPalette();
     applyStyleSheet();
+}
+
+// tTorrent: the UI face (Settings › Look › Font). Segoe UI Variable is
+// Windows' own and hinted for the screen, so it keeps the system's hinting;
+// the bundled faces are loaded only when chosen, and drawn unhinted, since
+// full hinting snaps Instrument Sans's thin strokes to whole pixels.
+void UIThemeManager::applyDoseFont()
+{
+    const bool bundled = (DoseThemeSource::fontChoice() == u"instrument");
+    static bool loaded = false;
+    if (bundled && !loaded)
+    {
+        loaded = true;
+        for (const QString &font : {u":/dosetheme/fonts/InstrumentSans-Regular.ttf"_s
+                , u":/dosetheme/fonts/InstrumentSans-Medium.ttf"_s
+                , u":/dosetheme/fonts/InstrumentSans-SemiBold.ttf"_s
+                , u":/dosetheme/fonts/DMMono-Regular.ttf"_s, u":/dosetheme/fonts/DMMono-Medium.ttf"_s})
+        {
+            QFontDatabase::addApplicationFont(font);
+        }
+    }
+    QFont appFont = QApplication::font();
+    appFont.setFamilies({DoseThemeSource::uiFamily(), u"Segoe UI"_s});
+    appFont.setHintingPreference(bundled ? QFont::PreferNoHinting : QFont::PreferDefaultHinting);
+    appFont.setStyleStrategy(QFont::PreferAntialias);
+    QApplication::setFont(appFont);
+}
+
+void UIThemeManager::setLookFont(const QString &font)
+{
+    SettingsStorage::instance()->storeValue(DoseThemeSource::fontKey(), font);
+    if (!m_doseTheme)
+        return;
+    applyDose();
+    emit themeChanged();
 }
 
 void UIThemeManager::setLook(const QString &theme, const QString &accent, const QString &density)

@@ -79,6 +79,16 @@ public:
     static QString accentKey();   // Appearance/Accent, default "theme"
     static QString densityKey();  // Appearance/Density, default "compact"
     static QString scaleKey();    // Appearance/InterfaceScale, default 1.0
+    static QString fontKey();     // Appearance/Font: "system" (default) or "instrument"
+    // The UI face for the chosen font: Segoe UI Variable (Windows' own, hinted
+    // for the screen) or the bundled Instrument Sans.
+    static QString fontChoice();
+    static QString uiFamily();
+    // Numbers: Segoe UI's figures are already tabular, so the system choice
+    // keeps one face; Instrument Sans pairs with DM Mono.
+    static QString numberFamily();
+    static bool numbersMonospace();
+    static QList<Choice> fonts();
     // Vertical padding of list rows for a density id (the @rowPad@ token).
     static int rowPadding(const QString &density);
     // Corner radius of controls for a density id (the @radius@ token).
