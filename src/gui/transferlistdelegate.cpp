@@ -31,6 +31,7 @@
 
 #include <QModelIndex>
 
+#include "base/global.h"
 #include "base/preferences.h"
 #include "base/types.h"
 #include "dose/dosepaint.h"
@@ -97,8 +98,16 @@ void TransferListDelegate::paint(QPainter *painter, const QStyleOptionViewItem &
             {
                 QStyleOptionViewItem opt {option};
                 initStyleOption(&opt, index);
-                const QColor stateColour = statusIndex.data(Qt::ForegroundRole).value<QColor>();
-                DosePaint::progress(painter, opt, index.data(TransferListModel::UnderlyingDataRole).toReal(), index.data().toString(), stateColour);
+                // Accent by default; red on error, muted when stopped. The state's
+                // text colour only when "progress bar follows text colour" is on.
+                QColor barColour = DosePaint::token(u"accent"_s);
+                if (Preferences::instance()->getProgressBarFollowsTextColor())
+                    barColour = statusIndex.data(Qt::ForegroundRole).value<QColor>();
+                else if ((torrentState == TorrentState::Error) || (torrentState == TorrentState::MissingFiles))
+                    barColour = DosePaint::token(u"bad"_s);
+                else if ((torrentState == TorrentState::StoppedDownloading) || (torrentState == TorrentState::StoppedUploading))
+                    barColour = DosePaint::token(u"muted"_s);
+                DosePaint::progress(painter, opt, index.data(TransferListModel::UnderlyingDataRole).toReal(), index.data().toString(), barColour);
                 DosePaint::selectionBar(painter, opt, index);
                 break;
             }
