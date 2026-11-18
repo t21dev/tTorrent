@@ -44,6 +44,7 @@
 #include <QShortcut>
 #include <QWheelEvent>
 
+#include "dose/doseidle.h"
 #include "dose/dosetorrentmenu.h"
 #include "base/bittorrent/session.h"
 #include "base/bittorrent/torrent.h"
@@ -129,6 +130,7 @@ TransferListWidget::TransferListWidget(IGUIApplication *app, QWidget *parent)
 
     m_sortFilterModel->setDynamicSortFilter(true);
     m_sortFilterModel->setSourceModel(m_listModel);
+    DoseIdle::pauseWhileHidden(m_listModel, this); // tTorrent: no list work while hidden
     m_sortFilterModel->setFilterKeyColumn(TransferListModel::TR_NAME);
     m_sortFilterModel->setFilterRole(Qt::DisplayRole);
     m_sortFilterModel->setSortCaseSensitivity(Qt::CaseInsensitive);

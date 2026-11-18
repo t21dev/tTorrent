@@ -293,6 +293,7 @@ MainWindow::MainWindow(IGUIApplication *app, const WindowState initialState, con
         UIThemeManager::instance()->getIcon(u"folder-remote"_s),
 #endif
         tr("Transfers"));
+    DoseToolbar::polishTabs(m_tabs, m_ui->actionRSSReader, m_ui->actionExecutionLogs); // tTorrent: tab bar hides with one tab
     // Filter types
     const QList<TransferListModel::Column> filterTypes = {
         TransferListModel::Column::TR_NAME

@@ -686,6 +686,8 @@ void TransferListModel::handleTorrentAboutToBeRemoved(BitTorrent::Torrent *const
 
 void TransferListModel::handleTorrentStatusUpdated(BitTorrent::Torrent *const torrent)
 {
+    if (property("dosePaused").toBool()) // tTorrent: window hidden, catch up on show (dose/doseidle.h)
+        return (void)setProperty("dosePending", true);
     const int row = getTorrentRow(torrent);
     Q_ASSERT(row >= 0);
 
@@ -694,6 +696,8 @@ void TransferListModel::handleTorrentStatusUpdated(BitTorrent::Torrent *const to
 
 void TransferListModel::handleTorrentsUpdated(const QList<BitTorrent::Torrent *> &torrents)
 {
+    if (property("dosePaused").toBool()) // tTorrent: window hidden, catch up on show (dose/doseidle.h)
+        return (void)setProperty("dosePending", true);
     const int columns = (columnCount() - 1);
 
     if (torrents.size() <= (m_torrents.size() * 0.5))

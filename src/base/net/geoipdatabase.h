@@ -28,6 +28,8 @@
 
 #pragma once
 
+#include <memory>
+
 #include <QtTypes>
 #include <QByteArray>
 #include <QCoreApplication>
@@ -37,6 +39,7 @@
 
 #include "base/pathfwd.h"
 
+class QFile;
 class QHostAddress;
 class QString;
 
@@ -48,6 +51,7 @@ class GeoIPDatabase
     Q_DECLARE_TR_FUNCTIONS(GeoIPDatabase)
 
 public:
+    ~GeoIPDatabase(); // tTorrent: owns the mapped file
     static GeoIPDatabase *load(const Path &filename, QString &error);
     static GeoIPDatabase *load(const QByteArray &data, QString &error);
 
@@ -83,4 +87,5 @@ private:
     // Search data
     mutable QHash<quint32, QString> m_countries;
     const QByteArray m_data;
+    std::unique_ptr<QFile> m_file; // tTorrent: m_data points into its mapping
 };

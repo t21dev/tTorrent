@@ -81,9 +81,27 @@ GeoIPDatabase::GeoIPDatabase(const QByteArray &data)
 {
 }
 
+GeoIPDatabase::~GeoIPDatabase() = default;
+
 GeoIPDatabase *GeoIPDatabase::load(const Path &filename, QString &error)
 {
     error.clear();
+
+    // tTorrent: map the file instead of copying it to the heap. Mapped pages
+    // are shared with the file cache and only the ones lookups touch load.
+    if (auto file = std::make_unique<QFile>(filename.data()); file->open(QIODevice::ReadOnly)
+        && (file->size() > 0) && (file->size() <= MAX_FILE_SIZE))
+    {
+        if (const uchar *mapped = file->map(0, file->size()))
+        {
+            auto *db = new GeoIPDatabase(QByteArray::fromRawData(reinterpret_cast<const char *>(mapped), file->size()));
+            db->m_file = std::move(file);
+            if (db->parseMetadata(db->readMetadata(), error) && db->loadDB(error))
+                return db;
+            delete db;
+            return nullptr;
+        }
+    }
 
     const auto readResult = Utils::IO::readFile(filename, MAX_FILE_SIZE);
     if (!readResult)

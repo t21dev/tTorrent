@@ -452,6 +452,7 @@ void DoseDialogs::decorateOptions(QDialog *dialog, QSplitter *splitter, QListWid
 {
     if (!dialog || !splitter || !sections || !pages)
         return;
+    dialog->setProperty("doseOwnHeading", true);
     if ((splitter->indexOf(sections) != 0) || (splitter->indexOf(pages) != 1))
         return;
 
@@ -484,7 +485,7 @@ void DoseDialogs::decorateOptions(QDialog *dialog, QSplitter *splitter, QListWid
     sections->setViewMode(QListView::ListMode);
     sections->setFlow(QListView::TopToBottom);
     sections->setWrapping(false);
-    sections->setIconSize({16, 16});
+    sections->setIconSize({15, 15});
     sections->setSpacing(1);
     sections->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     sections->setMinimumWidth(196);
@@ -492,7 +493,7 @@ void DoseDialogs::decorateOptions(QDialog *dialog, QSplitter *splitter, QListWid
     {
         QListWidgetItem *item = sections->item(i);
         item->setTextAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-        item->setSizeHint({0, 34});
+        item->setSizeHint({0, 30});
         if (UIThemeManager::instance()->usesDoseTheme())
         {
             if (const QIcon icon = sectionIcon(pages->widget(i) ? pages->widget(i)->objectName() : QString()); !icon.isNull())
@@ -579,6 +580,7 @@ void DoseDialogs::decorateOptions(QDialog *dialog, QSplitter *splitter, QListWid
 
 void DoseDialogs::decorateAddTorrent(QDialog *dialog)
 {
+    dialog->setProperty("doseOwnHeading", true);
     // Room either side of the splitter, so the columns' edges never touch.
     if (auto *split = dialog->findChild<QSplitter *>(QStringLiteral("splitter")))
     {

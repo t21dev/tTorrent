@@ -22,6 +22,7 @@
 #include <QHBoxLayout>
 #include <QIcon>
 #include <QLabel>
+#include <QTimer>
 #include <QLayout>
 #include <QMainWindow>
 #include <QMenuBar>
@@ -290,6 +291,16 @@ void DoseTitleBar::installDialog(QDialog *dialog)
     title->setObjectName(QStringLiteral("win-title-label"));
     title->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
     bar->setTitleLabel(title);
+    bar->setTitleFollowWindow(false);
+    // The dialog's title on the left, unless the dialog shows its own
+    // heading (property doseOwnHeading), so the name never appears twice.
+    const auto showTitle = [dialog, title]
+    {
+        title->setText(dialog->property("doseOwnHeading").toBool() ? QString() : dialog->windowTitle());
+    };
+    showTitle();
+    QObject::connect(dialog, &QWidget::windowTitleChanged, title, showTitle);
+    QTimer::singleShot(0, title, showTitle);
 
     auto *closeButton = new QWK::WindowButton;
     closeButton->setObjectName(QStringLiteral("close-button"));
@@ -319,6 +330,7 @@ void DoseTitleBar::embedInTitle(QMainWindow *window, QWidget *widget)
         return;
     // The title's text hides; the label's room hosts the widget, centred.
     label->setProperty("doseHosting", true); // the title text hides (stylesheet rule), children don't
+    label->setMinimumHeight(widget->height() + 8);
     auto *row = new QHBoxLayout(label);
     row->setContentsMargins(12, 0, 12, 0);
     row->addStretch();

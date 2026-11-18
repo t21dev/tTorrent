@@ -91,6 +91,40 @@ int DoseStyle::styleHint(const StyleHint hint, const QStyleOption *option, const
     return QProxyStyle::styleHint(hint, option, widget, returnData);
 }
 
+int DoseStyle::pixelMetric(const PixelMetric metric, const QStyleOption *option, const QWidget *widget) const
+{
+    const UIThemeManager *manager = UIThemeManager::instance();
+    if (!manager || !manager->usesDoseTheme())
+        return QProxyStyle::pixelMetric(metric, option, widget);
+    // dense, compact, standard
+    const QString density = manager->lookDensity();
+    const int level = (density == u"dense") ? 0 : ((density == u"standard") ? 2 : 1);
+    const auto pick = [level](const int dense, const int compact, const int standard)
+    {
+        return (level == 0) ? dense : ((level == 1) ? compact : standard);
+    };
+    switch (metric)
+    {
+    case PM_LayoutLeftMargin:
+    case PM_LayoutRightMargin:
+    case PM_LayoutTopMargin:
+    case PM_LayoutBottomMargin:
+        return pick(6, 9, 12);
+    case PM_LayoutHorizontalSpacing:
+    case PM_LayoutVerticalSpacing:
+        return pick(4, 6, 8);
+    case PM_SmallIconSize:
+    case PM_ButtonIconSize:
+    case PM_TabBarIconSize:
+    case PM_ListViewIconSize:
+        return pick(14, 14, 16);
+    case PM_LargeIconSize:
+        return pick(18, 20, 24);
+    default:
+        return QProxyStyle::pixelMetric(metric, option, widget);
+    }
+}
+
 void DoseStyle::polish(QWidget *widget)
 {
     QProxyStyle::polish(widget);

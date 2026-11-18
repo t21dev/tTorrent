@@ -16,6 +16,8 @@
 #include "dosetoolbar.h"
 
 #include <QAction>
+#include <QTabBar>
+#include <QTabWidget>
 #include <QWidgetAction>
 #include <QMainWindow>
 #include <QHash>
@@ -245,7 +247,7 @@ void DoseToolbar::polishFilter(QLineEdit *edit, QComboBox *columns)
     // The field: a rounded well holding a search button and the text box.
     auto *field = new QFrame;
     field->setObjectName(QStringLiteral("doseSearchField"));
-    field->setFixedSize(380, 30);
+    field->setFixedSize(380, 28);
     auto *row = new QHBoxLayout(field);
     row->setContentsMargins(4, 0, 6, 0);
     row->setSpacing(2);
@@ -253,7 +255,7 @@ void DoseToolbar::polishFilter(QLineEdit *edit, QComboBox *columns)
     icon->setObjectName(QStringLiteral("doseSearchIcon"));
     icon->setIcon(UIThemeManager::instance()->getIcon(QStringLiteral("edit-find")));
     icon->setIconSize({16, 16});
-    icon->setFixedSize(26, 24);
+    icon->setFixedSize(24, 22);
     icon->setCursor(Qt::PointingHandCursor);
     QObject::connect(UIThemeManager::instance(), &UIThemeManager::themeChanged, icon, [icon]
     {
@@ -266,7 +268,7 @@ void DoseToolbar::polishFilter(QLineEdit *edit, QComboBox *columns)
     edit->setMinimumWidth(0);
     edit->setMaximumWidth(QWIDGETSIZE_MAX);
     edit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    edit->setFixedHeight(28);
+    edit->setFixedHeight(26);
     edit->setPlaceholderText(QToolBar::tr("Filter torrents  (Ctrl+F)"));
     row->addWidget(icon);
     row->addWidget(edit, 1);
@@ -325,4 +327,26 @@ void DoseToolbar::setIconSize(QToolBar *toolBar, const int px)
     SettingsStorage::instance()->storeValue(ICON_SIZE_KEY, px);
     if (toolBar)
         toolBar->setIconSize({px, px});
+}
+
+void DoseToolbar::polishTabs(QTabWidget *tabs, QAction *rss, QAction *log)
+{
+    if (!tabs || !UIThemeManager::instance()->usesDoseTheme())
+        return;
+    tabs->setTabBarAutoHide(true);
+    QTabBar *bar = tabs->tabBar();
+    bar->setContextMenuPolicy(Qt::CustomContextMenu);
+    QObject::connect(bar, &QWidget::customContextMenuRequested, bar, [bar, rss, log](const QPoint &pos)
+    {
+        QMenu menu {bar};
+        QAction *heading = menu.addAction(QToolBar::tr("Show tabs"));
+        heading->setEnabled(false);
+        menu.addSeparator();
+        for (QAction *a : {rss, log})
+        {
+            if (a && a->isVisible())
+                menu.addAction(a);
+        }
+        menu.exec(bar->mapToGlobal(pos));
+    });
 }

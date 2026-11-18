@@ -31,6 +31,8 @@ public:
 
     int styleHint(StyleHint hint, const QStyleOption *option, const QWidget *widget, QStyleHintReturn *returnData) const override;
     void polish(QWidget *widget) override;
+    // Layout margins, spacing and small icon sizes follow the density.
+    int pixelMetric(PixelMetric metric, const QStyleOption *option, const QWidget *widget) const override;
     // Folders, files, browse and message icons from tTorrent's line set.
     QIcon standardIcon(StandardPixmap icon, const QStyleOption *option, const QWidget *widget) const override;
     // No dotted focus rectangle around list rows (selection already shows it).

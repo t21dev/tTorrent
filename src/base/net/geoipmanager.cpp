@@ -136,6 +136,17 @@ void GeoIPManager::downloadDatabaseFile()
 
 QString GeoIPManager::lookup(const QHostAddress &hostAddr) const
 {
+    // tTorrent: the database loads the first time a peer's country is asked
+    // for (the Peers tab), not at start, so it costs nothing until then.
+    if (m_enabled && !m_geoIPDatabase)
+    {
+        static bool tried = false;
+        if (!tried)
+        {
+            tried = true;
+            const_cast<GeoIPManager *>(this)->loadDatabase();
+        }
+    }
     if (m_enabled && m_geoIPDatabase)
         return m_geoIPDatabase->lookup(hostAddr);
 
@@ -414,7 +425,7 @@ void GeoIPManager::configure()
         m_enabled = enabled;
         if (m_enabled && !m_geoIPDatabase)
         {
-            loadDatabase();
+            // tTorrent: loaded on first lookup instead (see lookup()).
         }
         else if (!m_enabled)
         {
@@ -460,6 +471,7 @@ void GeoIPManager::downloadFinished(const DownloadResult &result)
             if (saveResult)
             {
                 LogMsg(tr("Successfully updated IP geolocation database."), Log::INFO);
+                loadDatabase(); // tTorrent: use the saved file, mapped, instead of the downloaded copy
             }
             else
             {

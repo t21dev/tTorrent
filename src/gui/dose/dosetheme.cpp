@@ -173,9 +173,9 @@ namespace
         // From Kitab's DESIGN.md › Density: control height 26 / 30 / 36,
         // UI text 12.5 (rounded to 12) / 13 / 14 px, radius 7 / 8 / 9.
         static const QList<Density> list {
-            {u"dense"_s, QT_TRANSLATE_NOOP("DoseTheme", "Dense"), 12, 4, 10, 4, 9, 2},
-            {u"compact"_s, QT_TRANSLATE_NOOP("DoseTheme", "Compact"), 13, 6, 12, 6, 10, 3},
-            {u"standard"_s, QT_TRANSLATE_NOOP("DoseTheme", "Standard"), 14, 9, 14, 9, 11, 5},
+            {u"dense"_s, QT_TRANSLATE_NOOP("DoseTheme", "Dense"), 12, 3, 8, 3, 7, 2},
+            {u"compact"_s, QT_TRANSLATE_NOOP("DoseTheme", "Compact"), 13, 4, 10, 4, 8, 3},
+            {u"standard"_s, QT_TRANSLATE_NOOP("DoseTheme", "Standard"), 14, 7, 12, 7, 10, 5},
         };
         return list;
     }

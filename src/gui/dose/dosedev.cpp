@@ -150,10 +150,13 @@ void DoseDev::scheduleShots(QMainWindow *window)
     };
     steps << [dir]
     {
-        if (auto *popup = QApplication::activePopupWidget())
+        for (QWidget *top : QApplication::topLevelWidgets())
         {
-            save(popup, dir + u"/palette.png");
-            popup->close();
+            if (top->isVisible() && (top->objectName() == u"dosePalette"))
+            {
+                save(top, dir + u"/palette.png");
+                top->close();
+            }
         }
     };
     steps << [window]

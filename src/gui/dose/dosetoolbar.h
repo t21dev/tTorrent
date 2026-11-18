@@ -15,9 +15,11 @@
 
 #pragma once
 
+class QAction;
 class QComboBox;
 class QLineEdit;
 class QMenu;
+class QTabWidget;
 class QToolBar;
 
 namespace DoseToolbar
@@ -41,4 +43,8 @@ namespace DoseToolbar
     // The filter field: wider, its "Filter by" choice moved into a menu on
     // the field's search icon (the combo box stays, hidden, as the model).
     void polishFilter(QLineEdit *edit, QComboBox *columns);
+
+    // The main tabs (Transfers, RSS, Log): the bar hides when Transfers is
+    // the only tab; right-clicking it shows or hides the RSS and log tabs.
+    void polishTabs(QTabWidget *tabs, QAction *rss, QAction *log);
 }

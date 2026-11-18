@@ -51,6 +51,7 @@
 #include "base/unicodestrings.h"
 #include "base/utils/misc.h"
 #include "base/utils/string.h"
+#include "gui/dose/doseidle.h"
 #include "gui/dose/dosepaint.h"
 #include "gui/autoexpandabledialog.h"
 #include "gui/filterpatternformatmenu.h"
@@ -398,6 +399,7 @@ void PropertiesWidget::loadDynamicData()
 {
     // Refresh only if the torrent handle is valid and visible
     if (!m_torrent || (m_state != VISIBLE)) return;
+    if (DoseIdle::windowHidden(this)) return; // tTorrent: nothing to refresh while hidden
 
     // Transfer infos
     switch (m_ui->stackedProperties->currentIndex())
