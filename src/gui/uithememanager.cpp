@@ -281,6 +281,7 @@ void UIThemeManager::setTrayIconStyle(const TrayIconStyle value)
 
 void UIThemeManager::applyStyleSheet() const
 {
+    if (qEnvironmentVariableIsSet("TTORRENT_BENCH_NO_QSS")) return; // tTorrent: memory A/B only (ttorrent/scripts/bench.ps1)
     qApp->setStyleSheet(QString::fromUtf8(m_themeSource->readStyleSheet()));
 }
 

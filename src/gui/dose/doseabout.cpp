@@ -47,16 +47,15 @@ QWidget#doseAbout QTextBrowser { border: none; background: transparent; }
 QWidget#doseAbout QLabel[role="key"] { color: palette(dark); }
 )";
 
-    // The logo in the theme's colours: a solid circle with the sprout cut out.
-    QPixmap logo(const int size, const QColor &circle, const QColor &mark, const qreal dpr)
+    // The app icon: the sprout on the green tile (ttorrent/brand/icon.svg), in every theme.
+    QPixmap logo(const int size, const QColor &, const QColor &, const qreal dpr)
     {
         const QString svg = QStringLiteral(
-            "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>"
-            "<circle cx='12' cy='12' r='11' fill='%1'/>"
-            "<g transform='translate(12 12) scale(0.62) translate(-12 -12.5)' fill='none' stroke='%2' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'>"
-            "<path d='M12 9v11'/><path d='M7.5 15.5 12 20l4.5-4.5'/>"
-            "<path d='M12 9c0-3 2-5 6-5 0 3.5-2 5.5-6 5Z'/><path d='M12 9c0-2.2-1.6-3.8-4.6-3.8 0 2.6 1.6 4.2 4.6 3.8Z'/></g></svg>")
-            .arg(circle.name(), mark.name());
+            "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'>"
+            "<rect width='256' height='256' rx='58' fill='#10a874'/>"
+            "<g fill='none' stroke='#fff' stroke-width='26' stroke-linecap='round' stroke-linejoin='round'>"
+            "<path d='M128 112v94'/><path d='M84 164l44 44 44-44'/></g>"
+            "<path d='M128 116c0-36 22-60 70-60 0 40-22 64-70 60Z M128 116c0-26-18-46-54-46 0 30 18 50 54 46Z' fill='#fff'/></svg>");
         QSvgRenderer renderer {svg.toUtf8()};
         QPixmap pixmap {QSize(size, size) * dpr};
         pixmap.setDevicePixelRatio(dpr);

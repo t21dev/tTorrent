@@ -63,6 +63,7 @@
 #include "base/logger.h"
 #include "base/preferences.h"
 #include "base/types.h"
+#include "base/utils/intern.h"
 #include "base/utils/fs.h"
 #include "base/utils/io.h"
 #include "base/utils/string.h"
@@ -126,7 +127,7 @@ namespace
 
         for (const lt::announce_endpoint &ltAnnounceEndpoint : nativeEntry.endpoints)
         {
-            const auto endpointName = toString(ltAnnounceEndpoint.local_endpoint);
+            const auto endpointName = Utils::intern(toString(ltAnnounceEndpoint.local_endpoint)); // tTorrent: shared copy
 
             for (const auto protocolVersion : btProtocols)
             {
@@ -190,12 +191,12 @@ namespace
 
                 if (!ltAnnounceInfo.message.empty())
                 {
-                    trackerEndpointStatus.message = QString::fromStdString(ltAnnounceInfo.message);
+                    trackerEndpointStatus.message = Utils::intern(QString::fromStdString(ltAnnounceInfo.message)); // tTorrent: shared copy
                 }
                 else if (ltAnnounceInfo.last_error)
                 {
 #if LIBTORRENT_VERSION_NUM >= 20100
-                    trackerEndpointStatus.message = QString::fromStdString(ltAnnounceInfo.last_error.message());
+                    trackerEndpointStatus.message = Utils::intern(QString::fromStdString(ltAnnounceInfo.last_error.message())); // tTorrent: shared copy
 #else
                     trackerEndpointStatus.message = QString::fromLocal8Bit(ltAnnounceInfo.last_error.message());
 #endif
