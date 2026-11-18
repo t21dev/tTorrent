@@ -44,6 +44,7 @@
 #include <QShortcut>
 #include <QWheelEvent>
 
+#include "dose/doserelocate.h"
 #include "dose/doseidle.h"
 #include "dose/dosetorrentmenu.h"
 #include "base/bittorrent/session.h"
@@ -1195,6 +1196,7 @@ void TransferListWidget::displayListMenu()
     listMenu->addAction(actionDelete);
     listMenu->addSeparator();
     listMenu->addAction(actionSetTorrentPath);
+    QAction *actionRelocate = DoseRelocate::addTorrentAction(listMenu, this, getSelectedTorrents()); // tTorrent: relocate (qBittorrent #439)
     if (selectedIndexes.size() == 1)
     {
         listMenu->addAction(actionRename);
@@ -1339,7 +1341,7 @@ void TransferListWidget::displayListMenu()
     // tTorrent: everyday actions on top, the rest grouped, and customizable.
     DoseTorrentMenu::shape(listMenu, {
         {u"start"_s, actionStart}, {u"stop"_s, actionStop}, {u"forceStart"_s, actionForceStart}, {u"remove"_s, actionDelete},
-        {u"openFolder"_s, actionOpenDestinationFolder}, {u"setLocation"_s, actionSetTorrentPath}, {u"rename"_s, actionRename},
+        {u"openFolder"_s, actionOpenDestinationFolder}, {u"setLocation"_s, actionSetTorrentPath}, {u"relocate"_s, actionRelocate}, {u"rename"_s, actionRename},
         {u"manageContent"_s, actionManageContent}, {u"preview"_s, actionPreviewFile}, {u"recheck"_s, actionForceRecheck},
         {u"export"_s, actionExportTorrent}, {u"options"_s, actionTorrentOptions}, {u"sequential"_s, actionSequentialDownload},
         {u"firstLast"_s, actionFirstLastPiecePrio}, {u"autoTMM"_s, actionAutoTMM}, {u"superSeeding"_s, actionSuperSeedingMode},

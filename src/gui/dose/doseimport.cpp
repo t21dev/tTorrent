@@ -36,6 +36,7 @@
 #include "base/logger.h"
 #include "base/path.h"
 #include "base/profile.h"
+#include "dosebackup.h"
 
 namespace
 {
@@ -130,7 +131,11 @@ void DoseImport::askAndRestart(QWidget *parent)
     if (!marker.open(QIODevice::WriteOnly))
         return;
     marker.close();
+    restart();
+}
 
+void DoseImport::restart()
+{
     // Start the next copy, told to wait for this one, then exit cleanly.
     QProcess next;
     next.setProgram(QCoreApplication::applicationFilePath());
@@ -156,6 +161,7 @@ void DoseImport::askAndRestart(QWidget *parent)
 
 void DoseImport::runPending()
 {
+    DoseBackup::runPendingRestore();
     const QString marker = ourConfigDir() + u'/' + MARKER;
     if (!QFile::exists(marker))
         return;

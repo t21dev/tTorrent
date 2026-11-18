@@ -249,6 +249,8 @@ add_library(qbt_gui STATIC
     dose/doseabout.h
     dose/doseautomation.cpp
     dose/doseautomation.h
+    dose/dosebackup.cpp
+    dose/dosebackup.h
     dose/dosebrand.cpp
     dose/dosebrand.h
     dose/dosedev.cpp
@@ -270,6 +272,10 @@ add_library(qbt_gui STATIC
     dose/thirdparty/qrcodegen.hpp
     dose/dosepaint.h
     dose/dosepiecemap.cpp
+    dose/doserelocate.cpp
+    dose/doserelocate.h
+    dose/doserename.cpp
+    dose/doserename.h
     dose/doseshortcuts.cpp
     dose/doseshortcuts.h
     dose/dosesidebar.cpp

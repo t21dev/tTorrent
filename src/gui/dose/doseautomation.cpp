@@ -14,6 +14,7 @@
  */
 
 #include "doseautomation.h"
+#include "dosebackup.h"
 #include "dosemcp.h"
 #include "dosememory.h"
 #include "dosepair.h"
@@ -426,6 +427,7 @@ void DoseAutomation::install(QMainWindow *window)
     DoseMcp::apply();
     DoseMemory::install(window);
     DoseUpdate::install(window);
+    DoseBackup::install(window);
 
     QObject::connect(session, &BitTorrent::Session::torrentAdded, window, [](BitTorrent::Torrent *torrent)
     {

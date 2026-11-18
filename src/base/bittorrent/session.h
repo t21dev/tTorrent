@@ -270,6 +270,7 @@ namespace BitTorrent
         virtual bool isPerformanceWarningEnabled() const = 0;
         virtual void setPerformanceWarningEnabled(bool enable) = 0;
         virtual int saveResumeDataInterval() const = 0;
+        virtual void saveChangedResumeData() = 0; // tTorrent: write changed torrents' state now (backups)
         virtual void setSaveResumeDataInterval(int value) = 0;
         virtual std::chrono::minutes saveStatisticsInterval() const = 0;
         virtual void setSaveStatisticsInterval(std::chrono::minutes value) = 0;

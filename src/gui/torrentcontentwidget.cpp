@@ -42,6 +42,7 @@
 #include <QShortcut>
 #include <QWheelEvent>
 
+#include "dose/doserelocate.h"
 #include "base/bittorrent/torrentcontenthandler.h"
 #include "base/path.h"
 #include "base/utils/string.h"
@@ -448,6 +449,7 @@ void TorrentContentWidget::displayContextMenu()
 
     menu->addAction(UIThemeManager::instance()->getIcon(u"edit-rename"_s), tr("Batch rename...")
             , this, &TorrentContentWidget::batchRenameFiles);
+    DoseRelocate::addToContentMenu(menu, this); // tTorrent: relocate (qBittorrent #439)
     menu->addSeparator();
 
     QMenu *subMenu = menu->addMenu(tr("Priority"));

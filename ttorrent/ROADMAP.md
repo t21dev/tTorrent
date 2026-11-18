@@ -26,6 +26,15 @@ Kept as they are: Web UI and Web API, RSS, run a program on add or finish, watch
 | Unpack when finished | .zip, .rar, .7z extracted into the save folder. **Done** (Windows' own tar.exe) |
 | Pair a phone | QR code that opens the Web UI on the same network. **Done** (Tools › Pair a phone) |
 
+## From qBittorrent's most-wanted issues
+
+| Issue | What it is |
+|---|---|
+| #10645 Don't start without disk space | **Done** (low disk space guard) |
+| #6236 Save and restore all settings | **Done** (Settings › Behavior › Backup: back up now, restore, daily backup keeping 3) |
+| #439 Relocate | **Done** (torrent menu › Files › Relocate, and per file or folder in the Content tab) |
+| #10614 Rename categories and tags | **Done** (right-click in the sidebar) |
+
 ## Later
 
 Auto-sort rules, portable mode. (Custom shortcuts: done.)

@@ -247,6 +247,7 @@ namespace BitTorrent
         bool isPerformanceWarningEnabled() const override;
         void setPerformanceWarningEnabled(bool enable) override;
         int saveResumeDataInterval() const override;
+        void saveChangedResumeData() override; // tTorrent
         void setSaveResumeDataInterval(int value) override;
         std::chrono::minutes saveStatisticsInterval() const override;
         void setSaveStatisticsInterval(std::chrono::minutes value) override;

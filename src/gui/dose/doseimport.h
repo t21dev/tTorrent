@@ -30,6 +30,9 @@ namespace DoseImport
     // Asks, marks the import as pending and restarts tTorrent.
     void askAndRestart(QWidget *parent);
 
+    // Starts a new copy of tTorrent (it waits for this one) and exits this one cleanly.
+    void restart();
+
     // At start, after the profile is known and before settings load: does a
     // pending import. Safe to call every start; does nothing otherwise.
     void runPending();

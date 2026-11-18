@@ -30,6 +30,7 @@
 
 #include <QMenu>
 
+#include "gui/dose/doserename.h"
 #include "base/bittorrent/session.h"
 #include "base/global.h"
 #include "gui/torrentcategorydialog.h"
@@ -125,6 +126,7 @@ void CategoryFilterWidget::showMenu()
             , this, &CategoryFilterWidget::addSubcategory);
         menu->addAction(UIThemeManager::instance()->getIcon(u"edit-rename"_s, u"document-edit"_s), tr("Edit category...")
             , this, &CategoryFilterWidget::editCategory);
+        DoseRename::addToCategoryMenu(menu, this, currentCategory()); // tTorrent: rename (qBittorrent #10614)
         menu->addAction(UIThemeManager::instance()->getIcon(u"edit-clear"_s, u"list-remove"_s), tr("Remove category")
             , this, &CategoryFilterWidget::removeCategory);
     }

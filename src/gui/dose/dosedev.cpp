@@ -21,6 +21,7 @@
 #include <QApplication>
 #include <QDialog>
 #include <QDir>
+#include <QFile>
 #include <QLayout>
 #include <QLabel>
 #include <QListWidget>
@@ -36,7 +37,14 @@
 #include <QTimer>
 #include <QTreeView>
 
+#include "base/bittorrent/session.h"
+#include "base/bittorrent/torrent.h"
 #include "base/global.h"
+#include "base/path.h"
+#include "base/tag.h"
+#include "dosebackup.h"
+#include "doserelocate.h"
+#include "doserename.h"
 #include "dosethemeeditor.h"
 
 namespace
@@ -82,8 +90,127 @@ namespace
     }
 }
 
+namespace
+{
+    // QApplication::quit() alone doesn't shut tTorrent down; File › Exit does.
+    void quitApp()
+    {
+        for (QWidget *top : QApplication::topLevelWidgets())
+        {
+            if (auto *main = qobject_cast<QMainWindow *>(top))
+            {
+                if (auto *exit = main->findChild<QAction *>(u"actionExit"_s))
+                {
+                    exit->trigger();
+                    return;
+                }
+            }
+        }
+        QApplication::quit();
+    }
+
+    // Self-test of features whose menus need dialogs (ttorrent/VERIFY.md):
+    // rename category and tag, back up, relocate. Runs on the first torrent of
+    // a scratch profile once the session is ready, writes PASS/FAIL lines to
+    // <TTORRENT_SELFTEST_DIR>/selftest.txt and quits. TTORRENT_SELFTEST_MOVED
+    // is a folder holding a copy of that torrent's files under a renamed top folder.
+    void runSelfTest(QMainWindow *window, const QString &dir)
+    {
+        QDir().mkpath(dir);
+        auto *lines = new QStringList;
+        const auto check = [lines](const QString &name, const bool ok, const QString &detail = {})
+        {
+            lines->append((ok ? u"PASS "_s : u"FAIL "_s) + name + (detail.isEmpty() ? QString() : (u" - "_s + detail)));
+        };
+        const auto finish = [lines, dir]
+        {
+            QFile out {dir + u"/selftest.txt"_s};
+            if (out.open(QIODevice::WriteOnly | QIODevice::Text))
+                out.write(lines->join(QChar(u'\n')).toUtf8() + QByteArray(1, '\n'));
+            delete lines;
+            quitApp();
+        };
+        const auto start = [window, check, finish]
+        {
+            BitTorrent::Session *session = BitTorrent::Session::instance();
+            if (session->torrents().isEmpty())
+            {
+                check(u"setup"_s, false, u"no torrent in the profile"_s);
+                return finish();
+            }
+            BitTorrent::Torrent *torrent = session->torrents().first();
+
+            // After a restore: report what the torrent looks like now.
+            if (qEnvironmentVariableIsSet("TTORRENT_SELFTEST_REPORT"))
+            {
+                QStringList tags;
+                for (const Tag &tag : torrent->tags())
+                    tags.append(tag.toString());
+                check(u"state"_s, true, u"save path "_s + torrent->savePath().toString() + u"; category "_s + torrent->category()
+                    + u"; tags "_s + tags.join(u", "_s) + u"; categories "_s + session->categories().join(u", "_s));
+                return finish();
+            }
+
+            // Second run, after the files were moved: relocate only.
+            const QString moved = qEnvironmentVariable("TTORRENT_SELFTEST_MOVED");
+            if (!moved.isEmpty())
+            {
+                const int found = DoseRelocate::relocateTo(torrent, moved);
+                check(u"relocate finds files"_s, found == torrent->filesCount(), QString::number(found) + u" of "_s + QString::number(torrent->filesCount()));
+                // The check runs in the background; look again once it's done.
+                QTimer::singleShot(12000, window, [torrent, moved, check, finish]
+                {
+                    check(u"relocate: save path"_s, torrent->savePath() == Path(moved), torrent->savePath().toString());
+                    check(u"relocate: complete after check"_s, torrent->progress() >= 0.999, QString::number(torrent->progress() * 100, 'f', 1) + u" %"_s);
+                    finish();
+                });
+                return;
+            }
+
+            session->addCategory(u"Films"_s);
+            session->addCategory(u"Films/4K"_s);
+            torrent->setCategory(u"Films/4K"_s);
+            const QString catError = DoseRename::renameCategory(u"Films"_s, u"Movies"_s);
+            const QStringList cats = session->categories();
+            check(u"rename category"_s, catError.isEmpty() && cats.contains(u"Movies"_s) && cats.contains(u"Movies/4K"_s) && !cats.contains(u"Films"_s)
+                && !cats.contains(u"Films/4K"_s) && (torrent->category() == u"Movies/4K"), u"categories: "_s + cats.join(u", "_s) + u"; torrent: "_s + torrent->category() + u" "_s + catError);
+
+            const Tag old {u"old"_s};
+            session->addTag(old);
+            torrent->addTag(old);
+            const QString tagError = DoseRename::renameTag(old, u"new"_s);
+            check(u"rename tag"_s, tagError.isEmpty() && torrent->hasTag(Tag(u"new"_s)) && !torrent->hasTag(old) && !session->hasTag(old), tagError);
+            check(u"rename to an existing tag is refused"_s, !DoseRename::renameTag(Tag(u"new"_s), u"new"_s).isEmpty());
+
+            DoseBackup::backupSoon(window, u"selftest"_s, [check, finish](const QString &backup)
+            {
+                const int saved = backup.isEmpty() ? 0 : int(QDir(backup + u"/data/BT_backup"_s).entryList({u"*.fastresume"_s}, QDir::Files).size());
+                check(u"backup"_s, QFile::exists(backup + u"/config/tTorrent.ini"_s) && (saved >= 1), backup + u" ("_s + QString::number(saved) + u" torrents)"_s);
+                finish();
+            });
+        };
+        // Wait up to 30 s for a torrent added on the command line, and for its first check.
+        auto *poll = new QTimer(window);
+        auto *tries = new int(0);
+        QObject::connect(poll, &QTimer::timeout, window, [poll, tries, start]
+        {
+            const QList<BitTorrent::Torrent *> torrents = BitTorrent::Session::instance()->torrents();
+            const bool ready = BitTorrent::Session::instance()->isRestored() && !torrents.isEmpty() && torrents.first()->hasMetadata()
+                && !torrents.first()->isChecking();
+            if (!ready && (++*tries < 30))
+                return;
+            poll->stop();
+            delete tries;
+            start();
+        });
+        poll->start(1000);
+    }
+}
+
 void DoseDev::scheduleShots(QMainWindow *window)
 {
+    if (const QString test = qEnvironmentVariable("TTORRENT_SELFTEST_DIR"); !test.isEmpty())
+        return runSelfTest(window, test);
     const QString dir = qEnvironmentVariable("TTORRENT_UISHOT_DIR");
     if (dir.isEmpty())
         return;
@@ -174,6 +301,25 @@ void DoseDev::scheduleShots(QMainWindow *window)
         for (QDialog *dialog : openDialogs())
         {
             save(dialog, dir + u"/options.png");
+            // The bottom of the first page: Updates and Backup.
+            if (auto *sections = dialog->findChild<QListWidget *>(u"tabSelection"_s))
+            {
+                sections->setCurrentRow(0);
+                QApplication::processEvents();
+            }
+            if (auto *group = dialog->findChild<QWidget *>(u"doseBackup"_s))
+            {
+                for (QWidget *p = group->parentWidget(); p; p = p->parentWidget())
+                {
+                    if (auto *area = qobject_cast<QScrollArea *>(p))
+                    {
+                        area->ensureWidgetVisible(group, 0, 0);
+                        break;
+                    }
+                }
+                QApplication::processEvents();
+                save(dialog, dir + u"/options-backup.png");
+            }
             // The last section (Advanced) too.
             if (auto *sections = dialog->findChild<QListWidget *>(u"tabSelection"_s))
             {
@@ -304,6 +450,6 @@ void DoseDev::scheduleShots(QMainWindow *window)
             dialog->close();
         }
     };
-    steps << [] { QApplication::quit(); };
+    steps << [] { quitApp(); };
     chain(window, steps, 1500);
 }

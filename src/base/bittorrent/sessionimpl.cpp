@@ -3358,6 +3358,11 @@ bool SessionImpl::downloadMetadata(const TorrentDescriptor &torrentDescr)
     return true;
 }
 
+void SessionImpl::saveChangedResumeData()
+{
+    generateResumeData(); // tTorrent: backups need the latest state on disk
+}
+
 void SessionImpl::generateResumeData()
 {
     for (TorrentImpl *const torrent : asConst(m_torrents))

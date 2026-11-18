@@ -54,6 +54,7 @@
 #include "gui/uithememanager.h"
 #include "doseimport.h"
 #include "doseautomation.h"
+#include "dosebackup.h"
 #include "dosemcp.h"
 #include "doseupdate.h"
 #include "dosepaint.h"
@@ -629,6 +630,7 @@ void DoseDialogs::decorateOptions(QDialog *dialog, QSplitter *splitter, QListWid
     addAutomationGroup(pages->widget(1));
     addGroupToPage(pages->findChild<QWidget *>(QStringLiteral("tabWebUIPage")), DoseMcp::settingsGroup(), &DoseMcp::saveSettings, true);
     addGroupToPage(pages->widget(0), DoseUpdate::settingsGroup(), &DoseUpdate::saveSettings, false);
+    addGroupToPage(pages->widget(0), DoseBackup::settingsGroup(), &DoseBackup::saveSettings, false);
     // Long help texts (the run-program parameters) wrap instead of making
     // the page wider than the dialog.
     for (QLabel *label : pages->findChildren<QLabel *>())

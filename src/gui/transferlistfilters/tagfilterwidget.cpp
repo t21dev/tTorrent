@@ -32,6 +32,7 @@
 #include <QMenu>
 #include <QMessageBox>
 
+#include "gui/dose/doserename.h"
 #include "base/bittorrent/session.h"
 #include "base/global.h"
 #include "gui/autoexpandabledialog.h"
@@ -112,6 +113,7 @@ void TagFilterWidget::showMenu()
     {
         menu->addAction(UIThemeManager::instance()->getIcon(u"edit-clear"_s, u"list-remove"_s), tr("Remove tag")
             , this, &TagFilterWidget::removeTag);
+        if (const std::optional<Tag> tag = currentTag()) DoseRename::addToTagMenu(menu, this, *tag); // tTorrent: rename (qBittorrent #10614)
     }
 
     menu->addAction(UIThemeManager::instance()->getIcon(u"edit-clear"_s, u"list-remove"_s), tr("Remove unused tags")
