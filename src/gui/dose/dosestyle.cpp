@@ -31,9 +31,10 @@
 
 namespace
 {
-    // Fades a window in when it shows: 120 ms for menus, lists, tooltips and
-    // pop-up panels, 180 ms for dialogs and other windows (DESIGN.md › Motion). Skipped when the system turns
-    // animations off (Windows' Animation effects setting).
+    // Fades pop-overs in when they show, over 120 ms: menus, drop-down lists,
+    // tooltips and panels such as the command list and the memory card
+    // (DESIGN.md › Motion). Dialogs only get the custom title bar here; Windows
+    // animates them itself. Skipped when Windows' Animation effects are off.
     class FadeIn final : public QObject
     {
     public:
@@ -63,14 +64,17 @@ namespace
             {
                 frame(dialog);
             }
-            if ((event->type() == QEvent::Show) && DosePaint::animationsEnabled())
+            // Only pop-overs fade: dialogs and other windows already get
+            // Windows' own opening animation.
+            auto *window = static_cast<QWidget *>(watched);
+            const bool popover = (window->windowType() == Qt::Popup) || (window->windowType() == Qt::ToolTip)
+                || (window->windowType() == Qt::Tool);
+            if ((event->type() == QEvent::Show) && popover && DosePaint::animationsEnabled())
             {
-                auto *window = static_cast<QWidget *>(watched);
-                const bool dialog = qobject_cast<QDialog *>(window) || (window->windowType() == Qt::Window);
                 auto *animation = new QPropertyAnimation(window, "windowOpacity", window);
                 animation->setStartValue(0.0);
                 animation->setEndValue(1.0);
-                animation->setDuration(dialog ? 180 : 120);
+                animation->setDuration(120);
                 animation->setEasingCurve(QEasingCurve::OutCubic);
                 window->setWindowOpacity(0.0);
                 animation->start(QAbstractAnimation::DeleteWhenStopped);
@@ -173,10 +177,9 @@ void DoseStyle::polish(QWidget *widget)
             menu->setProperty("doseDense", true);
         return;
     }
-    // Tooltips, other pop-up panels (command palette, memory card) and any
-    // other window but the main one fade in too.
-    if ((widget->windowType() == Qt::ToolTip) || (widget->windowType() == Qt::Popup) || (widget->windowType() == Qt::Tool)
-        || ((widget->windowType() == Qt::Window) && !widget->inherits("QMainWindow")))
+    // Tooltips and other pop-overs (the command list, the memory card) fade in
+    // too; windows don't, as Windows animates them itself.
+    if ((widget->windowType() == Qt::ToolTip) || (widget->windowType() == Qt::Popup) || (widget->windowType() == Qt::Tool))
     {
         widget->installEventFilter(FadeIn::instance());
         return;
