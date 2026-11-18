@@ -35,6 +35,7 @@
 #include <QPainter>
 #include <QPen>
 
+#include "gui/dose/dosepaint.h"
 #include "base/bittorrent/session.h"
 #include "base/global.h"
 #include "base/unicodestrings.h"
@@ -281,6 +282,12 @@ quint64 SpeedPlotView::maxYValue() const
 
 void SpeedPlotView::paintEvent(QPaintEvent *)
 {
+    if (DosePaint::active()) // tTorrent: themed graph
+    {
+        paintDose();
+        return;
+    }
+
     QPainter painter(viewport());
 
     QRect fullRect = viewport()->rect();

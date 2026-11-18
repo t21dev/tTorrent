@@ -372,8 +372,8 @@ void StatusBar::applyItemVisibility()
 {
     if (DosePaint::active())
     {
-        // Speeds and memory in the number font; down in the accent, up in `ok`.
-        for (QWidget *w : {static_cast<QWidget *>(m_dlSpeedLbl), static_cast<QWidget *>(m_upSpeedLbl), static_cast<QWidget *>(m_memoryLbl), static_cast<QWidget *>(m_DHTLbl), static_cast<QWidget *>(m_freeDiskSpaceLbl)})
+        // Speeds in the number font; down in the accent, up in `ok`.
+        for (QWidget *w : {static_cast<QWidget *>(m_dlSpeedLbl), static_cast<QWidget *>(m_upSpeedLbl)})
             w->setProperty("doseNumber", true); // DM Mono via the stylesheet
         m_dlSpeedLbl->setObjectName(u"doseDown"_s);
         m_upSpeedLbl->setObjectName(u"doseUp"_s);

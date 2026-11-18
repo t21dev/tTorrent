@@ -25,6 +25,7 @@
 #include <QMenuBar>
 #include <QPainter>
 #include <QPixmap>
+#include <QPushButton>
 #include <QTimer>
 
 #include "base/global.h"
@@ -71,6 +72,14 @@ void DoseDev::scheduleShots(QMainWindow *window)
                 }
             }
         }
+        // The Speed tab of the details pane.
+        for (QPushButton *tab : window->findChildren<QPushButton *>())
+        {
+            if (tab->property("doseTab").toBool() && tab->text().contains(u"Speed"))
+                tab->click();
+        }
+        QApplication::processEvents();
+        save(window, dir + u"/main-speed.png");
         if (auto *options = window->findChild<QAction *>(u"actionOptions"_s))
             options->trigger();
         const auto shootDialogs = [](const QString &path)

@@ -129,6 +129,7 @@ private:
     };
 
     quint64 maxYValue() const;
+    void paintDose(); // tTorrent: the themed graph, in dose/dosespeedplot.cpp
     const DataCircularBuffer &currentData() const;
 
     Averager m_averager5Min {5min, 1s};

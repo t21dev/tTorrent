@@ -253,6 +253,7 @@ add_library(qbt_gui STATIC
     dose/dosepaint.h
     dose/dosesidebar.cpp
     dose/dosesidebar.h
+    dose/dosespeedplot.cpp
     dose/dosestyle.cpp
     dose/dosestyle.h
     dose/dosetheme.cpp
