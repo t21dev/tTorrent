@@ -58,6 +58,8 @@ public:
     // Contrast of the unadjusted accent against the theme's background.
     static double accentContrast(const QString &accent, const QString &themeId);
     static QString resolveTheme(const QString &themeId, bool systemIsDark);
+    // Tinted icons live in <cache>/dose-icons/<theme>-<accent>; cleared once per start.
+    static void clearIconCache();
     // Older builds stored green/violet/ink; map them to today's presets.
     static QString migrateAccent(const QString &accent);
 

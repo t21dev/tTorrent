@@ -16,6 +16,7 @@
 #include "dosetitlebar.h"
 
 #include <QApplication>
+#include <QDialog>
 #include <QEvent>
 #include <QFile>
 #include <QIcon>
@@ -44,6 +45,14 @@ QWK--WindowBar {
 QWK--WindowBar QLabel#win-title-label {
     color: palette(dark);
     padding: 0 8px;
+}
+QWK--WindowBar#dose-dialog-bar QLabel#win-title-label {
+    color: palette(window-text);
+    font-weight: 600;
+    padding: 0 14px;
+}
+QWK--WindowBar#dose-dialog-bar {
+    border-bottom: none;
 }
 QWK--WindowBar QMenuBar#win-menu-bar {
     background: transparent;
@@ -104,13 +113,38 @@ QWK--WindowButton#close-button:hover {
         return icon;
     }
 
+    // The Sprout arrow logo as a solid circle with the sprout cut out, in
+    // the theme's text and background colours (ttorrent/brand/sprout.svg).
+    QIcon logo(const QColor &circle, const QColor &mark)
+    {
+        const QString svg = QStringLiteral(
+            "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>"
+            "<circle cx='12' cy='12' r='11' fill='%1'/>"
+            "<g transform='translate(12 12) scale(0.62) translate(-12 -12.5)' fill='none' stroke='%2' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round'>"
+            "<path d='M12 9v11'/><path d='M7.5 15.5 12 20l4.5-4.5'/>"
+            "<path d='M12 9c0-3 2-5 6-5 0 3.5-2 5.5-6 5Z'/><path d='M12 9c0-2.2-1.6-3.8-4.6-3.8 0 2.6 1.6 4.2 4.6 3.8Z'/></g></svg>")
+            .arg(circle.name(), mark.name());
+        QSvgRenderer renderer {svg.toUtf8()};
+        QIcon icon;
+        for (const qreal scale : {1.0, 1.25, 1.5, 2.0})
+        {
+            QPixmap pixmap {QSize(18, 18) * scale};
+            pixmap.setDevicePixelRatio(scale);
+            pixmap.fill(Qt::transparent);
+            QPainter painter {&pixmap};
+            renderer.render(&painter, QRectF(0, 0, 18, 18));
+            icon.addPixmap(pixmap);
+        }
+        return icon;
+    }
+
     // Redraws the button icons when the palette changes (light/dark).
     class PaletteWatcher final : public QObject
     {
     public:
         PaletteWatcher(QWidget *bar, QWK::WindowButton *min, QWK::WindowButton *max,
-                QWK::WindowButton *close)
-            : QObject(bar), m_bar {bar}, m_min {min}, m_max {max}, m_close {close}
+                QWK::WindowButton *close, QWK::WindowButton *icon = nullptr)
+            : QObject(bar), m_bar {bar}, m_min {min}, m_max {max}, m_close {close}, m_icon {icon}
         {
             bar->installEventFilter(this);
             apply();
@@ -119,10 +153,16 @@ QWK--WindowButton#close-button:hover {
         void apply()
         {
             const QColor ink = m_bar->palette().color(QPalette::WindowText);
-            m_min->setIconNormal(tinted(QStringLiteral("minimize"), ink));
-            m_max->setIconNormal(tinted(QStringLiteral("maximize"), ink));
-            m_max->setIconChecked(tinted(QStringLiteral("restore"), ink));
+            if (m_min)
+                m_min->setIconNormal(tinted(QStringLiteral("minimize"), ink));
+            if (m_max)
+            {
+                m_max->setIconNormal(tinted(QStringLiteral("maximize"), ink));
+                m_max->setIconChecked(tinted(QStringLiteral("restore"), ink));
+            }
             m_close->setIconNormal(tinted(QStringLiteral("close"), ink));
+            if (m_icon)
+                m_icon->setIconNormal(logo(ink, m_bar->palette().color(QPalette::Window)));
         }
 
     protected:
@@ -138,6 +178,7 @@ QWK--WindowButton#close-button:hover {
         QWK::WindowButton *m_min;
         QWK::WindowButton *m_max;
         QWK::WindowButton *m_close;
+        QWK::WindowButton *m_icon;
     };
 
     // Qt keeps a button hovered after a click maximizes the window under it.
@@ -170,7 +211,6 @@ void DoseTitleBar::install(QMainWindow *window, QMenuBar *menuBar)
 
     auto *iconButton = new QWK::WindowButton;
     iconButton->setObjectName(QStringLiteral("icon-button"));
-    iconButton->setIconNormal(window->windowIcon());
     iconButton->setIconSize({18, 18});
     auto *minButton = new QWK::WindowButton;
     minButton->setObjectName(QStringLiteral("min-button"));
@@ -186,9 +226,7 @@ void DoseTitleBar::install(QMainWindow *window, QMenuBar *menuBar)
     bar->setMinButton(minButton);
     bar->setMaxButton(maxButton);
     bar->setCloseButton(closeButton);
-    new PaletteWatcher(bar, minButton, maxButton, closeButton);
-
-    QObject::connect(window, &QWidget::windowIconChanged, iconButton, &QWK::WindowButton::setIconNormal);
+    new PaletteWatcher(bar, minButton, maxButton, closeButton, iconButton);
 #else
     Q_UNUSED(menuBar);
 #endif
@@ -222,4 +260,40 @@ void DoseTitleBar::install(QMainWindow *window, QMenuBar *menuBar)
 #endif
 
     window->setMenuWidget(bar);
+}
+
+void DoseTitleBar::installDialog(QDialog *dialog)
+{
+#ifdef Q_OS_MACOS
+    Q_UNUSED(dialog);
+#else
+    QLayout *layout = dialog->layout();
+    if (!layout || layout->menuBar())
+        return;
+
+    auto *agent = new QWK::WidgetWindowAgent(dialog);
+    agent->setup(dialog);
+
+    auto *bar = new QWK::WindowBar;
+    bar->setObjectName(QStringLiteral("dose-dialog-bar"));
+    bar->setStyleSheet(QString::fromLatin1(STYLE));
+    auto *title = new QLabel;
+    title->setObjectName(QStringLiteral("win-title-label"));
+    title->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+    bar->setTitleLabel(title);
+
+    auto *closeButton = new QWK::WindowButton;
+    closeButton->setObjectName(QStringLiteral("close-button"));
+    closeButton->setProperty("system-button", true);
+    bar->setCloseButton(closeButton);
+    new PaletteWatcher(bar, nullptr, nullptr, closeButton);
+
+    bar->setHostWidget(dialog);
+    agent->setTitleBar(bar);
+    agent->setSystemButton(QWK::WindowAgentBase::Close, closeButton);
+    QObject::connect(bar, &QWK::WindowBar::closeRequested, dialog, &QWidget::close);
+
+    // QLayout keeps its "menu bar" above everything else, edge to edge.
+    layout->setMenuBar(bar);
+#endif
 }

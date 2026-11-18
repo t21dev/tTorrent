@@ -145,5 +145,49 @@
         <file>themes/noctua.json</file>
         <file>themes/vampire.json</file>
         <file>themes/ink.json</file>
+        <file>fonts/DMMono-Regular.ttf</file>
+        <file>fonts/DMMono-Medium.ttf</file>
+        <file>icons/application-url.svg</file>
+        <file>icons/dark/application-url.svg</file>
+        <file>icons/browser-cookies.svg</file>
+        <file>icons/dark/browser-cookies.svg</file>
+        <file>icons/firewalled.svg</file>
+        <file>icons/dark/firewalled.svg</file>
+        <file>icons/hash.svg</file>
+        <file>icons/dark/hash.svg</file>
+        <file>icons/help-about.svg</file>
+        <file>icons/dark/help-about.svg</file>
+        <file>icons/help-contents.svg</file>
+        <file>icons/dark/help-contents.svg</file>
+        <file>icons/ip-blocked.svg</file>
+        <file>icons/dark/ip-blocked.svg</file>
+        <file>icons/mail-inbox.svg</file>
+        <file>icons/dark/mail-inbox.svg</file>
+        <file>icons/name.svg</file>
+        <file>icons/dark/name.svg</file>
+        <file>icons/object-locked.svg</file>
+        <file>icons/dark/object-locked.svg</file>
+        <file>icons/pause-session.svg</file>
+        <file>icons/dark/pause-session.svg</file>
+        <file>icons/peers.svg</file>
+        <file>icons/dark/peers.svg</file>
+        <file>icons/peers-add.svg</file>
+        <file>icons/dark/peers-add.svg</file>
+        <file>icons/peers-remove.svg</file>
+        <file>icons/dark/peers-remove.svg</file>
+        <file>icons/plugins.svg</file>
+        <file>icons/dark/plugins.svg</file>
+        <file>icons/rss_read_article.svg</file>
+        <file>icons/dark/rss_read_article.svg</file>
+        <file>icons/rss_unread_article.svg</file>
+        <file>icons/dark/rss_unread_article.svg</file>
+        <file>icons/task-complete.svg</file>
+        <file>icons/dark/task-complete.svg</file>
+        <file>icons/task-reject.svg</file>
+        <file>icons/dark/task-reject.svg</file>
+        <file>icons/view-preview.svg</file>
+        <file>icons/dark/view-preview.svg</file>
+        <file>icons/wallet-open.svg</file>
+        <file>icons/dark/wallet-open.svg</file>
     </qresource>
 </RCC>

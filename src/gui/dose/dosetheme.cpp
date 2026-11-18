@@ -18,12 +18,14 @@
 #include <cmath>
 
 #include <QCoreApplication>
+#include <QDir>
 #include <QFile>
 #include <QJsonDocument>
 #include <QJsonObject>
 
 #include "base/global.h"
 #include "base/path.h"
+#include "base/profile.h"
 
 namespace
 {
@@ -217,6 +219,8 @@ DoseThemeSource::DoseThemeSource(const QString &themeId, const QString &accent, 
     // Selection fill: the accent washed into the background, still readable under text.
     m_tokens[u"select"_s] = mix(accentColor, bg, m_dark ? 0.24 : 0.16);
     m_tokens[u"accentLine"_s] = mix(accentColor, bg, 0.5);
+    m_tokens[u"track"_s] = mix(text, bg, m_dark ? 0.14 : 0.09);
+    m_tokens[u"rowRule"_s] = mix(token(u"line"_s), bg, 0.6);
 
     const QColor muted = token(u"muted"_s), faint = token(u"faint"_s), ring = token(u"ring"_s);
     const QColor ok = token(u"ok"_s), warn = token(u"warn"_s), bad = token(u"bad"_s);
@@ -262,7 +266,41 @@ QColor DoseThemeSource::getColor(const QString &colorId, [[maybe_unused]] const 
 
 Path DoseThemeSource::getIconPath(const QString &iconId, [[maybe_unused]] const ColorMode colorMode) const
 {
-    return m_icons.getIconPath(iconId, m_dark ? ColorMode::Dark : ColorMode::Light);
+    const Path base = m_icons.getIconPath(iconId, ColorMode::Light);
+    // Only our own line icons are recoloured; the app icon and tray icons stay as drawn.
+    if (!base.data().startsWith(u":/dosetheme/") || !base.hasExtension(u".svg"_s) || iconId.startsWith(u"qbittorrent"))
+        return base;
+
+    const QString dir = Profile::instance()->location(SpecialFolder::Cache).data()
+        + u"/dose-icons/" + m_themeId + u'-' + token(u"accent"_s).name().mid(1);
+    const QString out = dir + u'/' + iconId + u".svg";
+    if (QFile::exists(out))
+        return Path(out);
+
+    QFile in {base.data()};
+    if (!in.open(QIODevice::ReadOnly))
+        return base;
+    QString svg = QString::fromUtf8(in.readAll());
+    // Each colour the icons are drawn in stands for a role (DESIGN.md › Icons).
+    const QList<std::pair<QString, QString>> roles {
+        {u"#2C2E31"_s, u"muted"_s}, {u"#1E1F22"_s, u"muted"_s}, {u"#007948"_s, u"accent"_s},
+        {u"#287C42"_s, u"ok"_s}, {u"#AE6700"_s, u"warn"_s}, {u"#C53637"_s, u"bad"_s},
+    };
+    for (const auto &[drawn, role] : roles)
+        svg.replace(drawn, token(role).name(), Qt::CaseInsensitive);
+    svg.replace(u"stroke-width=\"2\""_s, u"stroke-width=\"1.6\""_s);
+    svg.replace(u"stroke-width=\"2.6\""_s, u"stroke-width=\"2.1\""_s);
+
+    QDir().mkpath(dir);
+    QFile file {out};
+    if (!file.open(QIODevice::WriteOnly) || (file.write(svg.toUtf8()) < 0))
+        return base;
+    return Path(out);
+}
+
+void DoseThemeSource::clearIconCache()
+{
+    QDir(Profile::instance()->location(SpecialFolder::Cache).data() + u"/dose-icons"_s).removeRecursively();
 }
 
 QByteArray DoseThemeSource::readStyleSheet()
@@ -280,6 +318,28 @@ QByteArray DoseThemeSource::readStyleSheet()
     qss.replace(u"@rowPad@"_s, QString::number(d.rowPad));
     qss.replace(u"@radius@"_s, QString::number(d.radius));
     qss.replace(u"@toolPad@"_s, QString::number(d.toolPad));
+
+    // Small glyphs the stylesheet points at (arrows, check marks), drawn in
+    // this theme's colours into the icon cache.
+    const QString dir = Profile::instance()->location(SpecialFolder::Cache).data()
+        + u"/dose-icons/" + m_themeId + u'-' + token(u"accent"_s).name().mid(1);
+    QDir().mkpath(dir);
+    const auto asset = [&dir](const QString &name, const QString &svg) -> QString
+    {
+        const QString path = dir + u'/' + name + u".svg";
+        QFile file {path};
+        if (file.open(QIODevice::WriteOnly))
+            file.write(svg.toUtf8());
+        return QString(path).replace(u'\\', u'/');
+    };
+    const QString stroke = u"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'>%2</svg>"_s;
+    const QString muted = token(u"muted"_s).name();
+    const QString onAccent = token(u"onAccent"_s).name();
+    qss.replace(u"@chevronDown@"_s, asset(u"qss-chevron-down"_s, stroke.arg(muted, u"<path d='m6 9 6 6 6-6'/>"_s)));
+    qss.replace(u"@chevronUp@"_s, asset(u"qss-chevron-up"_s, stroke.arg(muted, u"<path d='m18 15-6-6-6 6'/>"_s)));
+    qss.replace(u"@check@"_s, asset(u"qss-check"_s, stroke.arg(onAccent, u"<path d='M20 6 9 17l-5-5'/>"_s).replace(u"stroke-width='2'"_s, u"stroke-width='3'"_s)));
+    qss.replace(u"@partial@"_s, asset(u"qss-partial"_s, stroke.arg(onAccent, u"<path d='M6 12h12'/>"_s).replace(u"stroke-width='2'"_s, u"stroke-width='3'"_s)));
+    qss.replace(u"@radioDot@"_s, asset(u"qss-radio"_s, u"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><circle cx='12' cy='12' r='5' fill='%1'/></svg>"_s.arg(onAccent)));
     return qss.toUtf8();
 }
 

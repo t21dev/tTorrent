@@ -44,6 +44,10 @@ public:
     QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const override;
     void paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const override;
 
+protected:
+    // tTorrent: numbers in DM Mono, state colour on Status only, state icon in Status.
+    void initStyleOption(QStyleOptionViewItem *option, const QModelIndex &index) const override;
+
 private:
     ProgressBarPainter m_progressBarPainter;
     mutable int m_nameColHeight = -1;

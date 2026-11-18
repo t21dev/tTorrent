@@ -32,6 +32,8 @@
 #include <QModelIndex>
 
 #include "base/preferences.h"
+#include "base/types.h"
+#include "dose/dosepaint.h"
 #include "transferlistmodel.h"
 
 TransferListDelegate::TransferListDelegate(QObject *parent)
@@ -88,11 +90,60 @@ void TransferListDelegate::paint(QPainter *painter, const QStyleOptionViewItem &
 
             const QColor color = Preferences::instance()->getProgressBarFollowsTextColor() ? index.data(Qt::ForegroundRole).value<QColor>() : QColor();
 
+            // tTorrent: a thin pill in the state's colour (DESIGN.md › Transfer list).
+            if (DosePaint::active())
+            {
+                QStyleOptionViewItem opt {option};
+                initStyleOption(&opt, index);
+                const QColor stateColour = statusIndex.data(Qt::ForegroundRole).value<QColor>();
+                DosePaint::progress(painter, opt, index.data(TransferListModel::UnderlyingDataRole).toReal(), index.data().toString(), stateColour);
+                DosePaint::selectionBar(painter, opt, index);
+                break;
+            }
+
             m_progressBarPainter.paint(painter, customOption, index.data().toString(), progress, color);
         }
         break;
     default:
         QStyledItemDelegate::paint(painter, option, index);
+        DosePaint::selectionBar(painter, option, index);
         break;
     }
+}
+
+void TransferListDelegate::initStyleOption(QStyleOptionViewItem *option, const QModelIndex &index) const
+{
+    QStyledItemDelegate::initStyleOption(option, index);
+    if (!DosePaint::active())
+        return;
+
+    const int column = index.column();
+    if (column == TransferListModel::TR_STATUS)
+    {
+        // The state icon moves from Name to Status, beside the word.
+        option->icon = index.siblingAtColumn(TransferListModel::TR_NAME).data(Qt::DecorationRole).value<QIcon>();
+        option->features |= QStyleOptionViewItem::HasDecoration;
+        option->decorationSize = QSize(14, 14);
+    }
+    else if (column == TransferListModel::TR_NAME)
+    {
+        option->icon = {};
+        option->features &= ~QStyleOptionViewItem::HasDecoration;
+    }
+
+    bool isZero = false;
+    const QVariant value = index.data(TransferListModel::UnderlyingDataRole);
+    switch (column)
+    {
+    case TransferListModel::TR_DLSPEED:
+    case TransferListModel::TR_UPSPEED:
+        isZero = (value.toLongLong() == 0);
+        break;
+    case TransferListModel::TR_ETA:
+        isZero = (value.toLongLong() >= MAX_ETA);
+        break;
+    default:
+        break;
+    }
+    DosePaint::styleCell(option, index, (column == TransferListModel::TR_STATUS), isZero);
 }

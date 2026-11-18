@@ -85,6 +85,8 @@ public:
     // The theme actually shown ("system" resolved).
     QString resolvedTheme() const;
     bool usesDoseTheme() const;
+    // A tTorrent look token (DESIGN.md › Colour); invalid when a custom theme is in use.
+    QColor doseToken(const QString &name) const;
 
 #ifdef Q_OS_WIN
     void updateSystemColorMode();

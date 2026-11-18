@@ -31,6 +31,7 @@
 #include "uithememanager.h"
 
 #include "base/settingsstorage.h"
+#include "dose/dosestyle.h"
 #include "dose/dosetheme.h"
 
 #include <QFontDatabase>
@@ -132,11 +133,13 @@ UIThemeManager::UIThemeManager()
     {
         for (const QString &font : {u":/dosetheme/fonts/InstrumentSans-Regular.ttf"_s
                 , u":/dosetheme/fonts/InstrumentSans-Medium.ttf"_s
-                , u":/dosetheme/fonts/InstrumentSans-SemiBold.ttf"_s})
+                , u":/dosetheme/fonts/InstrumentSans-SemiBold.ttf"_s
+                , u":/dosetheme/fonts/DMMono-Regular.ttf"_s, u":/dosetheme/fonts/DMMono-Medium.ttf"_s})
         {
             QFontDatabase::addApplicationFont(font);
         }
         m_doseTheme = true;
+        DoseThemeSource::clearIconCache();
         applyDose();
     }
     else if (m_useCustomTheme)
@@ -159,6 +162,7 @@ void UIThemeManager::applyDose()
 {
     const QString theme = lookTheme();
     m_doseResolved = DoseThemeSource::resolveTheme(theme, systemIsDark());
+    DoseStyle::install();
     auto source = std::make_unique<DoseThemeSource>(m_doseResolved, lookAccent(), lookDensity());
     const bool dark = source->isDark();
     m_themeSource = std::move(source);
@@ -211,6 +215,12 @@ QString UIThemeManager::resolvedTheme() const
 bool UIThemeManager::usesDoseTheme() const
 {
     return m_doseTheme;
+}
+
+QColor UIThemeManager::doseToken(const QString &name) const
+{
+    const auto *dose = dynamic_cast<const DoseThemeSource *>(m_themeSource.get());
+    return dose ? dose->token(name) : QColor();
 }
 
 UIThemeManager *UIThemeManager::instance()
@@ -279,7 +289,11 @@ void UIThemeManager::onColorSchemeChanged()
     emit themeChanged();
 
     // workaround to refresh styled controls once color scheme is changed
-    QApplication::setStyle(QApplication::style()->name());
+    // tTorrent: keep the DoseStyle layer when re-creating the style.
+    if (m_doseTheme)
+        QApplication::setStyle(new DoseStyle(QApplication::style()->name()));
+    else
+        QApplication::setStyle(QApplication::style()->name());
 }
 
 QIcon UIThemeManager::getIcon(const QString &iconId, [[maybe_unused]] const QString &fallback, const ColorMode colorMode) const

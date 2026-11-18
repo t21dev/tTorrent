@@ -245,6 +245,10 @@ add_library(qbt_gui STATIC
     transferlistsortmodel.cpp
     transferlistwidget.cpp
     dose/dosedialogs.cpp
+    dose/dosepaint.cpp
+    dose/dosepaint.h
+    dose/dosestyle.cpp
+    dose/dosestyle.h
     dose/dosetheme.cpp
     dose/dosetoolbar.cpp
     dose/dosetoolbar.h

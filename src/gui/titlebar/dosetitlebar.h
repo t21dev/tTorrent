@@ -15,6 +15,7 @@
 
 #pragma once
 
+class QDialog;
 class QMainWindow;
 class QMenuBar;
 
@@ -26,4 +27,9 @@ namespace DoseTitleBar
     // snap layouts, the system menu, shadows) through QWindowKit. On macOS
     // the native traffic-light buttons and the system menu bar stay.
     void install(QMainWindow *window, QMenuBar *menuBar);
+
+    // The same frame for a dialog: its title on the left and a Close
+    // button, placed above the dialog's own layout. Does nothing on macOS
+    // or for a dialog without a layout.
+    void installDialog(QDialog *dialog);
 }
