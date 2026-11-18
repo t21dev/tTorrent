@@ -76,6 +76,7 @@
 #include "interfaces/iguiapplication.h"
 #include "ipsubnetwhitelistoptionsdialog.h"
 #include "rss/automatedrssdownloader.h"
+#include "dose/doseassoc.h"
 #include "dose/dosedialogs.h"
 #include "ui_optionsdialog.h"
 #include "uithemedialog.h"
@@ -350,8 +351,7 @@ void OptionsDialog::loadBehaviorTabOptions()
 #if defined(Q_OS_WIN)
     connect(m_ui->buttonOpenDefaultApps, &QPushButton::clicked, this, [](bool)
     {
-        const Path explorer = Utils::OS::windowsSystemPath().parentPath() / Path(u"explorer.exe"_s);
-        QProcess::startDetached(explorer.data(), {u"ms-settings:defaultapps"_s});
+        DoseAssoc::registerAndOpenSettings(); // tTorrent: register for this user, open tTorrent's page
     });
 #elif defined(Q_OS_MACOS)
     m_ui->checkAssociateTorrents->setChecked(MacUtils::isTorrentFileAssocSet());

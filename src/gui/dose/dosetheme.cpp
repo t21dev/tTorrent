@@ -385,6 +385,9 @@ QByteArray DoseThemeSource::readStyleSheet()
     qss.replace(u"@uiFont@"_s, u"\"%1\", \"Segoe UI Variable Text\", \"Segoe UI\", sans-serif"_s.arg(uiFamily()));
     qss.replace(u"@numFont@"_s, u"\"%1\", \"Segoe UI Variable Text\", \"Segoe UI\", sans-serif"_s.arg(numberFamily()));
     qss.replace(u"@fontSmall@"_s, QString::number(d.font - 1));
+    // Border + padding (1 + 10) + the layout margin for this density (DoseStyle::pixelMetric).
+    const int layoutMargin = (m_density == u"dense") ? 6 : ((m_density == u"standard") ? 12 : 9);
+    qss.replace(u"@groupTitleLeft@"_s, QString::number(11 + layoutMargin));
     qss.replace(u"@font@"_s, QString::number(d.font));
     qss.replace(u"@padV@"_s, QString::number(d.padV));
     qss.replace(u"@padH@"_s, QString::number(d.padH));

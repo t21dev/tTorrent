@@ -15,6 +15,7 @@
 
 #pragma once
 
+class QLineEdit;
 class QMainWindow;
 
 // Keyboard shortcuts: a sheet that lists every command by menu and lets the
@@ -29,4 +30,8 @@ namespace DoseShortcuts
 
     void showSheet(QMainWindow *window);
     void showPalette(QMainWindow *window);
+    // One search for the title bar: the filter field keeps filtering the
+    // torrent list as you type, and a drop-down under it lists the commands
+    // that match (Up/Down to pick, Enter to run). Ctrl+K opens it.
+    void attachSearch(QMainWindow *window, QLineEdit *edit);
 }

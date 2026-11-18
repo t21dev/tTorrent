@@ -267,8 +267,14 @@ add_library(qbt_gui STATIC
     dose/dosememory.h
     dose/dosemotion.cpp
     dose/dosemotion.h
-    dose/dosepair.cpp
-    dose/dosepair.h
+    dose/doseassoc.cpp
+dose/dosepair.cpp
+dose/dosesnapshot.cpp
+dose/dosestatus.cpp
+    dose/doseassoc.h
+dose/dosepair.h
+dose/dosesnapshot.h
+dose/dosestatus.h
     dose/dosepaint.cpp
     dose/thirdparty/qrcodegen.cpp
     dose/thirdparty/qrcodegen.hpp

@@ -269,7 +269,7 @@ void DoseToolbar::polishFilter(QLineEdit *edit, QComboBox *columns)
     edit->setMaximumWidth(QWIDGETSIZE_MAX);
     edit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     edit->setFixedHeight(26);
-    edit->setPlaceholderText(QToolBar::tr("Filter torrents  (Ctrl+F)"));
+    edit->setPlaceholderText(QToolBar::tr("Search torrents and commands  (Ctrl+K)"));
     row->addWidget(icon);
     row->addWidget(edit, 1);
     edit->show(); // moved from the toolbar: a reparented widget starts hidden
@@ -292,8 +292,9 @@ void DoseToolbar::polishFilter(QLineEdit *edit, QComboBox *columns)
     const auto describe = [icon, edit, columns]
     {
         icon->setToolTip(QToolBar::tr("Filter by: %1").arg(columns->currentText()));
-        edit->setPlaceholderText((columns->currentIndex() == 0) ? QToolBar::tr("Filter torrents  (Ctrl+F)")
-            : QToolBar::tr("Filter by %1  (Ctrl+F)").arg(columns->currentText().toLower()));
+        // One field for both: it filters the list and lists matching commands.
+        edit->setPlaceholderText((columns->currentIndex() == 0) ? QToolBar::tr("Search torrents and commands  (Ctrl+K)")
+            : QToolBar::tr("Search %1 and commands  (Ctrl+K)").arg(columns->currentText().toLower()));
     };
     describe();
     QObject::connect(columns, &QComboBox::currentIndexChanged, icon, describe);

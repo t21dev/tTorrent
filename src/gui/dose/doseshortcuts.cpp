@@ -370,6 +370,189 @@ namespace
         QLabel *m_empty = nullptr;
     };
 
+    // The command list under the title bar's search field. It never takes
+    // focus: typing stays in the field, which filters the torrent list.
+    class SearchDrop final : public QFrame
+    {
+    public:
+        SearchDrop(QMainWindow *window, QLineEdit *edit)
+            : QFrame(window, Qt::Tool | Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint | Qt::WindowDoesNotAcceptFocus)
+            , m_window {window}
+            , m_edit {edit}
+        {
+            setObjectName(u"doseSearchDrop"_s);
+            setAttribute(Qt::WA_TranslucentBackground);
+            setAttribute(Qt::WA_ShowWithoutActivating);
+            auto *outer = new QVBoxLayout(this);
+            outer->setContentsMargins(0, 0, 0, 0);
+            auto *card = new QFrame;
+            card->setObjectName(u"dosePaletteCard"_s);
+            outer->addWidget(card);
+            auto *column = new QVBoxLayout(card);
+            column->setContentsMargins(8, 8, 8, 8);
+            column->setSpacing(6);
+
+            m_title = new QLabel;
+            m_title->setObjectName(u"dosePaletteHint"_s);
+            column->addWidget(m_title);
+
+            m_list = new QListWidget;
+            m_list->setObjectName(u"dosePaletteList"_s);
+            m_list->setItemDelegate(new PaletteDelegate(m_list));
+            m_list->setIconSize({16, 16});
+            m_list->setFrameShape(QFrame::NoFrame);
+            m_list->setUniformItemSizes(true);
+            m_list->setFocusPolicy(Qt::NoFocus);
+            m_list->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+            column->addWidget(m_list);
+
+            auto *hint = new QLabel(QDialog::tr("Typing filters the torrent list  ·  Enter runs a command  ·  Esc closes"));
+            hint->setObjectName(u"dosePaletteHint"_s);
+            column->addWidget(hint);
+
+            connect(m_list, &QListWidget::itemClicked, this, &SearchDrop::run);
+            connect(edit, &QLineEdit::textChanged, this, [this] { refresh(false); });
+            edit->installEventFilter(this);
+            window->installEventFilter(this);
+        }
+
+        // Ctrl+K: focus the field and list every command.
+        void openAll()
+        {
+            m_edit->setFocus();
+            m_edit->selectAll();
+            refresh(true);
+        }
+
+    protected:
+        bool eventFilter(QObject *watched, QEvent *event) override
+        {
+            if (watched == m_window)
+            {
+                switch (event->type())
+                {
+                case QEvent::Move:
+                case QEvent::Resize:
+                case QEvent::WindowStateChange:
+                case QEvent::Hide:
+                case QEvent::WindowDeactivate:
+                    hide();
+                    break;
+                default:
+                    break;
+                }
+                return QFrame::eventFilter(watched, event);
+            }
+            if (event->type() == QEvent::FocusOut)
+            {
+                hide();
+            }
+            else if ((event->type() == QEvent::KeyPress) && isVisible())
+            {
+                const auto *key = static_cast<QKeyEvent *>(event);
+                switch (key->key())
+                {
+                case Qt::Key_Down:
+                case Qt::Key_Up:
+                    step((key->key() == Qt::Key_Down) ? 1 : -1);
+                    return true;
+                case Qt::Key_Return:
+                case Qt::Key_Enter:
+                    if (m_list->currentItem())
+                    {
+                        run(m_list->currentItem());
+                        return true;
+                    }
+                    break;
+                case Qt::Key_Escape:
+                    hide();
+                    return true;
+                default:
+                    break;
+                }
+            }
+            return QFrame::eventFilter(watched, event);
+        }
+
+    private:
+        void refresh(const bool all)
+        {
+            const QString text = m_edit->text().trimmed();
+            // Ctrl+K lists everything; typing only while the field has focus.
+            if (!all && (!m_edit->hasFocus() || text.isEmpty()))
+            {
+                hide();
+                return;
+            }
+            const QStringList words = all ? QStringList() : text.split(u' ', Qt::SkipEmptyParts);
+            m_list->clear();
+            for (const Command &c : commands(m_window))
+            {
+                if (!c.action->isEnabled())
+                    continue;
+                const QString name = plain(c.action->text());
+                const QString haystack = name + u' ' + c.section;
+                const bool match = std::all_of(words.cbegin(), words.cend(), [&haystack](const QString &w)
+                {
+                    return haystack.contains(w, Qt::CaseInsensitive);
+                });
+                if (!match)
+                    continue;
+                auto *item = new QListWidgetItem(iconFor(c.action), name, m_list);
+                item->setData(Qt::UserRole, QVariant::fromValue(static_cast<QObject *>(c.action)));
+                item->setData(Qt::UserRole + 1, c.action->shortcut().toString(QKeySequence::NativeText));
+                item->setData(Qt::UserRole + 2, c.section);
+            }
+            if (m_list->count() == 0)
+            {
+                hide();
+                return;
+            }
+            m_title->setText(all ? QDialog::tr("Commands") : QDialog::tr("Commands matching \"%1\"").arg(text));
+            m_list->setCurrentRow(all ? -1 : 0);
+            place();
+            if (!isVisible())
+                show();
+        }
+
+        void place()
+        {
+            const int rows = std::min(m_list->count(), 8);
+            const int rowHeight = std::max(1, m_list->sizeHintForRow(0));
+            m_list->setFixedHeight((rows * rowHeight) + 4);
+            const int width = std::max(m_edit->width(), 460);
+            adjustSize();
+            resize(width, sizeHint().height());
+            move(m_edit->mapToGlobal(QPoint((m_edit->width() - width) / 2, m_edit->height() + 6)));
+        }
+
+        void step(const int delta)
+        {
+            const int count = m_list->count();
+            if (count == 0)
+                return;
+            const int row = m_list->currentRow();
+            m_list->setCurrentRow((row < 0) ? ((delta > 0) ? 0 : (count - 1)) : ((row + delta + count) % count));
+        }
+
+        void run(QListWidgetItem *item)
+        {
+            if (!item)
+                return;
+            QPointer<QAction> action = qobject_cast<QAction *>(item->data(Qt::UserRole).value<QObject *>());
+            hide();
+            // The text was a command name, not a torrent filter.
+            m_edit->clear();
+            if (action && action->isEnabled())
+                QMetaObject::invokeMethod(action, &QAction::trigger, Qt::QueuedConnection);
+        }
+
+        QMainWindow *m_window = nullptr;
+        QLineEdit *m_edit = nullptr;
+        QLabel *m_title = nullptr;
+        QListWidget *m_list = nullptr;
+    };
+
     class Sheet final : public QDialog
     {
     public:
@@ -667,6 +850,19 @@ void DoseShortcuts::showSheet(QMainWindow *window)
 
 void DoseShortcuts::showPalette(QMainWindow *window)
 {
+    // The title bar's search field when there is one, else a floating palette.
+    if (auto *drop = window->findChild<QFrame *>(u"doseSearchDrop"_s); drop && window->isVisible())
+    {
+        static_cast<SearchDrop *>(drop)->openAll();
+        return;
+    }
     auto *palette = new Palette(window);
     palette->open();
+}
+
+void DoseShortcuts::attachSearch(QMainWindow *window, QLineEdit *edit)
+{
+    if (!window || !edit || !DosePaint::active())
+        return;
+    new SearchDrop(window, edit);
 }

@@ -181,6 +181,28 @@ namespace
         }
     }
 
+    // The default button's label is semibold (stylesheet), and which button is
+    // the default moves with focus, so a button sized for regular text would
+    // clip ("Remove torrent and conten"). Every text button is kept wide
+    // enough for its label in semibold.
+    void fitSemibold(QWidget *widget)
+    {
+        auto *button = qobject_cast<QPushButton *>(widget);
+        if (!button || button->text().isEmpty())
+            return;
+        QFont bold = button->font();
+        bold.setWeight(QFont::DemiBold);
+        const QString text = button->text().remove(u'&');
+        // Zero when the label is already semibold (the button is the default now).
+        const int extra = std::max(0, QFontMetrics(bold).horizontalAdvance(text) - button->fontMetrics().horizontalAdvance(text));
+        const int need = button->sizeHint().width() + extra;
+        if (button->minimumWidth() < need)
+        {
+            button->setMinimumWidth(need);
+            button->updateGeometry();
+        }
+    }
+
     class Animator final : public QObject
     {
     public:
@@ -203,6 +225,11 @@ namespace
             case QEvent::Leave:
             case QEvent::HoverLeave:
                 fade(widget, 0.0);
+                break;
+            case QEvent::Show:
+            case QEvent::FontChange:
+                if (DosePaint::active())
+                    fitSemibold(widget);
                 break;
             case QEvent::Paint:
                 if (DosePaint::active())

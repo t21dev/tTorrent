@@ -329,9 +329,10 @@ void DoseTitleBar::embedInTitle(QMainWindow *window, QWidget *widget)
         return;
     // The title's text hides; the label's room hosts the widget, centred.
     label->setProperty("doseHosting", true); // the title text hides (stylesheet rule), children don't
-    label->setMinimumHeight(widget->height() + 8);
+    // Room above and below the field whatever its height (fonts differ), so
+    // its border never meets the window's top edge.
     auto *row = new QHBoxLayout(label);
-    row->setContentsMargins(12, 0, 12, 0);
+    row->setContentsMargins(12, 6, 12, 6);
     row->addStretch();
     row->addWidget(widget);
     row->addStretch();

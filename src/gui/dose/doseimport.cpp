@@ -187,6 +187,13 @@ void DoseImport::runPending()
     {
         if (key.startsWith(u"Appearance/") || key.startsWith(u"LegalNotice/") || key.startsWith(u"Meta/"))
             continue;
+        // A custom qBittorrent theme would replace tTorrent's look, and the log
+        // folder points into qBittorrent's own profile (tTorrent must never write there).
+        if ((key == u"Preferences/General/UseCustomUITheme") || (key == u"Preferences/General/CustomUIThemePath")
+            || (key == u"Application/FileLogger/Path"))
+        {
+            continue;
+        }
         ours.setValue(key, theirs.value(key));
     }
     ours.sync();

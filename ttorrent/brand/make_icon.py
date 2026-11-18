@@ -1,5 +1,6 @@
 """Draws tTorrent's app icon (sprout tile, chosen 2026-11-18) into
-ttorrent-256.png, ttorrent.ico (16-256 px) and icon.svg. Geometry is on a
+ttorrent-256.png, ttorrent.ico (16-256 px) and icon.svg, plus the .torrent
+file icon (ttorrent-file.ico). Geometry is on a
 256 grid, matching icon.svg; each size is drawn 8x larger and scaled down."""
 from pathlib import Path
 from PIL import Image, ImageDraw
@@ -51,12 +52,34 @@ def draw(size):
     return img.resize((size, size), Image.LANCZOS)
 
 
+def draw_file(size):
+    """A .torrent file: a white page with a folded corner and the sprout tile."""
+    k = 8
+    S = size * k
+    s = S / 256.0
+    img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    page, edge, fold = (250, 250, 248, 255), (176, 180, 186, 255), (222, 225, 228, 255)
+    x0, y0, x1, y1, c = 40 * s, 12 * s, 216 * s, 244 * s, 56 * s
+    outline = [(x0, y0), (x1 - c, y0), (x1, y0 + c), (x1, y1), (x0, y1)]
+    d.polygon(outline, fill=edge)
+    m = 6 * s
+    d.polygon([(x0 + m, y0 + m), (x1 - c - m * 0.4, y0 + m), (x1 - m, y0 + c + m * 0.4), (x1 - m, y1 - m), (x0 + m, y1 - m)], fill=page)
+    d.polygon([(x1 - c, y0), (x1 - c, y0 + c), (x1, y0 + c)], fill=fold)
+    tile = draw(256).resize((round(136 * s), round(136 * s)), Image.LANCZOS)
+    img.alpha_composite(tile, (round(60 * s), round(84 * s)))
+    return img.resize((size, size), Image.LANCZOS)
+
+
 def main():
     (HERE / "icon.svg").write_text(SVG, encoding="utf8")
     draw(256).save(HERE / "ttorrent-256.png")
     sizes = [16, 20, 24, 32, 40, 48, 64, 128, 256]
     images = [draw(n) for n in sizes]
     images[-1].save(HERE / "ttorrent.ico", sizes=[(n, n) for n in sizes], append_images=images[:-1])
+    files = [draw_file(n) for n in sizes]
+    files[-1].save(HERE / "ttorrent-file.ico", sizes=[(n, n) for n in sizes], append_images=files[:-1])
+    draw_file(256).save(HERE / "ttorrent-file-256.png")
     print("ok")
 
 

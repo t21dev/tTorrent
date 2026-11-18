@@ -15,6 +15,10 @@
 
 #include "dosedev.h"
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 #include <functional>
 
 #include <QAction>
@@ -40,6 +44,7 @@
 #include "base/bittorrent/session.h"
 #include "base/bittorrent/torrent.h"
 #include "base/global.h"
+#include "gui/deletionconfirmationdialog.h"
 #include "base/path.h"
 #include "base/tag.h"
 #include "dosebackup.h"
@@ -291,10 +296,32 @@ void DoseDev::scheduleShots(QMainWindow *window)
         };
     }
     // Keyboard shortcuts sheet and the command palette.
-    steps << [window]
+    steps << [window, dir]
     {
         if (auto *sheet = window->findChild<QAction *>(u"doseActionShortcuts"_s))
             sheet->trigger();
+        // Fade check: a dialog 40 ms after it opens should be part-transparent.
+        for (const int ms : {40, 400})
+        QTimer::singleShot(ms, window, [dir, ms]
+        {
+            QFile probe {dir + u"/fade-probe.txt"_s};
+            if (!probe.open(QIODevice::Append | QIODevice::Text))
+                return;
+            probe.write(u"%1 ms: "_s.arg(ms).toUtf8());
+            for (QDialog *dialog : openDialogs())
+            {
+                QString line = u"%1 opacity=%2"_s.arg(dialog->metaObject()->className()).arg(dialog->windowOpacity());
+#ifdef Q_OS_WIN
+                const auto hwnd = reinterpret_cast<HWND>(dialog->winId());
+                BYTE alpha = 0;
+                DWORD flags = 0;
+                const bool layered = (::GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_LAYERED) != 0;
+                ::GetLayeredWindowAttributes(hwnd, nullptr, &alpha, &flags);
+                line += u" layered=%1 alpha=%2 flags=%3"_s.arg(layered).arg(alpha).arg(flags);
+#endif
+                probe.write((line + u'\n').toUtf8());
+            }
+        });
     };
     steps << [window, dir]
     {
@@ -310,7 +337,7 @@ void DoseDev::scheduleShots(QMainWindow *window)
     {
         for (QWidget *top : QApplication::topLevelWidgets())
         {
-            if (top->isVisible() && (top->objectName() == u"dosePalette"))
+            if (top->isVisible() && ((top->objectName() == u"dosePalette") || (top->objectName() == u"doseSearchDrop")))
             {
                 save(top, dir + u"/palette.png");
                 top->close();
@@ -474,6 +501,21 @@ void DoseDev::scheduleShots(QMainWindow *window)
         for (QDialog *dialog : openDialogs())
         {
             save(dialog, dir + u"/update-message.png");
+            dialog->close();
+        }
+    };
+    // Remove confirmation with the long "remove content" button label.
+    steps << [window]
+    {
+        auto *dialog = new DeletionConfirmationDialog(window, 1, u"Big.Buck.Bunny.2008.1080p.Blender.Open.Movie.Sample-Collection"_s, true);
+        dialog->setAttribute(Qt::WA_DeleteOnClose);
+        dialog->show();
+    };
+    steps << [dir]
+    {
+        for (QDialog *dialog : openDialogs())
+        {
+            save(dialog, dir + u"/remove-confirm.png");
             dialog->close();
         }
     };

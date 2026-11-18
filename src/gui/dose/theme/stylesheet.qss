@@ -202,7 +202,7 @@ QGroupBox {
 QGroupBox::title {
     subcontrol-origin: margin;
     subcontrol-position: top left;
-    left: 2px;
+    left: @groupTitleLeft@px; /* lines up with the settings inside the box */
     top: 4px;
     padding: 0;
     font-weight: 600;

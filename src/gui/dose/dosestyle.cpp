@@ -31,9 +31,9 @@
 
 namespace
 {
-    // Fades a window in when it shows: 120 ms for menus, lists and tooltips,
-    // 180 ms for dialogs (DESIGN.md › Motion). Skipped when the system turns
-    // animations off (Qt reads that into UI_AnimateMenu on Windows).
+    // Fades a window in when it shows: 120 ms for menus, lists, tooltips and
+    // pop-up panels, 180 ms for dialogs and other windows (DESIGN.md › Motion). Skipped when the system turns
+    // animations off (Windows' Animation effects setting).
     class FadeIn final : public QObject
     {
     public:
@@ -63,10 +63,10 @@ namespace
             {
                 frame(dialog);
             }
-            if ((event->type() == QEvent::Show) && QApplication::isEffectEnabled(Qt::UI_AnimateMenu))
+            if ((event->type() == QEvent::Show) && DosePaint::animationsEnabled())
             {
                 auto *window = static_cast<QWidget *>(watched);
-                const bool dialog = qobject_cast<QDialog *>(window);
+                const bool dialog = qobject_cast<QDialog *>(window) || (window->windowType() == Qt::Window);
                 auto *animation = new QPropertyAnimation(window, "windowOpacity", window);
                 animation->setStartValue(0.0);
                 animation->setEndValue(1.0);
@@ -173,7 +173,10 @@ void DoseStyle::polish(QWidget *widget)
             menu->setProperty("doseDense", true);
         return;
     }
-    if (widget->windowType() == Qt::ToolTip)
+    // Tooltips, other pop-up panels (command palette, memory card) and any
+    // other window but the main one fade in too.
+    if ((widget->windowType() == Qt::ToolTip) || (widget->windowType() == Qt::Popup) || (widget->windowType() == Qt::Tool)
+        || ((widget->windowType() == Qt::Window) && !widget->inherits("QMainWindow")))
     {
         widget->installEventFilter(FadeIn::instance());
         return;

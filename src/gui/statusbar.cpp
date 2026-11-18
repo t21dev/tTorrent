@@ -42,6 +42,7 @@
 #include "base/preferences.h"
 #include "base/settingsstorage.h"
 #include "dose/dosememory.h"
+#include "dose/dosestatus.h"
 #include "dose/dosepaint.h"
 #include "base/utils/misc.h"
 #include "speedlimitdialog.h"
@@ -130,6 +131,7 @@ StatusBar::StatusBar(QWidget *parent)
 
     m_freeDiskSpaceLbl = new QLabel(tr("Free space: N/A"));
     m_freeDiskSpaceLbl->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
+    DoseStatus::decorate(m_freeDiskSpaceLbl, u"dose-drive"_s); // tTorrent: icon instead of words
     m_freeDiskSpaceSeparator = createSeparator(this);
 
     m_lastExternalIPsLbl = new QLabel(tr("External IP: N/A"));
@@ -139,6 +141,7 @@ StatusBar::StatusBar(QWidget *parent)
     const bool isDHTVisible = session->isDHTEnabled();
     m_DHTLbl = new QLabel(tr("DHT: %1 nodes").arg(0), this);
     m_DHTLbl->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
+    DoseStatus::decorate(m_DHTLbl, u"network-server"_s); // tTorrent: icon instead of words
     m_DHTLbl->setVisible(isDHTVisible);
     m_DHTSeparator = createSeparator(this);
     m_DHTSeparator->setVisible(isDHTVisible);
@@ -164,6 +167,7 @@ StatusBar::StatusBar(QWidget *parent)
     m_memoryLbl->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
     m_memoryLbl->setToolTip(tr("Memory tTorrent uses (Task Manager's private working set)"));
     DoseMemory::attachToLabel(m_memoryLbl); // tTorrent: click for the memory graph
+    DoseStatus::decorate(m_memoryLbl, u"dose-memory"_s); // tTorrent: icon instead of words
     m_memorySeparator = createSeparator(this);
     m_connectionSeparator = createSeparator(this);
     m_altSpeedsSeparator = createSeparator(this);
@@ -222,7 +226,7 @@ void StatusBar::updateConnectionStatus()
     if (!BitTorrent::Session::instance()->isListening())
     {
         m_connecStatusLblIcon->setIcon(UIThemeManager::instance()->getIcon(u"disconnected"_s));
-        m_connecStatusLblIcon->setText(tr("Offline")); // tTorrent: a word beside the icon
+        m_connecStatusLblIcon->setText(DoseStatus::iconsOnly() ? QString() : tr("Offline")); // tTorrent: a word beside the icon
         const QString tooltip = u"<b>%1</b><br>%2"_s.arg(tr("Connection Status:"), tr("Offline. This usually means that qBittorrent failed to listen on the selected port for incoming connections."));
         m_connecStatusLblIcon->setToolTip(tooltip);
     }
@@ -232,14 +236,14 @@ void StatusBar::updateConnectionStatus()
         {
             // Connection OK
             m_connecStatusLblIcon->setIcon(UIThemeManager::instance()->getIcon(u"connected"_s));
-            m_connecStatusLblIcon->setText(tr("Online"));
+            m_connecStatusLblIcon->setText(DoseStatus::iconsOnly() ? QString() : tr("Online")); // tTorrent
             const QString tooltip = u"<b>%1</b><br>%2"_s.arg(tr("Connection Status:"), tr("Online"));
             m_connecStatusLblIcon->setToolTip(tooltip);
         }
         else
         {
             m_connecStatusLblIcon->setIcon(UIThemeManager::instance()->getIcon(u"firewalled"_s));
-            m_connecStatusLblIcon->setText(tr("Firewalled"));
+            m_connecStatusLblIcon->setText(DoseStatus::iconsOnly() ? QString() : tr("Firewalled")); // tTorrent
             const QString tooltip = u"<b>%1</b><br><i>%2</i>"_s.arg(tr("Connection Status:"), tr("No direct connections. This may indicate network configuration problems."));
             m_connecStatusLblIcon->setToolTip(tooltip);
         }
@@ -252,7 +256,9 @@ void StatusBar::updateDHTNodesNumber()
     {
         m_DHTLbl->setVisible(true);
         m_DHTSeparator->setVisible(true);
-        m_DHTLbl->setText(tr("DHT: %1 nodes").arg(BitTorrent::Session::instance()->status().dhtNodes));
+        const qint64 nodes = BitTorrent::Session::instance()->status().dhtNodes;
+        m_DHTLbl->setText(DoseStatus::iconsOnly() ? QString::number(nodes) : tr("DHT: %1 nodes").arg(nodes)); // tTorrent
+        m_DHTLbl->setToolTip(DoseStatus::iconsOnly() ? tr("DHT: %1 nodes").arg(nodes) : QString()); // tTorrent
     }
     else
     {
@@ -263,7 +269,8 @@ void StatusBar::updateDHTNodesNumber()
 
 void StatusBar::updateFreeDiskSpaceLabel(const qint64 value)
 {
-    m_freeDiskSpaceLbl->setText(tr("Free space: ") + Utils::Misc::friendlyUnit(value));
+    m_freeDiskSpaceLbl->setText(DoseStatus::text(tr("Free space: "), Utils::Misc::friendlyUnit(value))); // tTorrent
+    m_freeDiskSpaceLbl->setToolTip(DoseStatus::iconsOnly() ? tr("Free space") : QString()); // tTorrent
 }
 
 void StatusBar::updateFreeDiskSpaceVisibility()
@@ -399,7 +406,7 @@ void StatusBar::updateMemoryLabel()
     if (!m_memoryLbl || !m_memoryLbl->isVisible())
         return;
     const qint64 bytes = processMemory();
-    m_memoryLbl->setText(tr("Memory: %1").arg(Utils::Misc::friendlyUnit(bytes)));
+    m_memoryLbl->setText(DoseStatus::iconsOnly() ? Utils::Misc::friendlyUnit(bytes) : tr("Memory: %1").arg(Utils::Misc::friendlyUnit(bytes))); // tTorrent
 }
 
 void StatusBar::contextMenuEvent(QContextMenuEvent *event)
@@ -423,6 +430,15 @@ void StatusBar::contextMenuEvent(QContextMenuEvent *event)
         add(label, wants(id), [this, id](const bool on) { setWanted(id, on); });
     }
     menu.addSeparator();
+    // tTorrent: an icon and a value instead of "Free space: …"
+    add(tr("Icons instead of words"), DoseStatus::iconsOnly(), [this](const bool on)
+    {
+        DoseStatus::setIconsOnly(on);
+        DoseStatus::relabel(m_freeDiskSpaceLbl, tr("Free space: "), tr("Free space"));
+        DoseStatus::relabel(m_DHTLbl, {}, {});
+        DoseStatus::relabel(m_memoryLbl, {}, {});
+        refresh();
+    });
     menu.addAction(tr("Show all"), this, [this, pref]
     {
         SettingsStorage::instance()->storeValue(HIDDEN_KEY, QStringList());

@@ -32,6 +32,7 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QMenu>
+#include <QStyle>
 #include <QVBoxLayout>
 
 #include "base/bittorrent/session.h"
@@ -62,7 +63,7 @@ SpeedWidget::SpeedWidget(PropertiesWidget *parent)
     m_layout->setSpacing(3);
 
     m_hlayout = new QHBoxLayout();
-    m_hlayout->setContentsMargins(0, 0, 0, 0);
+    m_hlayout->setContentsMargins(style()->pixelMetric(QStyle::PM_LayoutLeftMargin), 0, style()->pixelMetric(QStyle::PM_LayoutRightMargin), 0); // tTorrent: off the sidebar's edge
 
     m_periodLabel = new QLabel(u"<b>" + tr("Period:") + u"</b>");
 

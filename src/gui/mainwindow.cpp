@@ -271,6 +271,7 @@ MainWindow::MainWindow(IGUIApplication *app, const WindowState initialState, con
     m_columnFilterWidget->setLayout(columnFilterLayout);
     m_columnFilterAction = m_ui->toolBar->insertWidget(m_ui->actionLock, m_columnFilterWidget);
     DoseToolbar::polishFilter(m_columnFilterEdit, m_columnFilterComboBox); // tTorrent: one field, column in its menu
+    DoseShortcuts::attachSearch(this, m_columnFilterEdit); // tTorrent: commands drop down under the same field
 
     auto *spacer = new QWidget(this);
     spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
