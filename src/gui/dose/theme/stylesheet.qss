@@ -59,6 +59,8 @@ QMenu::item:selected { background: @menuHover@; color: @text@; }
 QMenu::item:disabled { color: @ring@; }
 QMenu::separator { height: 1px; background: @line@; margin: 4px 8px; }
 QMenu::icon { padding-left: 10px; }
+/* A ticked item that has an icon: the icon sits on an accent-tinted chip, so on and off stay clear. */
+QMenu::icon:checked { background: @select@; border: 1px solid @accentLine@; border-radius: 5px; }
 QMenu::indicator { width: 14px; height: 14px; left: 10px; }
 QMenu::right-arrow { image: url(@chevronRight@); width: 12px; height: 12px; right: 12px; }
 
