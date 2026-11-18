@@ -22,6 +22,7 @@
 #include <QFile>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QRegularExpression>
 
 #include "base/global.h"
 #include "base/path.h"
@@ -118,12 +119,24 @@ namespace
         , u"dark"_s, u"ink"_s, u"charcoal"_s, u"nord"_s, u"dracula"_s, u"mocha"_s, u"tokyo"_s
         , u"rosepine"_s, u"gruvbox"_s, u"vampire"_s, u"aurora"_s, u"ember"_s};
 
+    QString themePath(const QString &id)
+    {
+        if (id.startsWith(u"user-"))
+            return QString(DoseThemeSource::userThemeDir() + u'/' + id + u".json");
+        return QString(u":/dosetheme/themes/" + id + u".json");
+    }
+
     QJsonObject loadTheme(const QString &id)
     {
-        QFile file {u":/dosetheme/themes/" + id + u".json"};
+        QFile file {themePath(id)};
         if (!file.open(QIODevice::ReadOnly))
             return {};
         return QJsonDocument::fromJson(file.readAll()).object();
+    }
+
+    bool isKnown(const QString &id)
+    {
+        return THEME_ORDER.contains(id) || (id.startsWith(u"user-") && QFile::exists(themePath(id)));
     }
 
     struct Preset
@@ -202,11 +215,15 @@ namespace
 }
 
 DoseThemeSource::DoseThemeSource(const QString &themeId, const QString &accent, const QString &density)
-    : m_themeId {THEME_ORDER.contains(themeId) ? themeId : u"light"_s}
+    : DoseThemeSource(loadTheme(isKnown(themeId) ? themeId : u"light"_s), accent, density)
+{
+}
+
+DoseThemeSource::DoseThemeSource(const QJsonObject &theme, const QString &accent, const QString &density)
+    : m_themeId {theme.value(u"id"_s).toString(u"draft"_s)}
     , m_density {densityFor(density).id}
     , m_icons {Path(u":/dosetheme"_s)}
 {
-    const QJsonObject theme = loadTheme(m_themeId);
     const QJsonObject colors = theme.value(u"colors"_s).toObject();
     m_dark = (theme.value(u"appearance"_s).toString() == u"dark");
     for (auto it = colors.begin(); it != colors.end(); ++it)
@@ -368,6 +385,12 @@ QList<DoseThemeSource::Choice> DoseThemeSource::themes()
     QList<Choice> list {{u"system"_s, tr(QT_TRANSLATE_NOOP("DoseTheme", "Follow system"))}};
     for (const QString &id : THEME_ORDER)
         list.append({id, loadTheme(id).value(u"name"_s).toString(id)});
+    const QStringList mine = QDir(userThemeDir()).entryList({u"user-*.json"_s}, QDir::Files, QDir::Name);
+    for (const QString &file : mine)
+    {
+        const QString id = file.chopped(5);
+        list.append({id, loadTheme(id).value(u"name"_s).toString(id)});
+    }
     return list;
 }
 
@@ -400,7 +423,7 @@ double DoseThemeSource::accentContrast(const QString &accent, const QString &the
 
 QString DoseThemeSource::resolveTheme(const QString &themeId, const bool systemIsDark)
 {
-    if (THEME_ORDER.contains(themeId))
+    if (isKnown(themeId))
         return themeId;
     return systemIsDark ? u"dark"_s : u"light"_s;
 }
@@ -434,4 +457,49 @@ QString DoseThemeSource::densityKey()
 QString DoseThemeSource::scaleKey()
 {
     return u"Appearance/InterfaceScale"_s;
+}
+
+QString DoseThemeSource::userThemeDir()
+{
+    return Profile::instance()->location(SpecialFolder::Config).data() + u"/themes"_s;
+}
+
+QJsonObject DoseThemeSource::themeJson(const QString &themeId)
+{
+    return loadTheme(themeId);
+}
+
+QStringList DoseThemeSource::baseTokens()
+{
+    return {u"bg"_s, u"panel"_s, u"raised"_s, u"hover"_s, u"line"_s, u"text"_s, u"muted"_s, u"faint"_s, u"ring"_s
+        , u"accent"_s, u"ok"_s, u"warn"_s, u"bad"_s};
+}
+
+double DoseThemeSource::contrastRatio(const QColor &a, const QColor &b)
+{
+    return contrast(a, b);
+}
+
+QString DoseThemeSource::saveUserTheme(const QString &name, const bool dark, const QHash<QString, QColor> &colours)
+{
+    QString slug = name.trimmed().toLower();
+    slug.replace(QRegularExpression(u"[^a-z0-9]+"_s), u"-"_s);
+    slug.remove(QRegularExpression(u"^-+|-+$"_s));
+    if (slug.isEmpty())
+        slug = u"theme"_s;
+    const QString id = u"user-"_s + slug;
+
+    QJsonObject tokens;
+    for (const QString &key : baseTokens())
+        tokens.insert(key, colours.value(key).name().toUpper());
+    const QJsonObject theme {
+        {u"id"_s, id}, {u"name"_s, name.trimmed().isEmpty() ? QString(tr("My theme")) : name.trimmed()},
+        {u"appearance"_s, dark ? u"dark"_s : u"light"_s}, {u"colors"_s, tokens},
+    };
+    QDir().mkpath(userThemeDir());
+    QFile file {themePath(id)};
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate))
+        return {};
+    file.write(QJsonDocument(theme).toJson(QJsonDocument::Indented));
+    return id;
 }

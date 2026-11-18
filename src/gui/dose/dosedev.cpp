@@ -19,6 +19,7 @@
 #include <QApplication>
 #include <QDialog>
 #include <QDir>
+#include <QLayout>
 #include <QMainWindow>
 #include <QMenu>
 #include <QMenuBar>
@@ -27,6 +28,7 @@
 #include <QTimer>
 
 #include "base/global.h"
+#include "dosethemeeditor.h"
 
 namespace
 {
@@ -90,6 +92,12 @@ void DoseDev::scheduleShots(QMainWindow *window)
             QTimer::singleShot(1200, window, [dir, shootDialogs]
             {
                 shootDialogs(dir + u"/about.png");
+                // The theme editor, rendered without showing it.
+                DoseThemeEditor editor {u"dark"_s};
+                editor.resize(900, 620);
+                editor.ensurePolished();
+                editor.layout()->activate();
+                editor.grab().save(dir + u"/theme-editor.png");
                 QTimer::singleShot(300, qApp, &QApplication::quit);
             });
         });

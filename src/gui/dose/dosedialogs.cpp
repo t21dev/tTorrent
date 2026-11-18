@@ -27,6 +27,7 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
+#include <QPushButton>
 #include <QRegularExpression>
 #include <QRegularExpressionValidator>
 #include <QScrollArea>
@@ -42,6 +43,7 @@
 #include "base/settingsstorage.h"
 #include "gui/uithememanager.h"
 #include "dosetheme.h"
+#include "dosethemeeditor.h"
 #include "dosetrim.h"
 
 namespace
@@ -165,15 +167,31 @@ QToolButton#doseInfoToggle {
         int row = 0;
 
         auto *theme = new QComboBox;
-        for (const DoseThemeSource::Choice &c : DoseThemeSource::themes())
+        theme->setMaxVisibleItems(20);
+        const auto fillThemes = [theme, manager]
         {
-            if ((c.id == u"light") || (c.id == u"dark"))
-                theme->insertSeparator(theme->count());
-            theme->addItem(c.name, c.id);
-        }
-        theme->setCurrentIndex(std::max(0, theme->findData(manager->lookTheme())));
+            theme->clear();
+            bool mine = false;
+            for (const DoseThemeSource::Choice &c : DoseThemeSource::themes())
+            {
+                const bool user = c.id.startsWith(u"user-");
+                if ((c.id == u"light") || (c.id == u"dark") || (user && !mine))
+                    theme->insertSeparator(theme->count());
+                mine = mine || user;
+                theme->addItem(c.name, c.id);
+            }
+            theme->setCurrentIndex(std::max(0, theme->findData(manager->lookTheme())));
+        };
+        fillThemes();
+        auto *themeRow = new QHBoxLayout;
+        themeRow->setSpacing(8);
+        themeRow->addWidget(theme);
+        auto *create = new QPushButton(QDialog::tr("Create a theme…"));
+        create->setAutoDefault(false);
+        themeRow->addWidget(create);
+        themeRow->addStretch();
         form->addWidget(new QLabel(QDialog::tr("Theme:")), row, 0);
-        form->addWidget(theme, row++, 1, Qt::AlignLeft);
+        form->addLayout(themeRow, row++, 1);
 
         auto *swatches = new QHBoxLayout;
         swatches->setSpacing(8);
@@ -250,6 +268,15 @@ QToolButton#doseInfoToggle {
                 apply(c.name());
         });
         QObject::connect(theme, &QComboBox::activated, group, [=](int) { apply(manager->lookAccent()); });
+        QObject::connect(create, &QPushButton::clicked, group, [=]
+        {
+            DoseThemeEditor editor {manager->resolvedTheme(), group->window()};
+            if (editor.exec() != QDialog::Accepted)
+                return;
+            manager->setLook(editor.savedThemeId(), manager->lookAccent(), density->currentData().toString());
+            fillThemes();
+            refresh();
+        });
         QObject::connect(density, &QComboBox::activated, group, [=](int) { apply(manager->lookAccent()); });
         refresh();
 

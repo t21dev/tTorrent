@@ -17,6 +17,7 @@
 
 #include <QColor>
 #include <QHash>
+#include <QJsonObject>
 #include <QList>
 #include <QString>
 
@@ -38,6 +39,8 @@ public:
 
     // themeId must already be resolved ("system" is the caller's job).
     DoseThemeSource(const QString &themeId, const QString &accent, const QString &density);
+    // From a theme's JSON (the theme editor's draft).
+    DoseThemeSource(const QJsonObject &theme, const QString &accent, const QString &density);
 
     QColor getColor(const QString &colorId, ColorMode colorMode) const override;
     Path getIconPath(const QString &iconId, ColorMode colorMode) const override;
@@ -58,6 +61,15 @@ public:
     // Contrast of the unadjusted accent against the theme's background.
     static double accentContrast(const QString &accent, const QString &themeId);
     static QString resolveTheme(const QString &themeId, bool systemIsDark);
+
+    // Themes people make in the editor: <config>/themes/user-<name>.json.
+    static QString userThemeDir();
+    static QJsonObject themeJson(const QString &themeId);
+    // Writes the theme and returns its id ("user-…").
+    static QString saveUserTheme(const QString &name, bool dark, const QHash<QString, QColor> &colours);
+    // The colours a theme is made of, in editor order.
+    static QStringList baseTokens();
+    static double contrastRatio(const QColor &a, const QColor &b);
     // Tinted icons live in <cache>/dose-icons/<theme>-<accent>; cleared once per start.
     static void clearIconCache();
     // Older builds stored green/violet/ink; map them to today's presets.

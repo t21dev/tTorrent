@@ -256,6 +256,8 @@ add_library(qbt_gui STATIC
     dose/dosestyle.cpp
     dose/dosestyle.h
     dose/dosetheme.cpp
+    dose/dosethemeeditor.cpp
+    dose/dosethemeeditor.h
     dose/dosetoolbar.cpp
     dose/dosetoolbar.h
     dose/dosetrim.cpp
