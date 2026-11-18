@@ -9,7 +9,7 @@ Source of truth in code: `src/gui/dose/` (`dosetheme.*` for tokens, accent and d
 - **Familiar map, new finish.** Menu, toolbar, filter sidebar, transfer list, details tabs and status bar stay where people expect them.
 - **Data is the loudest thing.** Chrome is quiet greys. Colour is for the accent (selection, primary action, progress), states (seeding, checking, error) and category colours.
 - **Crisp and compact, never gimmicky.** Flat surfaces; depth comes from a lighter top edge, a darker bottom edge and fills, **never gradients**. Icon buttons and icon labels wherever they fit. Every interactive element has a hover state.
-- **Fast is a feature.** Nothing decorative costs a frame or memory. No blur, no idle redraws. Lists with hundreds of rows are painted in code, not through stylesheet rules (the transfer list's stylesheet rows cost a 68 MB start-up peak, measured 2026-11-18).
+- **Fast is a feature.** Nothing decorative costs a frame or memory. No blur, no idle redraws. Lists with hundreds of rows are painted in code, not through stylesheet rules (the stylesheet as a whole costs about 29 MB of private bytes, measured 2026-11-18).
 - **Plain copy.** Sentence case, short sentences. No invented numbers.
 
 ## Colour

@@ -59,9 +59,9 @@ namespace DosePaint
     // become compact icon buttons with the text as their tooltip.
     void selectButtonsAsIcons(QWidget *root);
 
-    // Rows the stylesheet doesn't draw (the transfer list: hundreds of rows
-    // through stylesheet rules cost a 60 MB start-up peak, measured
-    // 2026-11-18). True for views that paint their own rows.
+    // Rows the stylesheet doesn't draw (the transfer list, which can hold
+    // hundreds of rows; the stylesheet as a whole was measured at 29 MB of
+    // private bytes, 2026-11-18). True for views that paint their own rows.
     bool paintsOwnRows(const QWidget *view);
     // Their padding (the density's row padding) and background: hover,
     // selection and the hairline under each row, as the stylesheet draws them.

@@ -96,7 +96,7 @@ powershell -ExecutionPolicy Bypass -File ttorrent\scripts\bench.ps1 `
 - The machine, date, torrent count and run length.
 - Which build each column was.
 
-Single runs vary by a few MB, so call a difference of under about 5 MB "within noise" unless repeated. Start-up times come from the log: "Start-up: N torrents ready X s after launch" and "window shown X s after launch". The window line doesn't appear in benchmark runs, because the window stays in the tray.
+**Peaks come from start-up runs only** (`-StartupRuns 3`, sampled every second). Long runs sample every 15 s and can miss a short spike, so never compare their peaks (a 68 MB "saving" from 15 s samples was published and withdrawn on 2026-11-18). Single runs vary by a few MB, so call a difference of under about 5 MB "within noise" unless repeated. Start-up times come from the log: "Start-up: N torrents ready X s after launch" and "window shown X s after launch". The window line doesn't appear in benchmark runs, because the window stays in the tray.
 
 ## Releases
 
