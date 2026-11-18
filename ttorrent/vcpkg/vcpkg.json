@@ -1,0 +1,17 @@
+{
+  "name": "ttorrent",
+  "version-string": "0.3.0",
+  "description": "tTorrent's libraries. OpenSSL is pinned to the 3.5 LTS line (supported to April 2030); the rest follow the baseline.",
+  "dependencies": [
+    "libtorrent",
+    "boost-circular-buffer",
+    "boost-optional",
+    "boost-asio",
+    "openssl",
+    "zlib"
+  ],
+  "builtin-baseline": "de36db04550a8625e3154b1a758c60035901f244",
+  "overrides": [
+    { "name": "openssl", "version": "3.5.4" }
+  ]
+}

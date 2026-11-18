@@ -49,6 +49,31 @@
 
 namespace
 {
+    // Every button DoseMotion paints, at full hover (or back at rest).
+    void forceHover(QWidget *root, const qreal amount)
+    {
+        for (QWidget *w : root->findChildren<QWidget *>())
+        {
+            if (w->property("doseMotionKind").isValid())
+            {
+                w->setProperty("doseMotionHover", amount);
+                w->update();
+            }
+        }
+    }
+
+    void save(QWidget *widget, const QString &path);
+
+    // The same screen with every animated button hovered.
+    void saveHovered(QWidget *widget, const QString &path)
+    {
+        forceHover(widget, 1.0);
+        QApplication::processEvents();
+        save(widget, path);
+        forceHover(widget, 0.0);
+        QApplication::processEvents();
+    }
+
     // A grab with a neutral grey behind translucent corners.
     void save(QWidget *widget, const QString &path)
     {
@@ -246,6 +271,7 @@ void DoseDev::scheduleShots(QMainWindow *window)
                 view->setCurrentIndex(view->model()->index(0, 0));
         }
         save(window, dir + u"/main.png");
+        saveHovered(window, dir + u"/main-hover.png");
         for (QMenuBar *bar : window->findChildren<QMenuBar *>())
         {
             for (QAction *action : bar->actions())
@@ -301,6 +327,7 @@ void DoseDev::scheduleShots(QMainWindow *window)
         for (QDialog *dialog : openDialogs())
         {
             save(dialog, dir + u"/options.png");
+            saveHovered(dialog, dir + u"/options-hover.png");
             // The bottom of the first page: Updates and Backup.
             if (auto *sections = dialog->findChild<QListWidget *>(u"tabSelection"_s))
             {

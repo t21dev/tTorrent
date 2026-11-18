@@ -265,6 +265,8 @@ add_library(qbt_gui STATIC
     dose/dosemcp.h
     dose/dosememory.cpp
     dose/dosememory.h
+    dose/dosemotion.cpp
+    dose/dosemotion.h
     dose/dosepair.cpp
     dose/dosepair.h
     dose/dosepaint.cpp

@@ -46,7 +46,13 @@ namespace DosePaint
     void setProgressStyle(const QString &style);
 
     // A bar on `track` in `fill` with the percentage, drawn in progressStyle().
-    void progress(QPainter *painter, const QStyleOptionViewItem &option, qreal percent, const QString &text, const QColor &fill);
+    // With a `key` (one per torrent), the bar glides to a new value over
+    // 400 ms instead of jumping; the text always shows the exact value.
+    void progress(QPainter *painter, const QStyleOptionViewItem &option, qreal percent, const QString &text, const QColor &fill
+        , const QString &key = {});
+
+    // False when Windows' "Animation effects" setting is off.
+    bool animationsEnabled();
 
     // The 3 px accent bar on the selected row's first visible cell.
     void selectionBar(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index);

@@ -36,7 +36,6 @@
 
 #include <QFontDatabase>
 #include <QApplication>
-#include <QRegularExpression>
 #include <QPalette>
 #include <QPixmapCache>
 #include <QResource>
@@ -282,11 +281,7 @@ void UIThemeManager::setTrayIconStyle(const TrayIconStyle value)
 
 void UIThemeManager::applyStyleSheet() const
 {
-    if (qEnvironmentVariableIsSet("TTORRENT_BENCH_NO_QSS")) return; // tTorrent: memory A/B only (ttorrent/scripts/bench.ps1)
-    QString qss = QString::fromUtf8(m_themeSource->readStyleSheet());
-    if (qEnvironmentVariableIsSet("TTORRENT_BENCH_QSS_NO_ITEMS")) // tTorrent: memory A/B only, drops the per-row rules
-        qss.remove(QRegularExpression(u"[^{}]*::item[^{]*[{][^}]*[}]"_s));
-    qApp->setStyleSheet(qss);
+    qApp->setStyleSheet(DoseThemeSource::forBenchmark(QString::fromUtf8(m_themeSource->readStyleSheet()))); // tTorrent: A/B switches
 }
 
 void UIThemeManager::onColorSchemeChanged()

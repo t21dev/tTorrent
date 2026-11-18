@@ -62,7 +62,11 @@ function New-Profile([string]$App, [string]$Dir) {
     Set-IniValue $ini 'Preferences' 'General\PreventFromSuspendWhenDownloading' 'false'
     Set-IniValue $ini 'Application' 'GUI\Notifications\Enabled' 'false'
     # The app's log is kept next to the results (start-up timing, early exits).
+    # Its folder must be the scratch profile's: a copied profile can point at the
+    # owner's real qBittorrent log folder, which a test run must never write to.
     Set-IniValue $ini 'Application' 'FileLogger\Enabled' 'true'
+    Set-IniValue $ini 'Application' 'FileLogger\Path' (($data + '\logs') -replace '\\', '/')
+    Set-IniValue $ini 'Application' 'FileLogger\DeleteOld' 'false'
     Set-IniValue $ini 'Preferences' 'General\StartMinimized' 'true'
     Set-IniValue $ini 'Preferences' 'General\SystrayEnabled' 'true'
     Set-IniValue $ini 'Preferences' 'General\MinimizeToTray' 'true'

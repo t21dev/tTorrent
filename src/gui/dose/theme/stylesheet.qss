@@ -30,6 +30,8 @@ QToolBar QLineEdit { padding: 0 10px; min-height: 22px; max-height: 30px; }
 QToolButton:hover { background: @hover@; }
 QToolButton:pressed { background: @panel@; }
 QToolButton:checked { background: @select@; }
+/* Toolbar buttons and the search icon: DoseMotion paints their background so hover fades. */
+QToolBar QToolButton:hover, QToolBar QToolButton:pressed, QToolBar QToolButton:checked { background: transparent; }
 
 QMenuBar { background: transparent; padding: 2px 4px; spacing: 2px; }
 QMenuBar::item { padding: @padV@px 11px; border-radius: 8px; background: transparent; color: @muted@; }
@@ -152,27 +154,23 @@ QSpinBox::up-button:hover, QDoubleSpinBox::up-button:hover, QSpinBox::down-butto
 QSpinBox::up-arrow, QDoubleSpinBox::up-arrow, QDateTimeEdit::up-arrow { image: url(@chevronUp@); width: 11px; height: 11px; }
 QSpinBox::down-arrow, QDoubleSpinBox::down-arrow, QDateTimeEdit::down-arrow { image: url(@chevronDown@); width: 11px; height: 11px; }
 
-/* Raised buttons: lit from above, a darker bottom edge; pressed sinks in. */
+/* Raised buttons: lit from above, a darker bottom edge; pressed sinks in.
+   DoseMotion paints the fill and border (dosemotion.cpp) so hover fades;
+   the stylesheet keeps size, padding and text colour. */
 QPushButton {
-    background: @raised@;
-    border: 1px solid @line@;
-    border-bottom-color: @edgeLo@;
+    background: transparent;
+    border: 1px solid transparent;
     border-radius: @radius@px;
     padding: @padV@px @padH@px;
     min-width: 56px;
     color: @text@;
 }
-QPushButton:hover { background: @hover@; border-color: @ring@; }
-QPushButton:pressed { background: @well@; border-top-color: @edgeLo@; border-bottom-color: @line@; padding-top: @padV@px; }
+QPushButton:pressed { padding-top: @padV@px; }
 QPushButton:default {
-    background: @accent@;
-    border: 1px solid @accent@;
     color: @onAccent@;
     font-weight: 600;
 }
-QPushButton:default:hover { background: @accentHover@; border-color: @accentHover@; }
-QPushButton:default:pressed { background: @accentBottom@; }
-QPushButton:disabled, QPushButton:default:disabled { background: @panel@; color: @faint@; border-color: @line@; }
+QPushButton:disabled, QPushButton:default:disabled { color: @faint@; }
 QPushButton:disabled { color: @ring@; }
 
 QCheckBox, QRadioButton { spacing: 8px; }
@@ -251,13 +249,13 @@ QStatusBar QPushButton, QStatusBar QPushButton:default {
     font-weight: 400;
     padding: 2px 8px;
 }
-QStatusBar QPushButton:hover { background: @hover@; color: @text@; }
+QStatusBar QPushButton:hover { color: @text@; }
 QStatusBar QFrame[frameShape="5"] { color: @line@; background: @line@; max-width: 1px; border: none; margin: 4px 2px; }
 
 /* Flat buttons (the details pane's tab row, filters): text, not chips. */
 QPushButton:flat, QPushButton[flat="true"] { background: transparent; border: none; color: @muted@; }
-QPushButton:flat:hover { background: @hover@; color: @text@; }
-QPushButton:flat:checked, QPushButton:flat:pressed { background: @select@; color: @text@; }
+QPushButton:flat:hover { color: @text@; }
+QPushButton:flat:checked, QPushButton:flat:pressed { color: @text@; }
 
 QToolTip { background: @raised@; color: @text@; border: 1px solid @line@; padding: 6px 10px; border-radius: 9px; }
 
@@ -279,15 +277,13 @@ QPushButton[doseTab="true"]:pressed, QPushButton[doseTab="true"]:checked {
 
 /* Primary toolbar button: Add torrent (DESIGN.md › Toolbar). */
 QToolButton#dosePrimary {
-    background: @accent@;
+    background: transparent;
     color: @onAccent@;
     font-weight: 600;
-    border: 1px solid @accent@;
+    border: 1px solid transparent;
     padding: 3px 14px 3px 10px;
     margin-right: 6px;
 }
-QToolButton#dosePrimary:hover { background: @accentHover@; border-color: @accentHover@; }
-QToolButton#dosePrimary:pressed { background: @accentBottom@; }
 
 /* Slim toolbar (the default): one tight row. */
 QToolBar[doseSlim="true"] { padding: 2px 8px; spacing: 2px; }
@@ -303,7 +299,6 @@ QStatusBar QPushButton { text-align: left; }
 QPushButton#selectAllButton, QPushButton#selectNoneButton, QPushButton#buttonSelectAll, QPushButton#buttonSelectNone {
     background: transparent; border: 1px solid transparent; border-radius: 7px; padding: 0; min-width: 0; min-height: 0;
 }
-QPushButton#selectAllButton:hover, QPushButton#selectNoneButton:hover, QPushButton#buttonSelectAll:hover, QPushButton#buttonSelectNone:hover { background: @hover@; border-color: @line@; }
 
 /* Filter sidebar (DESIGN.md › Sidebar): panel colour, sentence-case headings,
    rounded selection, no row dividers. */
@@ -349,7 +344,7 @@ QFrame#doseSearchField QLineEdit, QFrame#doseSearchField QLineEdit:hover, QFrame
     background: transparent; border: none; padding: 0 4px; min-height: 0;
 }
 QToolButton#doseSearchIcon { border: none; border-radius: 6px; padding: 0; background: transparent; }
-QToolButton#doseSearchIcon:hover { background: @hover@; }
+QToolButton#doseSearchIcon:hover { background: transparent; }
 
 /* Sliders: a thin track, the filled part in the accent, a round handle. */
 QSlider::groove:horizontal { height: 4px; background: @track@; border-radius: 2px; }
@@ -362,10 +357,12 @@ QSlider::handle:vertical { width: 14px; height: 14px; margin: 0 -6px; border-rad
 /* The small arrow on buttons with a menu (the Lock button). */
 QToolButton::menu-indicator { image: url(@chevronDown@); width: 10px; height: 10px; subcontrol-origin: padding; subcontrol-position: bottom right; }
 QToolButton[popupMode="1"] { padding-right: 12px; }
+/* Split buttons (popupMode 1): no frame around the arrow part, just the chevron (Fusion draws a box). */
+QToolButton::menu-button { border: none; background: transparent; width: 12px; }
+QToolButton::menu-arrow { image: url(@chevronDown@); width: 10px; height: 10px; }
 
 /* Icon buttons (Select all / none): quiet until hovered. */
 QPushButton[doseIconButton="true"] { background: transparent; border: 1px solid transparent; border-radius: 7px; padding: 0; min-width: 0; }
-QPushButton[doseIconButton="true"]:hover { background: @hover@; border-color: @line@; }
 
 /* Wide splitter gaps draw a single hairline in the middle. */
 QSplitter#splitter::handle:horizontal {

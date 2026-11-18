@@ -81,6 +81,12 @@ public:
     static QString scaleKey();    // Appearance/InterfaceScale, default 1.0
     // Vertical padding of list rows for a density id (the @rowPad@ token).
     static int rowPadding(const QString &density);
+    // Corner radius of controls for a density id (the @radius@ token).
+    static int controlRadius(const QString &density);
+    // Memory A/B runs only (ttorrent/VERIFY.md › Benchmarks): TTORRENT_BENCH_NO_QSS
+    // drops the whole stylesheet; TTORRENT_BENCH_QSS_DROP=QMenu,QPushButton drops
+    // every rule whose selector names one of them. Unchanged otherwise.
+    static QString forBenchmark(const QString &qss);
 
 private:
     QString m_themeId;

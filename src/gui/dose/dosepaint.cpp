@@ -27,10 +27,123 @@
 #include <QLabel>
 #include <QPushButton>
 
+#include <QElapsedTimer>
+#include <QHash>
+#include <QPointer>
+#include <QTimer>
+
+#ifdef Q_OS_WIN
+#include <windows.h>
+#endif
+
 #include "base/global.h"
 #include "base/settingsstorage.h"
 #include "dosetheme.h"
 #include "gui/uithememanager.h"
+
+namespace
+{
+    // Progress glide: per torrent, where the bar started and where it's going.
+    struct Glide
+    {
+        qreal from = 0;
+        qreal to = 0;
+        qint64 start = 0;
+    };
+
+    const qint64 GLIDE_MS = 400;
+
+    QElapsedTimer &glideClock()
+    {
+        static QElapsedTimer timer = []
+        {
+            QElapsedTimer t;
+            t.start();
+            return t;
+        }();
+        return timer;
+    }
+
+    QHash<QString, Glide> &glides()
+    {
+        static QHash<QString, Glide> map;
+        return map;
+    }
+
+    // One repaint per frame for every view with a gliding bar; stops by itself.
+    void repaintSoon(const QWidget *widget)
+    {
+        static QList<QPointer<QWidget>> pending;
+        static bool armed = false;
+        auto *view = qobject_cast<const QAbstractItemView *>(widget);
+        QWidget *target = view ? view->viewport() : const_cast<QWidget *>(widget);
+        if (!target || pending.contains(target))
+            return;
+        pending.append(target);
+        if (armed)
+            return;
+        armed = true;
+        QTimer::singleShot(16, qApp, []
+        {
+            armed = false;
+            const QList<QPointer<QWidget>> now = std::exchange(pending, {});
+            for (const QPointer<QWidget> &w : now)
+            {
+                if (w)
+                    w->update();
+            }
+        });
+    }
+
+    // The bar's value now: the target, or on its way there.
+    qreal glidedPercent(const QString &key, const qreal target, const QWidget *widget)
+    {
+        if (key.isEmpty() || !DosePaint::animationsEnabled())
+            return target;
+        const qint64 now = glideClock().elapsed();
+        QHash<QString, Glide> &map = glides();
+        const auto it = map.find(key);
+        if (it == map.end())
+        {
+            // First time on screen: show it as it is.
+            map.insert(key, {target, target, now - GLIDE_MS});
+            return target;
+        }
+        Glide &g = it.value();
+        const auto at = [now](const Glide &glide)
+        {
+            const qreal t = std::clamp(qreal(now - glide.start) / GLIDE_MS, 0.0, 1.0);
+            const qreal eased = 1 - ((1 - t) * (1 - t) * (1 - t));
+            return glide.from + ((glide.to - glide.from) * eased);
+        };
+        if (!qFuzzyCompare(g.to + 1, target + 1))
+            g = {at(g), target, now};
+        if ((now - g.start) >= GLIDE_MS)
+            return g.to;
+        repaintSoon(widget);
+        return at(g);
+    }
+}
+
+bool DosePaint::animationsEnabled()
+{
+#ifdef Q_OS_WIN
+    // Read again at most every 5 s: painting asks for every cell.
+    static bool enabled = true;
+    static qint64 checked = -1;
+    const qint64 now = glideClock().elapsed();
+    if ((checked < 0) || ((now - checked) > 5000))
+    {
+        checked = now;
+        BOOL value = TRUE;
+        if (::SystemParametersInfoW(SPI_GETCLIENTAREAANIMATION, 0, &value, 0))
+            enabled = (value != FALSE);
+    }
+    return enabled;
+#else
+    return true;
+#endif
+}
 
 bool DosePaint::active()
 {
@@ -102,8 +215,10 @@ void DosePaint::setProgressStyle(const QString &style)
     }
 }
 
-void DosePaint::progress(QPainter *painter, const QStyleOptionViewItem &option, const qreal percent, const QString &text, const QColor &fill)
+void DosePaint::progress(QPainter *painter, const QStyleOptionViewItem &option, const qreal value, const QString &text, const QColor &fill
+    , const QString &key)
 {
+    const qreal percent = glidedPercent(key, value, option.widget);
     if (paintsOwnRows(option.widget))
     {
         rowBackground(painter, option);

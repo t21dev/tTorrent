@@ -24,6 +24,7 @@
 #include <QPushButton>
 #include <QTimer>
 
+#include "dosemotion.h"
 #include "dosepaint.h"
 #include "gui/titlebar/dosetitlebar.h"
 #include "gui/uithememanager.h"
@@ -80,8 +81,12 @@ namespace
 }
 
 DoseStyle::DoseStyle(const QString &baseStyle)
-    : QProxyStyle(baseStyle)
+    // Always Fusion underneath: Qt switches to its Windows 11 style when the
+    // colour scheme is light, whose list rows grew taller in Qt 6.12, so light
+    // and dark themes would differ in size. The look is designed on Fusion.
+    : QProxyStyle(u"Fusion"_s)
 {
+    Q_UNUSED(baseStyle);
 }
 
 int DoseStyle::styleHint(const StyleHint hint, const QStyleOption *option, const QWidget *widget, QStyleHintReturn *returnData) const
@@ -137,6 +142,7 @@ void DoseStyle::polish(QWidget *widget)
     {
         QTimer::singleShot(0, button, [button] { DosePaint::selectButtonsAsIcons(button->parentWidget()); });
     }
+    DoseMotion::attach(widget); // buttons: background painted with a fading hover
     // Lists styled row by row through the stylesheet; the transfer list
     // paints its own rows (DosePaint::paintsOwnRows).
     if (auto *view = qobject_cast<QAbstractItemView *>(widget); view && !view->inherits("TransferListWidget"))

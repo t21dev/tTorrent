@@ -41,3 +41,5 @@ src/icons/skin/build-icons/icons/*.png
 
 # CMake build directory
 build/
+# tTorrent: every build folder (build-qt612, build-qt68...)
+/build*/

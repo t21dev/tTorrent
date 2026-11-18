@@ -107,7 +107,7 @@ void TransferListDelegate::paint(QPainter *painter, const QStyleOptionViewItem &
                     barColour = DosePaint::token(u"bad"_s);
                 else if ((torrentState == TorrentState::StoppedDownloading) || (torrentState == TorrentState::StoppedUploading))
                     barColour = DosePaint::token(u"muted"_s);
-                DosePaint::progress(painter, opt, index.data(TransferListModel::UnderlyingDataRole).toReal(), index.data().toString(), barColour);
+                DosePaint::progress(painter, opt, index.data(TransferListModel::UnderlyingDataRole).toReal(), index.data().toString(), barColour, index.siblingAtColumn(TransferListModel::TR_INFOHASH_V1).data().toString() + index.siblingAtColumn(TransferListModel::TR_INFOHASH_V2).data().toString());
                 DosePaint::selectionBar(painter, opt, index);
                 break;
             }

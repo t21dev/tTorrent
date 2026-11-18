@@ -60,7 +60,8 @@ Each feature built so far has a real-run check. Run the ones your change touches
 | MCP server | Scratch profile with `McpEnabled=true`, `McpScope=manage` and `McpKeyHash=@ByteArray(<sha256 hex of a test key>)`, then `python -I ttorrent\scripts\test\mcp_check.py <key> --manage`. Every line must say ok. Use Python, not `curl` (a shell wrapper here cuts long output). |
 | Health in the Add dialog | Add a public open-movie torrent (for example Sintel from webtorrent.io) with screenshots on; the Add dialog shows seeds and peers. |
 | Update check | Run the screenshot pass twice: once as is (the private repo gives `update-message.png`, "the release list isn't public yet"), and once with `TTORRENT_UPDATE_REPO=qbittorrent/qBittorrent` (any public repo with newer tags gives the card in `update-window.png`). GitHub's API allows 60 anonymous requests an hour per address; past that the check falls back to `releases.atom`. |
-| Rename, backup, restore, relocate | Self-test (no dialogs): `make_sample_zip.py <dir>\data`, then start with `TTORRENT_SELFTEST_DIR=<out>` and the sample torrent (`--skip-dialog=true --save-path=<dir>\data`). It renames a category and a tag, backs up, writes PASS/FAIL lines to `<out>\selftest.txt` and exits. Move `<dir>\data\Elephants Dream (2006)` to a renamed folder and start again with `TTORRENT_SELFTEST_MOVED=<that folder>`: relocate must find every file and reach 100 %. Write the backup's path into `configestore-backup.pending`, start with `TTORRENT_SELFTEST_REPORT=1`: the save path, category and tag come back. |
+| Rename, backup, restore, relocate | Self-test (no dialogs): `make_sample_zip.py <dir>\data`, then start with `TTORRENT_SELFTEST_DIR=<out>` and the sample torrent (`--skip-dialog=true --save-path=<dir>\data`). It renames a category and a tag, backs up, writes PASS/FAIL lines to `<out>\selftest.txt` and exits. Move `<dir>\data\Elephants Dream (2006)` to a renamed folder and start again with `TTORRENT_SELFTEST_MOVED=<that folder>`: relocate must find every file and reach 100 %. Write the backup's path into `config
+estore-backup.pending`, start with `TTORRENT_SELFTEST_REPORT=1`: the save path, category and tag come back. |
 | Check for updates | `TTORRENT_UPDATE_REPO=qbittorrent/qBittorrent` with the screenshot run: the card offers a newer version. Without it (private repo) the message says the release list isn't public. |
 | Pair a phone, saved views, palette, shortcuts | The screenshot run shows each; click through them once by hand. |
 
@@ -73,6 +74,8 @@ Any claim that something is lighter or faster needs a benchmark, before and afte
 - downloads limited to 1 KiB/s;
 - the window minimized to the tray;
 - the app's log switched on.
+
+**Nothing may point outside the scratch copy.** A copied profile keeps its absolute folder settings. Until 18 Nov 2026 its log folder pointed at the owner's real qBittorrent log folder, and the runs wrote there. `bench.ps1` now moves the log into the copy. Before using a new profile copy, check its `.ini` for other absolute paths: watched folders, export folders, the log.
 
 **What it records.** It samples every second during start-up runs and every 15 s during long runs:
 - Task Manager's memory (private working set);
@@ -91,7 +94,7 @@ powershell -ExecutionPolicy Bypass -File ttorrent\scripts\bench.ps1 `
 ```
 
 - **Comparison with qBittorrent:** `-Apps both`, 30 minutes or more.
-- **A/B of one change:** `-Apps tt`, 15 minutes each, same snapshot, one variable changed. The switches `TTORRENT_BENCH_NO_QSS` (no stylesheet) and `TTORRENT_BENCH_QSS_NO_ITEMS` (no per-row rules) exist for that and do nothing otherwise.
+- **A/B of one change:** `-Apps tt`, 15 minutes each, same snapshot, one variable changed. The switches `TTORRENT_BENCH_NO_QSS` (no stylesheet) and `TTORRENT_BENCH_QSS_DROP=QMenu,QPushButton` (drops every rule naming those widgets) exist for that and do nothing otherwise.
 - **Nothing else heavy while it runs.** Building in parallel can nudge CPU figures; say so in the report if it happened.
 
 **Report.**

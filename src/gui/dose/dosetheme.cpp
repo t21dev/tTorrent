@@ -391,6 +391,31 @@ QColor DoseThemeSource::token(const QString &name) const
     return m_tokens.value(name);
 }
 
+QString DoseThemeSource::forBenchmark(const QString &qss)
+{
+    if (qEnvironmentVariableIsSet("TTORRENT_BENCH_NO_QSS"))
+        return {};
+    const QStringList drop = qEnvironmentVariable("TTORRENT_BENCH_QSS_DROP").split(u',', Qt::SkipEmptyParts);
+    if (drop.isEmpty())
+        return qss;
+    QString kept;
+    static const QRegularExpression block {u"([^{}]*)[{]([^}]*)[}]"_s};
+    for (auto it = block.globalMatch(qss); it.hasNext();)
+    {
+        const QRegularExpressionMatch m = it.next();
+        const QString selector = m.captured(1);
+        const bool named = std::any_of(drop.cbegin(), drop.cend(), [&selector](const QString &d) { return selector.contains(d.trimmed()); });
+        if (!named)
+            kept += m.captured(0);
+    }
+    return kept;
+}
+
+int DoseThemeSource::controlRadius(const QString &density)
+{
+    return densityFor(density).radius;
+}
+
 int DoseThemeSource::rowPadding(const QString &density)
 {
     return densityFor(density).rowPad;
