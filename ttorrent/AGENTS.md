@@ -1,6 +1,6 @@
 # Agent instructions
 
-tTorrent is a fork of qBittorrent (C++, Qt 6, libtorrent) with a new look and a few additions. GPL, like upstream. The Rust/GPUI prototype that came before is on the `rust-prototype` branch, for reference only.
+tTorrent is a torrent client (C++, Qt 6, libtorrent), GPL. It began as a fork of qBittorrent and is being rebuilt from there to be leaner, faster and cleaner. Product copy (README, site, app) never pitches it against qBittorrent; qBittorrent appears only in credits (About, README credits, installer) as where tTorrent started. The Rust/GPUI prototype is on the `rust-prototype` branch (checked out at `../tTorrent-prototype`), for reference only.
 
 ## Rules that are easy to break
 
