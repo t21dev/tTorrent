@@ -200,6 +200,30 @@
         <file>icons/dark/qbittorrent-tray-filled-light.svg</file>
         <file>icons/qbittorrent-tray-filled-dark.svg</file>
         <file>icons/dark/qbittorrent-tray-filled-dark.svg</file>
+        <file>icons/dose-keyboard.svg</file>
+        <file>icons/dark/dose-keyboard.svg</file>
+        <file>icons/dose-panel-top.svg</file>
+        <file>icons/dark/dose-panel-top.svg</file>
+        <file>icons/dose-panel-bottom.svg</file>
+        <file>icons/dark/dose-panel-bottom.svg</file>
+        <file>icons/dose-panel-left.svg</file>
+        <file>icons/dark/dose-panel-left.svg</file>
+        <file>icons/dose-window.svg</file>
+        <file>icons/dark/dose-window.svg</file>
+        <file>icons/dose-type-video.svg</file>
+        <file>icons/dark/dose-type-video.svg</file>
+        <file>icons/dose-type-audio.svg</file>
+        <file>icons/dark/dose-type-audio.svg</file>
+        <file>icons/dose-type-image.svg</file>
+        <file>icons/dark/dose-type-image.svg</file>
+        <file>icons/dose-type-archive.svg</file>
+        <file>icons/dark/dose-type-archive.svg</file>
+        <file>icons/dose-type-disc.svg</file>
+        <file>icons/dark/dose-type-disc.svg</file>
+        <file>icons/dose-type-app.svg</file>
+        <file>icons/dark/dose-type-app.svg</file>
+        <file>icons/dose-type-document.svg</file>
+        <file>icons/dark/dose-type-document.svg</file>
         <file>icons/dose-drive.svg</file>
         <file>icons/dark/dose-drive.svg</file>
         <file>icons/dose-memory.svg</file>

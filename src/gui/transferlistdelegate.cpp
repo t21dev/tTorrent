@@ -29,11 +29,14 @@
 
 #include "transferlistdelegate.h"
 
+#include <QSortFilterProxyModel>
+
 #include <QModelIndex>
 
 #include "base/global.h"
 #include "base/preferences.h"
 #include "base/types.h"
+#include "dose/dosetypes.h"
 #include "dose/dosepaint.h"
 #include "transferlistmodel.h"
 
@@ -151,6 +154,18 @@ void TransferListDelegate::initStyleOption(QStyleOptionViewItem *option, const Q
     {
         option->icon = {};
         option->features &= ~QStyleOptionViewItem::HasDecoration;
+        // tTorrent: what the torrent holds (video, archive, folder...), Settings › Look.
+        if (DoseTypes::enabled())
+        {
+            const auto *proxy = qobject_cast<const QSortFilterProxyModel *>(index.model());
+            const QModelIndex source = proxy ? proxy->mapToSource(index) : index;
+            if (const auto *model = qobject_cast<const TransferListModel *>(source.model()))
+            {
+                option->icon = DoseTypes::iconFor(model->torrentHandle(source));
+                option->features |= QStyleOptionViewItem::HasDecoration;
+                option->decorationSize = QSize(16, 16);
+            }
+        }
     }
 
     bool isZero = false;

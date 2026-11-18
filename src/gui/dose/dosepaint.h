@@ -68,6 +68,16 @@ namespace DosePaint
     // Rows the stylesheet doesn't draw (the transfer list, which can hold
     // hundreds of rows; the stylesheet as a whole was measured at 29 MB of
     // private bytes, 2026-11-18). True for views that paint their own rows.
+    // The deep end of a fill's gradient: the same colour, darker.
+    QColor gradientEnd(const QColor &start);
+    // Settings › Look › Fills: flat (default) or a deep-to-full gradient on
+    // progress bars and the selection (Appearance/Fills).
+    bool gradients();
+    void setGradients(bool on);
+    // Settings › Look › Button hover: grey (default) or an accent wash
+    // (Appearance/ButtonHover).
+    bool accentHover();
+    void setAccentHover(bool on);
     bool paintsOwnRows(const QWidget *view);
     // Their padding (the density's row padding) and background: hover,
     // selection and the hairline under each row, as the stylesheet draws them.

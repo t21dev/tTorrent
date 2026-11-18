@@ -106,14 +106,15 @@ PropertiesWidget::PropertiesWidget(QWidget *parent)
     // Downloaded pieces progress bar
     m_ui->tempProgressBarArea->setVisible(false);
     m_downloadedPieces = new DownloadedPiecesBar(this);
-    m_ui->groupBarLayout->addWidget(m_downloadedPieces, 0, 1);
+    m_ui->groupBarLayout->addWidget(m_downloadedPieces, 0, 1, Qt::AlignVCenter); // tTorrent: centred on its label
     m_downloadedPieces->setFixedHeight(barHeight);
     m_downloadedPieces->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 
     // Pieces availability bar
     m_ui->tempAvailabilityBarArea->setVisible(false);
     m_piecesAvailability = new PieceAvailabilityBar(this);
-    m_ui->groupBarLayout->addWidget(m_piecesAvailability, 1, 1);
+    m_ui->groupBarLayout->addWidget(m_piecesAvailability, 1, 1, Qt::AlignVCenter); // tTorrent: centred on its label
+    m_ui->groupBarLayout->setHorizontalSpacing(12); // tTorrent: room after the labels
     m_piecesAvailability->setFixedHeight(barHeight);
     m_piecesAvailability->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 

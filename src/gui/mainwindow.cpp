@@ -1587,6 +1587,7 @@ void MainWindow::populateDesktopIntegrationMenu()
 
 #ifndef Q_OS_MACOS
     menu->addSeparator();
+    menu->addAction(DoseShortcuts::restartAction(this)); // tTorrent: restart from the tray
     menu->addAction(m_ui->actionExit);
 #endif
 

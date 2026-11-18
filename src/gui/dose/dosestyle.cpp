@@ -151,6 +151,12 @@ void DoseStyle::polish(QWidget *widget)
     // paints its own rows (DosePaint::paintsOwnRows).
     if (auto *view = qobject_cast<QAbstractItemView *>(widget); view && !view->inherits("TransferListWidget"))
         view->setProperty("doseRows", true);
+    // The transfer list paints its own rows, hover included: it needs to hear the mouse.
+    if (auto *view = qobject_cast<QAbstractItemView *>(widget); view && view->inherits("TransferListWidget"))
+    {
+        view->setMouseTracking(true);
+        view->viewport()->setAttribute(Qt::WA_Hover);
+    }
     if (!widget->isWindow())
         return;
 

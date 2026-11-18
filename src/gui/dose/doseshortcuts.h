@@ -15,6 +15,7 @@
 
 #pragma once
 
+class QAction;
 class QLineEdit;
 class QMainWindow;
 
@@ -30,6 +31,9 @@ namespace DoseShortcuts
 
     void showSheet(QMainWindow *window);
     void showPalette(QMainWindow *window);
+    // File › Restart tTorrent (also in the tray menu): quits cleanly and
+    // starts again. Made once per window.
+    QAction *restartAction(QMainWindow *window);
     // One search for the title bar: the filter field keeps filtering the
     // torrent list as you type, and a drop-down under it lists the commands
     // that match (Up/Down to pick, Enter to run). Ctrl+K opens it.

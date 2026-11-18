@@ -61,6 +61,16 @@ namespace
             , a.blueF() + ((b.blueF() - a.blueF()) * t), a.alphaF() + ((b.alphaF() - a.alphaF()) * t));
     }
 
+    // Hover on transparent buttons: stronger than the list's hover, so an
+    // icon's background shows clearly (a quarter of the way to the ring).
+    QColor buttonHover()
+    {
+        // Accent hover (Settings › Look): a light wash of the accent.
+        if (DosePaint::accentHover())
+            return mix(token("bg"), token("accent"), 0.22);
+        return mix(token("raised"), token("ring"), 0.25);
+    }
+
     int radius()
     {
         return DoseThemeSource::controlRadius(UIThemeManager::instance()->lookDensity());
@@ -145,12 +155,12 @@ namespace
         case Kind::Quiet:
             if (!enabled)
                 return;
-            fill = down ? token("panel") : (checked ? token("select") : mix(QColor(Qt::transparent), token("hover"), hover));
+            fill = down ? token("well") : (checked ? token("select") : mix(QColor(Qt::transparent), buttonHover(), hover));
             break;
         case Kind::IconButton:
             if (!enabled)
                 return;
-            fill = mix(QColor(Qt::transparent), token("hover"), down ? 1.0 : hover);
+            fill = mix(QColor(Qt::transparent), buttonHover(), down ? 1.0 : hover);
             border = mix(QColor(Qt::transparent), token("line"), down ? 1.0 : hover);
             bottom = border;
             break;

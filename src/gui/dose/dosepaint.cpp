@@ -15,6 +15,11 @@
 
 #include "dosepaint.h"
 
+#include <cmath>
+
+#include <QAbstractItemView>
+#include <QLinearGradient>
+
 #include <QApplication>
 #include <QAbstractItemView>
 #include <QHeaderView>
@@ -234,6 +239,19 @@ void DosePaint::progress(QPainter *painter, const QStyleOptionViewItem &option, 
 
     const QFont font = numberFont(option.font);
     const QColor done = fill.isValid() ? fill : token(u"accent"_s);
+    // The fill is a gradient along the whole bar (DESIGN.md › Colour), so a
+    // half-done bar shows the first half of it.
+    // Flat, or (Settings › Look) the colour from deep on the left to full
+    // on the right, along the whole bar so a half-done bar shows its first half.
+    const auto brushFor = [&done](const QRectF &whole)
+    {
+        if (!gradients())
+            return QBrush(done);
+        QLinearGradient g {whole.topLeft(), whole.topRight()};
+        g.setColorAt(0.0, gradientEnd(done));
+        g.setColorAt(1.0, done);
+        return QBrush(g);
+    };
     const qreal fraction = std::clamp(percent, 0.0, 100.0) / 100.0;
     const QString styleName = progressStyle();
     painter->save();
@@ -256,7 +274,7 @@ void DosePaint::progress(QPainter *painter, const QStyleOptionViewItem &option, 
             QPainterPath clip;
             clip.addRoundedRect(box, radius, radius);
             painter->setClipPath(clip);
-            painter->setBrush(done);
+            painter->setBrush(brushFor(box));
             painter->drawRect(filled);
             painter->setClipping(false);
         }
@@ -282,7 +300,7 @@ void DosePaint::progress(QPainter *painter, const QStyleOptionViewItem &option, 
     {
         QRectF part = bar;
         part.setWidth(std::max(qreal(barHeight), bar.width() * fraction));
-        painter->setBrush(done);
+        painter->setBrush(brushFor(bar));
         painter->drawRoundedRect(part, radius, radius);
     }
     painter->setPen(token(u"muted"_s));
@@ -338,13 +356,29 @@ int DosePaint::rowPadding()
 
 void DosePaint::rowBackground(QPainter *painter, const QStyleOptionViewItem &option)
 {
-    QColor fill;
-    if (option.state.testFlag(QStyle::State_Selected))
-        fill = token(u"select"_s);
+    if (option.state.testFlag(QStyle::State_Selected) && !gradients())
+    {
+        painter->fillRect(option.rect, token(u"select"_s));
+    }
+    else if (option.state.testFlag(QStyle::State_Selected))
+    {
+        // The selected row: the select wash, fading a little to the right
+        // across the whole row (each cell paints its part of one gradient).
+        const QColor select = token(u"select"_s);
+        QColor end = select;
+        const QColor bg = token(u"bg"_s);
+        end = QColor::fromRgbF((select.redF() + bg.redF()) / 2, (select.greenF() + bg.greenF()) / 2, (select.blueF() + bg.blueF()) / 2);
+        const auto *view = qobject_cast<const QAbstractItemView *>(option.widget);
+        const int width = view ? view->viewport()->width() : option.rect.width();
+        QLinearGradient g {QPointF(0, 0), QPointF(width, 0)};
+        g.setColorAt(0.0, select);
+        g.setColorAt(1.0, end);
+        painter->fillRect(option.rect, g);
+    }
     else if (option.state.testFlag(QStyle::State_MouseOver))
-        fill = token(u"hover"_s);
-    if (fill.isValid())
-        painter->fillRect(option.rect, fill);
+    {
+        painter->fillRect(option.rect, token(u"hover"_s));
+    }
     painter->fillRect(QRect(option.rect.left(), option.rect.bottom(), option.rect.width(), 1), token(u"rowRule"_s));
 }
 
@@ -355,5 +389,57 @@ void DosePaint::selectionBar(QPainter *painter, const QStyleOptionViewItem &opti
     const auto *view = qobject_cast<const QTreeView *>(option.widget);
     if (!view || (view->header()->logicalIndex(0) != index.column()))
         return;
-    painter->fillRect(QRect(option.rect.left(), option.rect.top(), 3, option.rect.height()), token(u"accent"_s));
+    const QRect bar {option.rect.left(), option.rect.top(), 3, option.rect.height()};
+    if (!gradients())
+    {
+        painter->fillRect(bar, token(u"accent"_s));
+        return;
+    }
+    // Bright at the top, deep at the bottom, like light from above.
+    QLinearGradient g {QPointF(bar.topLeft()), QPointF(bar.bottomLeft())};
+    g.setColorAt(0.0, token(u"accent"_s));
+    g.setColorAt(1.0, gradientEnd(token(u"accent"_s)));
+    painter->fillRect(bar, g);
+}
+
+QColor DosePaint::gradientEnd(const QColor &start)
+{
+    // The same colour, deeper: darker and a little less saturated, so the
+    // gradient reads as light falling on one colour (DESIGN.md › Colour).
+    float h = 0, sat = 0, l = 0, a = 0;
+    start.getHslF(&h, &sat, &l, &a);
+    return QColor::fromHslF(std::max(0.0f, h), std::max(0.0f, sat * 0.85f), std::max(0.0f, l * 0.62f), a);
+}
+
+namespace
+{
+    QString &cachedLook(const QString &key, const QString &fallback)
+    {
+        static QHash<QString, QString> cache;
+        if (!cache.contains(key))
+            cache.insert(key, SettingsStorage::instance()->loadValue<QString>(key, fallback));
+        return cache[key];
+    }
+}
+
+bool DosePaint::gradients()
+{
+    return active() && (cachedLook(u"Appearance/Fills"_s, u"flat"_s) == u"gradient");
+}
+
+void DosePaint::setGradients(const bool on)
+{
+    cachedLook(u"Appearance/Fills"_s, u"flat"_s) = on ? u"gradient"_s : u"flat"_s;
+    SettingsStorage::instance()->storeValue(u"Appearance/Fills"_s, on ? u"gradient"_s : u"flat"_s);
+}
+
+bool DosePaint::accentHover()
+{
+    return active() && (cachedLook(u"Appearance/ButtonHover"_s, u"grey"_s) == u"accent");
+}
+
+void DosePaint::setAccentHover(const bool on)
+{
+    cachedLook(u"Appearance/ButtonHover"_s, u"grey"_s) = on ? u"accent"_s : u"grey"_s;
+    SettingsStorage::instance()->storeValue(u"Appearance/ButtonHover"_s, on ? u"accent"_s : u"grey"_s);
 }

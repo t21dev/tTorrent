@@ -293,9 +293,14 @@ void DoseTitleBar::installDialog(QDialog *dialog)
     bar->setTitleFollowWindow(false);
     // The dialog's title on the left, unless the dialog shows its own
     // heading (property doseOwnHeading), so the name never appears twice.
+    // doseBarTitle puts other text there (Add torrent: its title is the
+    // torrent's name, shown in the dialog instead).
     const auto showTitle = [dialog, title]
     {
-        title->setText(dialog->property("doseOwnHeading").toBool() ? QString() : dialog->windowTitle());
+        if (const QString bar = dialog->property("doseBarTitle").toString(); !bar.isEmpty())
+            title->setText(bar);
+        else
+            title->setText(dialog->property("doseOwnHeading").toBool() ? QString() : dialog->windowTitle());
     };
     showTitle();
     QObject::connect(dialog, &QWidget::windowTitleChanged, title, showTitle);

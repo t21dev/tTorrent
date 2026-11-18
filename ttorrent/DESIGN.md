@@ -8,7 +8,7 @@ Source of truth in code: `src/gui/dose/` (`dosetheme.*` for tokens, accent and d
 
 - **Familiar map, new finish.** Menu, toolbar, filter sidebar, transfer list, details tabs and status bar stay where people expect them.
 - **Data is the loudest thing.** Chrome is quiet greys. Colour is for the accent (selection, primary action, progress), states (seeding, checking, error) and category colours.
-- **Crisp and compact, never gimmicky.** Flat surfaces; depth comes from a lighter top edge, a darker bottom edge and fills, **never gradients**. Icon buttons and icon labels wherever they fit. Every interactive element has a hover state.
+- **Crisp and compact, never gimmicky.** Flat surfaces; depth comes from a lighter top edge, a darker bottom edge and fills. No gradients on chrome; the one exception is the optional Gradient fill for progress bars and the selection (below). Icon buttons and icon labels wherever they fit. Every interactive element has a hover state.
 - **Fast is a feature.** Nothing decorative costs a frame or memory. No blur, no idle redraws. Lists with hundreds of rows are painted in code, not through stylesheet rules (the stylesheet as a whole costs about 29 MB of private bytes, measured 2026-11-18).
 - **Plain copy.** Sentence case, short sentences. No invented numbers.
 
@@ -40,7 +40,7 @@ Accent presets: Theme (the theme's own), Emerald, Blue, Grape, Amber, Rose, Wine
 
 Torrent states (status text and icon): downloading, forced, metadata and moving use `accent`; seeding and completed `ok`; stalled and checking `warn`; errors and missing files `bad`; stopped and queued `faint`.
 
-Progress bars use `accent`, `bad` on error or missing files, `muted` when stopped. They follow the state's text colour only when qBittorrent's "progress bar follows text colour" option is on.
+Progress bars use `accent`, `bad` on error or missing files, `muted` when stopped. Settings › Look › Progress and selection: **Flat** (default) or **Gradient**, where a fill runs from a deep shade of its colour (same hue, 62 % lightness, 85 % saturation) on the left to the full colour on the right, the selection bar from bright at the top to deep at the bottom, and the selected row's wash fades to the right. Button hover: **Grey** (default) or **Accent** (22 % accent over `bg`). They follow the state's text colour only when qBittorrent's "progress bar follows text colour" option is on.
 
 ## Type
 
@@ -75,6 +75,7 @@ Density changes spacing everywhere, through the stylesheet tokens and `DoseStyle
 - **Search field** (in the title bar, the only one): typing filters the transfer list, and a drop-down under the field lists the commands that match (Up/Down, Enter runs one and clears the field, Esc closes). Settings that match are listed after the commands (Settings › section); choosing one opens Settings at that setting. Ctrl+K lists every command; Ctrl+F focuses it too. The search button opens "Filter by". 6 px above and below, so it never meets the window edge.
 - **Main tabs** (Transfers, RSS, Log): icon and label, accent underline; the bar hides when Transfers is the only tab, and right-clicking it shows or hides the others.
 - **Sidebar** (`panel`): Views (saved filters), Status, Categories, Tags, Trackers; counts in DM Mono `faint`, right-aligned. The selected filter has a `select` fill and an accent icon.
+- **Torrent icons**: before each name, what the torrent holds: video, audio, image, archive, disc image, app, document, folder or file, from its largest file's type when that file is at least half the torrent (a magnet until the metadata arrives); 16 px, `muted`. Settings › Look › Torrent icons: By file type (default) or None.
 - **Transfer list**: at start it shows a picture of last session's visible rows until the torrents have loaded, then cross-fades (180 ms) to the live list; any click or key removes it at once. Hairline row dividers (`rowRule`), no zebra stripes, rows painted in code. Progress in one of three styles (Settings › Look): **Line** (4 px), **Bar** (8 px), each with the percentage beside it, or **Filled** (the whole cell with the percentage inside, the text switching colour over the fill). Zero speeds and ∞ ETAs fade to `faint`. The selected row gets a `select` fill and a 3 px accent bar on its left edge.
 - **Details tabs**: icon and label, an accent underline under the current tab.
 - **General**: the **piece map** (the signature): 2 px-rounded squares, done in `accent`, partial in `accentLine`, missing in `track`.
@@ -94,6 +95,8 @@ Density changes spacing everywhere, through the stylesheet tokens and `DoseStyle
 ## Icons
 
 - **UI icons:** one set, Lucide geometry (ISC), 24 grid drawn at 14 to 16 px, 1.6 px stroke, round caps and joins. Icons are tinted from tokens when the theme loads, never stored in a colour: chrome icons in `muted`, state icons in their state colour, icons on accent in `onAccent`. Every command has an icon, including in the palette and the shortcuts sheet.
+- **Menus:** every item has an icon, toggles included (panel shapes for the toolbar, status bar and sidebar).
+- **Tray icon (monochrome):** the app icon's sprout alone, large with solid leaves, or on the app's rounded tile (filled), in white or near-black for the taskbar.
 - **App icon:** the sprout-arrow in white on a `#10A874` tile with rounded corners (`ttorrent/brand/icon.svg`; `make_icon.py` draws the PNG and the multi-size ICO). The same icon is used in the title bar and the About dialog, whatever the theme. The tray icon can be the colour tile, outline or filled monochrome.
 
 ## Motion

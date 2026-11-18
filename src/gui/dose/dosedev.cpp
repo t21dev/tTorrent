@@ -27,6 +27,7 @@
 #include <QDir>
 #include <QFile>
 #include <QLayout>
+#include <QImage>
 #include <QLabel>
 #include <QLineEdit>
 #include <QElapsedTimer>
@@ -49,6 +50,8 @@
 #include "base/global.h"
 #include "gui/deletionconfirmationdialog.h"
 #include "gui/rss/automatedrssdownloader.h"
+#include "gui/uithememanager.h"
+#include "dosepaint.h"
 #include "base/path.h"
 #include "base/tag.h"
 #include "dosebackup.h"
@@ -281,6 +284,18 @@ void DoseDev::scheduleShots(QMainWindow *window)
         }
         save(window, dir + u"/main.png");
         saveHovered(window, dir + u"/main-hover.png");
+        // The optional looks (Settings › Look): gradient fills, accent hover.
+        const bool wasGradient = DosePaint::gradients();
+        const bool wasAccent = DosePaint::accentHover();
+        DosePaint::setGradients(true);
+        DosePaint::setAccentHover(true);
+        if (auto *list = window->findChild<QTreeView *>())
+            list->selectionModel()->select(list->model()->index(0, 0), QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
+        QApplication::processEvents();
+        save(window, dir + u"/main-gradient.png");
+        saveHovered(window, dir + u"/main-hover-accent.png");
+        DosePaint::setGradients(wasGradient);
+        DosePaint::setAccentHover(wasAccent);
         for (QMenuBar *bar : window->findChildren<QMenuBar *>())
         {
             for (QAction *action : bar->actions())
@@ -550,6 +565,31 @@ void DoseDev::scheduleShots(QMainWindow *window)
             save(dialog, dir + u"/update-message.png");
             dialog->close();
         }
+    };
+    // Tray icons, each style at 16, 20 and 32 px on a dark and a light taskbar.
+    steps << [dir]
+    {
+        const QStringList names {u"qbittorrent-tray"_s, u"qbittorrent-tray-dark"_s, u"qbittorrent-tray-light"_s
+            , u"qbittorrent-tray-filled-dark"_s, u"qbittorrent-tray-filled-light"_s};
+        QImage sheet {QSize(names.size() * 3 * 44 + 16, 2 * 52 + 16), QImage::Format_ARGB32};
+        sheet.fill(Qt::gray);
+        QPainter p {&sheet};
+        for (int row = 0; row < 2; ++row)
+        {
+            p.fillRect(QRect(0, 8 + (row * 52), sheet.width(), 48), (row == 0) ? QColor(0x20, 0x20, 0x24) : QColor(0xF3, 0xF3, 0xF3));
+            int x = 8;
+            for (const QString &name : names)
+            {
+                const QIcon icon = UIThemeManager::instance()->getIcon(name);
+                for (const int px : {16, 20, 32})
+                {
+                    icon.paint(&p, QRect(x + ((40 - px) / 2), 8 + (row * 52) + ((48 - px) / 2), px, px));
+                    x += 44;
+                }
+            }
+        }
+        p.end();
+        sheet.save(dir + u"/tray-icons.png");
     };
     // RSS Downloader (rules editor).
     steps << [window]

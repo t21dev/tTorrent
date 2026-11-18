@@ -62,6 +62,7 @@
 #include "dosemcp.h"
 #include "doseupdate.h"
 #include "dosepaint.h"
+#include "dosetypes.h"
 #include "dosetheme.h"
 #include "dosethemeeditor.h"
 #include "dosetoolbar.h"
@@ -357,6 +358,51 @@ QGroupBox#doseInfoBox { border: none; margin-top: 0; padding: 0 0 0 22px; }
         QObject::connect(bars, &QComboBox::activated, group, [bars](int)
         {
             DosePaint::setProgressStyle(bars->currentData().toString());
+        });
+
+        auto *types = new QComboBox;
+        types->addItem(QDialog::tr("By file type"), true);
+        types->addItem(QDialog::tr("None"), false);
+        types->setCurrentIndex(DoseTypes::enabled() ? 0 : 1);
+        form->addWidget(new QLabel(QDialog::tr("Torrent icons:")), row, 0);
+        form->addWidget(types, row++, 1, Qt::AlignLeft);
+        QObject::connect(types, &QComboBox::activated, group, [types](int)
+        {
+            DoseTypes::setEnabled(types->currentData().toBool());
+            for (QWidget *w : QApplication::allWidgets())
+            {
+                if (w->inherits("TransferListWidget"))
+                    static_cast<QAbstractScrollArea *>(w)->viewport()->update();
+            }
+        });
+
+        auto *fills = new QComboBox;
+        fills->addItem(QDialog::tr("Flat"), false);
+        fills->addItem(QDialog::tr("Gradient, deep to bright"), true);
+        fills->setCurrentIndex(DosePaint::gradients() ? 1 : 0);
+        form->addWidget(new QLabel(QDialog::tr("Progress and selection:")), row, 0);
+        form->addWidget(fills, row++, 1, Qt::AlignLeft);
+        QObject::connect(fills, &QComboBox::activated, group, [fills](int)
+        {
+            DosePaint::setGradients(fills->currentData().toBool());
+            for (QWidget *top : QApplication::topLevelWidgets())
+                top->update();
+            for (QWidget *w : QApplication::allWidgets())
+            {
+                if (w->inherits("TransferListWidget"))
+                    static_cast<QAbstractScrollArea *>(w)->viewport()->update();
+            }
+        });
+
+        auto *hover = new QComboBox;
+        hover->addItem(QDialog::tr("Grey"), false);
+        hover->addItem(QDialog::tr("Accent colour"), true);
+        hover->setCurrentIndex(DosePaint::accentHover() ? 1 : 0);
+        form->addWidget(new QLabel(QDialog::tr("Button hover:")), row, 0);
+        form->addWidget(hover, row++, 1, Qt::AlignLeft);
+        QObject::connect(hover, &QComboBox::activated, group, [hover](int)
+        {
+            DosePaint::setAccentHover(hover->currentData().toBool());
         });
 
         auto *height = new QComboBox;
@@ -769,7 +815,9 @@ void DoseDialogs::decorateOptions(QDialog *dialog, QSplitter *splitter, QListWid
 
 void DoseDialogs::decorateAddTorrent(QDialog *dialog)
 {
-    dialog->setProperty("doseOwnHeading", true);
+    // "Add torrent" in the title bar, on the left like every dialog; the
+    // torrent's name leads the dialog itself.
+    dialog->setProperty("doseBarTitle", QDialog::tr("Add torrent"));
     // Room either side of the splitter, so the columns' edges never touch.
     if (auto *split = dialog->findChild<QSplitter *>(QStringLiteral("splitter")))
     {
@@ -814,13 +862,10 @@ void DoseDialogs::decorateAddTorrent(QDialog *dialog)
     auto *head = new QVBoxLayout(header);
     head->setContentsMargins(8, 4, 8, 12);
     head->setSpacing(4);
-    auto *title = new QLabel(QDialog::tr("Add torrent"));
-    title->setObjectName(QStringLiteral("doseAddTitle"));
     auto *name = new QLabel(dialog->windowTitle());
     name->setObjectName(QStringLiteral("doseAddName"));
     name->setTextInteractionFlags(Qt::TextSelectableByMouse);
     QObject::connect(dialog, &QWidget::windowTitleChanged, name, &QLabel::setText);
-    head->addWidget(title);
     head->addWidget(name);
     auto *summary = new QHBoxLayout;
     summary->setSpacing(28);

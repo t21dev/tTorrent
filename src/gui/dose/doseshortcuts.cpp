@@ -14,6 +14,7 @@
  */
 
 #include "doseshortcuts.h"
+#include "doseimport.h"
 
 #include <algorithm>
 #include <functional>
@@ -934,6 +935,20 @@ void DoseShortcuts::install(QMainWindow *window)
 {
     if (!window)
         return;
+    restartAction(window);
+    // Icons for the menu items that came without one (View's toggles, the
+    // tray's Show/Hide), so every menu row lines up.
+    const QList<std::pair<const char *, const char *>> icons {
+        {"actionTopToolBar", "dose-panel-top"}, {"actionShowStatusbar", "dose-panel-bottom"},
+        {"actionShowFiltersSidebar", "dose-panel-left"}, {"actionSpeedInTitleBar", "dose-window"},
+        {"actionRSSReader", "application-rss"}, {"actionSearchWidget", "edit-find"},
+        {"actionToggleVisibility", "dose-window"}, {"actionUseAlternativeSpeedLimits", "slow"},
+    };
+    for (const auto &[name, icon] : icons)
+    {
+        if (auto *action = window->findChild<QAction *>(QString::fromLatin1(name)); action && action->icon().isNull())
+            action->setIcon(UIThemeManager::instance()->getIcon(QString::fromLatin1(icon)));
+    }
     const QHash<QString, QString> saved = savedKeys();
     for (const Command &c : commands(window))
     {
@@ -943,7 +958,7 @@ void DoseShortcuts::install(QMainWindow *window)
     }
 
     QMenu *help = window->findChild<QMenu *>(u"menuHelp"_s);
-    auto *sheet = new QAction(UIThemeManager::instance()->getIcon(u"preferences-desktop-keyboard"_s, u"help-contents"_s)
+    auto *sheet = new QAction(UIThemeManager::instance()->getIcon(u"dose-keyboard"_s)
         , QDialog::tr("Keyboard shortcuts"), window);
     sheet->setObjectName(u"doseActionShortcuts"_s);
     sheet->setShortcut(Qt::CTRL | Qt::Key_Slash);
@@ -986,4 +1001,23 @@ void DoseShortcuts::attachSearch(QMainWindow *window, QLineEdit *edit)
     if (!window || !edit || !DosePaint::active())
         return;
     new SearchDrop(window, edit);
+}
+
+QAction *DoseShortcuts::restartAction(QMainWindow *window)
+{
+    if (auto *existing = window->findChild<QAction *>(u"doseActionRestart"_s))
+        return existing;
+    auto *restart = new QAction(UIThemeManager::instance()->getIcon(u"view-refresh"_s), QDialog::tr("Restart tTorrent"), window);
+    restart->setObjectName(u"doseActionRestart"_s);
+    QObject::connect(restart, &QAction::triggered, window, [] { DoseImport::restart(); });
+    // File menu, just above Exit.
+    if (auto *exit = window->findChild<QAction *>(u"actionExit"_s))
+    {
+        for (QMenu *menu : window->findChildren<QMenu *>())
+        {
+            if (menu->actions().contains(exit) && (menu->objectName() == u"menuFile"))
+                menu->insertAction(exit, restart);
+        }
+    }
+    return restart;
 }
