@@ -48,7 +48,17 @@ $shell = New-Object -ComObject WScript.Shell
 $link = $shell.CreateShortcut($shortcut)
 $link.TargetPath = $exe
 $link.WorkingDirectory = $target
-$link.IconLocation = "$exe,0"
+# Windows caches a shortcut's icon by file path and often keeps the old one
+# after the exe changes (the taskbar then shows a stale logo). The icon gets
+# a name from its content, so a new logo is a new path and is always re-read.
+$ico = Join-Path $repo 'ttorrent/brand/ttorrent.ico'
+$hash = (Get-FileHash $ico -Algorithm SHA256).Hash.Substring(0, 8).ToLower()
+Get-ChildItem $target -Filter 'ttorrent-icon-*.ico' | Where-Object Name -ne "ttorrent-icon-$hash.ico" | ForEach-Object { try { Remove-Item $_.FullName -Force -ErrorAction Stop } catch {} }
+$iconFile = Join-Path $target "ttorrent-icon-$hash.ico"
+if (-not (Test-Path $iconFile)) { Copy-Item $ico $iconFile }
+$link.IconLocation = "$iconFile,0"
 $link.Description = 'tTorrent (local build)'
 $link.Save()
+# Ask Explorer to re-read icons now (refreshes the taskbar and Start Menu).
+Start-Process -FilePath "$env:SystemRoot\System32\ie4uinit.exe" -ArgumentList '-show' -Wait -ErrorAction SilentlyContinue
 Write-Host ("installed {0} ({1}, {2} files updated)" -f $exe, (Get-Item $exe).LastWriteTime.ToString('yyyy-MM-dd HH:mm'), $copied)
