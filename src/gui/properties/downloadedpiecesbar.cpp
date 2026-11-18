@@ -35,6 +35,7 @@
 #include <QDebug>
 #include <QList>
 
+#include "gui/dose/dosepaint.h"
 #include "base/global.h"
 #include "gui/uithememanager.h"
 
@@ -55,6 +56,8 @@ DownloadedPiecesBar::DownloadedPiecesBar(QWidget *parent)
     : base(parent)
 {
     updateColorsImpl();
+    if (DosePaint::active()) // tTorrent: room for the piece map's rows of squares
+        setMinimumHeight(64);
 }
 
 QList<float> DownloadedPiecesBar::bitfieldToFloatVector(const QBitArray &vecin, int reqSize)

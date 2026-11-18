@@ -54,6 +54,7 @@ private:
     // scale bitfield vector to float vector
     QList<float> bitfieldToFloatVector(const QBitArray &vecin, int reqSize);
     QImage renderImage() override;
+    void paintEvent(QPaintEvent *event) override; // tTorrent: the piece map, in dose/dosepiecemap.cpp
     QString simpleToolTipText() const override;
     void updateColors() override;
     void updateColorsImpl();
