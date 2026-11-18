@@ -140,6 +140,50 @@ QGroupBox#doseInfoBox { border: none; margin-top: 0; padding: 0 0 0 22px; }
         return icon;
     }
 
+    // One icon per Options section, drawn in our line style: grey normally,
+    // in the accent when the section is selected.
+    QIcon sectionIcon(const QString &page)
+    {
+        static const QHash<QString, QString> paths {
+            {QStringLiteral("tabBehaviorPage"), QStringLiteral("<path d='M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M2 14h4M10 8h4M18 16h4'/>")},
+            {QStringLiteral("tabDownloadsPage"), QStringLiteral("<path d='M12 15V3'/><path d='m7 10 5 5 5-5'/><path d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'/>")},
+            {QStringLiteral("tabConnectionPage"), QStringLiteral("<path d='M12 22v-5'/><path d='M9 8V2M15 8V2'/><path d='M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z'/>")},
+            {QStringLiteral("tabSpeedPage"), QStringLiteral("<path d='m12 14 4-4'/><path d='M3.34 19a10 10 0 1 1 17.32 0'/>")},
+            {QStringLiteral("tabBitTorrentPage"), QStringLiteral("<circle cx='12' cy='5' r='2.5'/><circle cx='5' cy='18' r='2.5'/><circle cx='19' cy='18' r='2.5'/><path d='M12 7.5v3.5M10.5 12.5 6.5 16M13.5 12.5l4 3.5'/>")},
+            {QStringLiteral("tabSearchPage"), QStringLiteral("<circle cx='11' cy='11' r='7'/><path d='m21 21-4.3-4.3'/>")},
+            {QStringLiteral("tabRSSPage"), QStringLiteral("<path d='M4 11a9 9 0 0 1 9 9'/><path d='M4 4a16 16 0 0 1 16 16'/><circle cx='5' cy='19' r='1'/>")},
+            {QStringLiteral("tabWebUIPage"), QStringLiteral("<rect x='2' y='3' width='20' height='14' rx='2'/><path d='M8 21h8M12 17v4'/>")},
+            {QStringLiteral("tabAdvancedPage"), QStringLiteral("<rect x='5' y='5' width='14' height='14' rx='2'/><rect x='9' y='9' width='6' height='6' rx='1'/><path d='M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3'/>")},
+        };
+        const QString body = paths.value(page);
+        if (body.isEmpty())
+            return {};
+        const auto draw = [&body](const QColor &colour)
+        {
+            const QString svg = QStringLiteral("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%1' "
+                "stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'>%2</svg>").arg(colour.name(), body);
+            QSvgRenderer renderer {svg.toUtf8()};
+            QList<QPixmap> list;
+            for (const qreal scale : {1.0, 1.5, 2.0})
+            {
+                QPixmap pixmap {QSize(16, 16) * scale};
+                pixmap.setDevicePixelRatio(scale);
+                pixmap.fill(Qt::transparent);
+                QPainter painter {&pixmap};
+                renderer.render(&painter, QRectF(0, 0, 16, 16));
+                list.append(pixmap);
+            }
+            return list;
+        };
+        const UIThemeManager *theme = UIThemeManager::instance();
+        QIcon icon;
+        for (const QPixmap &p : draw(theme->doseToken(QStringLiteral("muted"))))
+            icon.addPixmap(p, QIcon::Normal);
+        for (const QPixmap &p : draw(theme->doseToken(QStringLiteral("accent"))))
+            icon.addPixmap(p, QIcon::Selected);
+        return icon;
+    }
+
     // Text a reader would search for: labels, buttons, group titles,
     // advanced settings' names. Accelerators and markup removed.
     QString searchableText(const QWidget *page)
@@ -406,6 +450,11 @@ void DoseDialogs::decorateOptions(QDialog *dialog, QSplitter *splitter, QListWid
         QListWidgetItem *item = sections->item(i);
         item->setTextAlignment(Qt::AlignLeft | Qt::AlignVCenter);
         item->setSizeHint({0, 34});
+        if (UIThemeManager::instance()->usesDoseTheme())
+        {
+            if (const QIcon icon = sectionIcon(pages->widget(i) ? pages->widget(i)->objectName() : QString()); !icon.isNull())
+                item->setIcon(icon);
+        }
     }
     sidebar->setMinimumWidth(220);
 
