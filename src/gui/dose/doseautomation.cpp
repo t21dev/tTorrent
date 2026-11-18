@@ -17,6 +17,7 @@
 #include "dosemcp.h"
 #include "dosememory.h"
 #include "dosepair.h"
+#include "doseupdate.h"
 
 #include <functional>
 
@@ -86,9 +87,9 @@ namespace
     // A card in the bottom-right corner of the main window: what happened,
     // and buttons to act on it. Fades out after a few seconds.
     void showCard(QMainWindow *window, const QString &title, const QString &text, const QString &iconId
-        , const QList<std::pair<QString, std::function<void ()>>> &actions)
+        , const QList<std::pair<QString, std::function<void ()>>> &actions, const bool always = false)
     {
-        if (!window || !window->isVisible() || window->isMinimized() || !DoseAutomation::notificationCards())
+        if (!window || !window->isVisible() || window->isMinimized() || (!always && !DoseAutomation::notificationCards()))
             return;
         // One card at a time: a new one replaces the old.
         for (QFrame *old : window->findChildren<QFrame *>(u"doseCard"_s, Qt::FindDirectChildrenOnly))
@@ -109,8 +110,10 @@ namespace
         heading->setObjectName(u"doseCardTitle"_s);
         auto *body = new QLabel(text);
         body->setObjectName(u"doseCardText"_s);
-        body->setMaximumWidth(300);
-        body->setText(body->fontMetrics().elidedText(text, Qt::ElideMiddle, 300));
+        body->setMaximumWidth(320);
+        body->setWordWrap(true);
+        // Sentences wrap; a very long torrent name is shortened in the middle.
+        body->setText((text.size() > 140) ? body->fontMetrics().elidedText(text, Qt::ElideMiddle, 2 * 320) : text);
         body->setToolTip(text);
         column->addWidget(heading);
         column->addWidget(body);
@@ -382,6 +385,12 @@ namespace
     };
 }
 
+void DoseAutomation::showCard(QMainWindow *window, const QString &title, const QString &text, const QString &iconId
+    , const QList<std::pair<QString, std::function<void ()>>> &actions, const bool always)
+{
+    ::showCard(window, title, text, iconId, actions, always);
+}
+
 bool DoseAutomation::lowDiskGuard()
 {
     return settings()->loadValue<bool>(KEY_GUARD, true);
@@ -416,6 +425,7 @@ void DoseAutomation::install(QMainWindow *window)
     DosePair::install(window);
     DoseMcp::apply();
     DoseMemory::install(window);
+    DoseUpdate::install(window);
 
     QObject::connect(session, &BitTorrent::Session::torrentAdded, window, [](BitTorrent::Torrent *torrent)
     {

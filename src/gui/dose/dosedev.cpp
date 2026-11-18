@@ -288,6 +288,22 @@ void DoseDev::scheduleShots(QMainWindow *window)
             dialog->close();
         }
     };
+    // Help › Check for updates: the card or the message it ends with.
+    steps << [window]
+    {
+        if (auto *check = window->findChild<QAction *>(u"doseActionUpdates"_s))
+            check->trigger();
+    };
+    steps << [] {} << [] {};
+    steps << [window, dir]
+    {
+        save(window, dir + u"/update-window.png");
+        for (QDialog *dialog : openDialogs())
+        {
+            save(dialog, dir + u"/update-message.png");
+            dialog->close();
+        }
+    };
     steps << [] { QApplication::quit(); };
     chain(window, steps, 1500);
 }

@@ -16,7 +16,7 @@ Kept as they are: Web UI and Web API, RSS, run a program on add or finish, watch
 | Fast start | The torrent list shows at once; trackers, peers and file details load in the background without a disk spike |
 | MCP server | AI agents (Claude Code, Codex, Cursor) read and, with a key that allows it, manage torrents. Off by default, local only. Design: the prototype's `docs/mcp.md`. **Done, v1** (Settings › Web UI › AI agents; HTTP on 127.0.0.1:7812/mcp, one key, read or manage, 13 tools; 2026-07-28 and 2025 clients) |
 | Import from qBittorrent | Torrents, progress, categories, tags and settings in one step, no recheck |
-| tTorrent updates | Signed updates of our own, installed on restart |
+| tTorrent updates | Signed updates of our own, installed on restart. **Check done** (GitHub releases, daily and Help › Check for updates; needs a public release list). Install on restart: not yet (needs a signing key) |
 | Low disk space guard | Pauses downloads before the drive fills, resumes when space returns. **Done** (Settings › Downloads) |
 | Command palette | Ctrl+K: torrents, actions, settings. **Done** (actions; Ctrl+/ lists and changes every shortcut) |
 | Notifications with actions | Finished or failed, with Open folder and Show. **Done** (a card in the window; the system notification is unchanged) |

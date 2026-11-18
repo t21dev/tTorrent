@@ -15,6 +15,9 @@
 
 #pragma once
 
+#include <functional>
+
+#include <QList>
 #include <QString>
 
 class QMainWindow;
@@ -42,4 +45,9 @@ namespace DoseAutomation
     QString webhookUrl();
     bool unpackArchives();
     bool notificationCards();
+
+    // A card in the window's bottom-right corner with up to three actions.
+    // `always` shows it even when finish/fail cards are turned off (update offers).
+    void showCard(QMainWindow *window, const QString &title, const QString &text, const QString &iconId
+        , const QList<std::pair<QString, std::function<void ()>>> &actions, bool always = false);
 }

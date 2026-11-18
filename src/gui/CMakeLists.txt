@@ -285,6 +285,8 @@ add_library(qbt_gui STATIC
     dose/dosetorrentmenu.h
     dose/dosetoolbar.h
     dose/dosetrim.cpp
+    dose/doseupdate.cpp
+    dose/doseupdate.h
     dose/doseviews.cpp
     dose/doseviews.h
     dose/dosetrim.h

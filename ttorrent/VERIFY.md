@@ -59,6 +59,7 @@ Each feature built so far has a real-run check. Run the ones your change touches
 | Low disk space guard | Set `LowDiskGiB` above the drive's free space and add a torrent with no data: the log says "Low disk space … stopped". Set it back to 5 and restart: "Space is back … started". |
 | MCP server | Scratch profile with `McpEnabled=true`, `McpScope=manage` and `McpKeyHash=@ByteArray(<sha256 hex of a test key>)`, then `python -I ttorrent\scripts\test\mcp_check.py <key> --manage`. Every line must say ok. Use Python, not `curl` (a shell wrapper here cuts long output). |
 | Health in the Add dialog | Add a public open-movie torrent (for example Sintel from webtorrent.io) with screenshots on; the Add dialog shows seeds and peers. |
+| Update check | Run the screenshot pass twice: once as is (the private repo gives `update-message.png`, "the release list isn't public yet"), and once with `TTORRENT_UPDATE_REPO=qbittorrent/qBittorrent` (any public repo with newer tags gives the card in `update-window.png`). GitHub's API allows 60 anonymous requests an hour per address; past that the check falls back to `releases.atom`. |
 | Pair a phone, saved views, palette, shortcuts | The screenshot run shows each; click through them once by hand. |
 
 ## Benchmarks
