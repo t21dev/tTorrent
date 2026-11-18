@@ -1,0 +1,28 @@
+[package]
+name = "tt-ui"
+description = "tTorrent's window process (GPUI): started when shown, ends when closed to the tray"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+publish = false
+
+[[bin]]
+name = "ttorrent-ui"
+path = "src/main.rs"
+
+[dependencies]
+gpui = { workspace = true }
+tt-ipc = { workspace = true }
+tt-theme = { workspace = true }
+tt-platform = { workspace = true }
+anyhow = { workspace = true }
+log = { workspace = true }
+serde_json = { workspace = true }
+# An async channel GPUI tasks can await (already in GPUI's tree).
+smol = "2"
+
+[lints]
+workspace = true

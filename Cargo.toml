@@ -1,0 +1,51 @@
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.95"
+license = "MIT"
+repository = "https://github.com/t21dev/ttorrent"
+authors = ["t21 dev and contributors"]
+
+[workspace.dependencies]
+tt-theme = { path = "crates/tt-theme" }
+tt-ipc = { path = "crates/tt-ipc" }
+tt-import = { path = "crates/tt-import" }
+tt-platform = { path = "crates/tt-platform" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+anyhow = "1"
+log = "0.4"
+interprocess = "2.4"
+gpui = "0.2.2"
+librqbit = { version = "9.1.0", default-features = false, features = ["rust-tls"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "time", "sync"] }
+rusqlite = { version = "0.40", features = ["bundled"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt", "env-filter"] }
+proptest = "1"
+
+[workspace.lints.rust]
+unsafe_code = "deny"
+
+[workspace.lints.clippy]
+unwrap_used = "warn"
+expect_used = "warn"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = "symbols"
+
+# Builds of dependencies stay optimised in dev so the engine and GPUI aren't crawling.
+[profile.dev.package."*"]
+opt-level = 2
+
+# librqbit with tTorrent's changes until upstream has them (PLAN.md › librqbit
+# change list): t21dev/rqbit branch "ttorrent" = upstream main plus
+# sparse-chunk-status (ikatson/rqbit#757) and fastresume-file-sizes.
+[patch.crates-io]
+librqbit = { git = "https://github.com/t21dev/rqbit", branch = "ttorrent" }

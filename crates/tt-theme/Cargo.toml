@@ -1,0 +1,19 @@
+[package]
+name = "tt-theme"
+description = "tTorrent's design tokens: Dose themes, accents, density, scale, motion (DESIGN.md)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+publish = false
+
+[dependencies]
+serde = { workspace = true }
+
+[dev-dependencies]
+proptest = { workspace = true }
+
+[lints]
+workspace = true

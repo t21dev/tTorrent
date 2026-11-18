@@ -13,3 +13,6 @@
 .idea/
 .DS_Store
 Thumbs.db
+
+# local engine data from dev runs and screenshots fixtures
+/.tt-dev/

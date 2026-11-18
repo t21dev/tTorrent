@@ -96,7 +96,7 @@ macOS:    system menu bar: tTorrent File Edit View Torrent Tools Window Help
 - **Sidebar** (Ctrl/⌘ B): Status, Categories (each with its colour square), Tags, Trackers, each item with a count.
 - **Transfer list** columns default to: Name, Added on, Size, Progress, Status, Downloaded, Uploaded, Down, Up, ETA, Ratio. All **38 qBittorrent columns** are available, in qBittorrent's order (from `transferlistmodel.h`): #, Name, Size, Total size, Progress, Status, Seeds, Peers, Down speed, Up speed, ETA, Ratio, Popularity, Category, Tags, Added on, Completed on, Tracker, Down limit, Up limit, Downloaded, Uploaded, Session download, Session upload, Remaining, Time active, Save path, Completed, Ratio limit, Last seen complete, Last activity, Availability, Incomplete save path, Info hash v1, Info hash v2, Reannounce in, Private, Created on. Right-click a header (or View › Columns…) to show or hide them; a shown column is inserted at its qBittorrent position and fades in. Drag headers to reorder, drag their edges to resize. Click a header to sort (arrow shows direction; numbers sort descending first, text ascending). Default sort: Added on, newest first. Name always shows. Numbers right-aligned in DM Mono.
 - **Details** (Ctrl/⌘ J): General (the live piece map plus key figures), Trackers, Peers, HTTP sources, Content, Speed. The tab underline slides between tabs.
-- **Status bar**: free space, DHT nodes, down and up speed with session totals, memory against its cap, port state. Optional: session ratio, connected peers.
+- **Status bar**: free space, DHT nodes, down and up speed with session totals, memory (engine and window together, Task Manager's measure; against its cap once memory caps exist), port state, and "Slow mode" in the warn colour while it is on. Optional: session ratio, connected peers.
 
 ## Torrent menu (right-click on a row)
 
@@ -167,9 +167,26 @@ The **piece map** in the General tab: 48 columns of small squares, filled in the
 - **Torrent menu**: Settings › Torrent menu shows or hides each item; the menu ends with "Customize this menu…". Hidden items stay in the main Torrent menu and keep their shortcuts.
 
 - **Toolbar**: 15 available items, drag to reorder, each set to Hidden, Icon only, or Icon and label using three icon buttons. From right-click on the toolbar, View › Customize toolbar, or Settings › Toolbar. Keyboard: Alt and the arrow keys move a focused item.
-- **Status bar** and **details tabs**: right-click to show or hide items (at least one tab stays).
+- **Status bar** and **details tabs**: right-click to show or hide items (at least one tab stays). Status bar items, in this order: Free space, DHT nodes, Download speed, Upload speed, Session totals, Session ratio, Connected peers, Memory, Port; all but ratio and peers on by default; also View › Status bar, with Reset to defaults. Slow mode and "Starting torrents" always show while they apply.
 - Items appear and leave with a 220 ms fade and scale; neighbours slide into place (transform only).
 - **Settings** has a search field (focused on open, Ctrl/⌘ F) that filters rows and sections live and highlights matches, plus a section list.
+
+## Add torrent dialog
+
+qBittorrent's "Add new torrent", shown for every file and link opened from the system, Ctrl+O, the link dialog or a drop, while Settings › Downloads › "Show the Add torrent dialog" is on (default). Direction A of the 18 November mock-ups (https://claude.ai/artifact/QKCkUgAFHcTgmnoQnpH4kJ). A sheet of 960 × 680 px (at most 96 % × 92 % of the window):
+
+- **Header**: "Add torrent" (and "1 of 3 waiting"), the torrent's name, a row of Size, Files, Pieces and Created (values in DM Mono), and a Close button (×) at the top right. A magnet shows "Retrieving metadata from peers" there until its file list arrives.
+- **Left column** (340 px, scrolls on its own): Save at (field, Browse…, "192 GB free, 1.75 GB needed", red when it doesn't fit); Category, Tags, Layout and Stop when as label and dropdown rows; When added (Start torrent, Add to top of queue, Skip hash check); "2 options coming later" folded.
+- **Right**: Files with "7 of 7 selected, 1.75 GB" and a filter field; the tree in a bordered box with its own header (select-all checkbox, Name, Size) and its own scroll, folders first, mixed checkbox state, sizes right-aligned; Torrent information folded below (hashes, comment, creator, trackers).
+- **Footer**, always visible: Don't show this again, Cancel, Add torrent. Esc cancels, Enter in a field adds.
+
+Dropdowns open their choices as a menu at the pointer, above the sheet. Spec: `docs/associations.md`.
+
+## Settings
+
+Direction A: a sheet of 980 × 680 px. Left, on the side colour: "Settings", a search field, and the sections with icons (Behaviour, Downloads, Connection, Speed, Queue and seeding, BitTorrent, File association, Appearance, AI agents). Right: the section's name and one-line description with a Close button (×), then its groups: a 13 px semibold title over a bordered, rounded list of rows, each row a label (and a muted hint) with its control on the right: switches, steppers, dropdowns, buttons. Sub-settings indent. Typing in search shows matching rows from every section, grouped by section. Changes apply at once; there is no Save.
+
+Settings › File association: whether tTorrent opens .torrent files and magnet links, and Make default… (what it does differs per system, see `docs/associations.md`). Settings › Downloads: qBittorrent's "When adding a torrent" group. Settings › Queue and seeding: qBittorrent's queueing and seeding limits, same defaults.
 
 ## AI agents
 

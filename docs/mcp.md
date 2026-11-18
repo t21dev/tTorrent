@@ -4,7 +4,13 @@ tTorrent has a built-in [Model Context Protocol](https://modelcontextprotocol.io
 
 It is off until you turn it on. Everything stays on your computer: tTorrent sends nothing anywhere, and the agent you connect decides what it does with what it reads.
 
-Status: specification. Built in Phase 3 (see `PLAN.md`), following Turbo Reader's MCP server (`../turbo-reader/docs/mcp.md`).
+Status: partly built (18 November 2026). `ttorrent --mcp --scope read|manage|full` serves stdio today, for both the 2026-07-28 revision and 2025 clients; it is a small process that talks to the engine's local API. Working: the switch in Settings › AI agents (off by default), the read tools above except `check_connection`, `get_stats`, `get_activity` and the RSS tools, and the manage set except `move_storage` and `set_file_priority`. Not yet: the HTTP transport, per-agent keys (the scope is a command-line flag until then), events, Activity with Undo, and the in-app confirmation sheet. Until that sheet exists, agents can never delete files and changes to more than 20 torrents are refused. Plan: `PLAN.md` › Phase 3b.
+
+Connect Claude Code (read-only):
+
+```
+claude mcp add ttorrent -- "<folder>\ttorrent.exe" --mcp --scope read
+```
 
 ## Why this is ours
 

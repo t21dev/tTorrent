@@ -1,0 +1,27 @@
+[package]
+name = "tt-bench"
+description = "tTorrent's measurement tool: fixtures, local swarm, memory, start-up, screenshots (docs/perf/README.md)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+publish = false
+
+[dependencies]
+tt-ipc = { workspace = true }
+tt-platform = { workspace = true }
+anyhow = { workspace = true }
+serde_json = { workspace = true }
+librqbit = { workspace = true }
+tokio = { workspace = true }
+# SHA-1 for synthetic .torrent files. BSD-3-Clause.
+sha1_smol = "1"
+
+[target.'cfg(windows)'.dependencies]
+# Per-window capture (PrintWindow), which reads a GPUI window's own pixels. Apache-2.0.
+xcap = { version = "0.9.8", default-features = false }
+
+[lints]
+workspace = true
