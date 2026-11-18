@@ -3,7 +3,7 @@
 # (TTORRENT_BENCH_QSS_DROP, see ttorrent/VERIFY.md › Benchmarks).
 # Usage: powershell -ExecutionPolicy Bypass -File ttorrent\scripts\qss-ab.ps1 -Exe <snapshot>\ttorrent.exe -Source <profile copy> -Out <folder>
 
-param([Parameter(Mandatory)][string]$Exe, [Parameter(Mandatory)][string]$Source, [Parameter(Mandatory)][string]$Out, [int]$Runs = 2, [int]$Seconds = 100)
+param([Parameter(Mandatory)][string]$Exe, [Parameter(Mandatory)][string]$Source, [Parameter(Mandatory)][string]$Out, [int]$Runs = 2, [int]$Seconds = 100, [string[]]$Only = @())
 $ErrorActionPreference = 'Stop'
 $bench = Join-Path $PSScriptRoot 'bench.ps1'
 $variants = [ordered]@{
@@ -18,6 +18,7 @@ $variants = [ordered]@{
     'views'     = 'QTreeView,QTableView,QListView,QAbstractItemView'
 }
 foreach ($name in $variants.Keys) {
+    if ($Only.Count -and ($name -notin $Only)) { continue }
     Remove-Item Env:TTORRENT_BENCH_NO_QSS, Env:TTORRENT_BENCH_QSS_DROP -ErrorAction SilentlyContinue
     if ($variants[$name] -eq '*') { $env:TTORRENT_BENCH_NO_QSS = '1' }
     elseif ($variants[$name]) { $env:TTORRENT_BENCH_QSS_DROP = $variants[$name] }
