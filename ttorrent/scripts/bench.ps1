@@ -61,6 +61,8 @@ function New-Profile([string]$App, [string]$Dir) {
     Set-IniValue $ini 'Preferences' 'WebUI\Enabled' 'false'
     Set-IniValue $ini 'Preferences' 'General\PreventFromSuspendWhenDownloading' 'false'
     Set-IniValue $ini 'Application' 'GUI\Notifications\Enabled' 'false'
+    # The app's log is kept next to the results (start-up timing, early exits).
+    Set-IniValue $ini 'Application' 'FileLogger\Enabled' 'true'
     Set-IniValue $ini 'Preferences' 'General\StartMinimized' 'true'
     Set-IniValue $ini 'Preferences' 'General\SystrayEnabled' 'true'
     Set-IniValue $ini 'Preferences' 'General\MinimizeToTray' 'true'

@@ -79,6 +79,8 @@ public:
     static QString accentKey();   // Appearance/Accent, default "theme"
     static QString densityKey();  // Appearance/Density, default "compact"
     static QString scaleKey();    // Appearance/InterfaceScale, default 1.0
+    // Vertical padding of list rows for a density id (the @rowPad@ token).
+    static int rowPadding(const QString &density);
 
 private:
     QString m_themeId;

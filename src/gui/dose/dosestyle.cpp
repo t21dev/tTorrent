@@ -137,6 +137,10 @@ void DoseStyle::polish(QWidget *widget)
     {
         QTimer::singleShot(0, button, [button] { DosePaint::selectButtonsAsIcons(button->parentWidget()); });
     }
+    // Lists styled row by row through the stylesheet; the transfer list
+    // paints its own rows (DosePaint::paintsOwnRows).
+    if (auto *view = qobject_cast<QAbstractItemView *>(widget); view && !view->inherits("TransferListWidget"))
+        view->setProperty("doseRows", true);
     if (!widget->isWindow())
         return;
 

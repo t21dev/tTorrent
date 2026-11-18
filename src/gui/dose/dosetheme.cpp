@@ -391,6 +391,11 @@ QColor DoseThemeSource::token(const QString &name) const
     return m_tokens.value(name);
 }
 
+int DoseThemeSource::rowPadding(const QString &density)
+{
+    return densityFor(density).rowPad;
+}
+
 int DoseThemeSource::fontPixelSize() const
 {
     return densityFor(m_density).font;

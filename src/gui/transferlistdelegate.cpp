@@ -56,6 +56,8 @@ QSize TransferListDelegate::sizeHint(const QStyleOptionViewItem &option, const Q
 
     QSize size = QStyledItemDelegate::sizeHint(option, index);
     size.setHeight(std::max(m_nameColHeight, size.height()));
+    if (DosePaint::paintsOwnRows(option.widget)) // tTorrent: rows padded here, not by the stylesheet
+        size.rheight() += (2 * DosePaint::rowPadding()) + 1;
     return size;
 }
 
@@ -105,7 +107,18 @@ void TransferListDelegate::paint(QPainter *painter, const QStyleOptionViewItem &
         }
         break;
     default:
-        QStyledItemDelegate::paint(painter, option, index);
+        if (DosePaint::paintsOwnRows(option.widget)) // tTorrent: the row's background painted here, not by the stylesheet
+        {
+            DosePaint::rowBackground(painter, option);
+            QStyleOptionViewItem opt {option};
+            opt.state &= ~(QStyle::State_Selected | QStyle::State_MouseOver | QStyle::State_HasFocus);
+            opt.rect.adjust(4, 0, -4, 0);
+            QStyledItemDelegate::paint(painter, opt, index);
+        }
+        else
+        {
+            QStyledItemDelegate::paint(painter, option, index);
+        }
         DosePaint::selectionBar(painter, option, index);
         break;
     }

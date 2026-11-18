@@ -27,6 +27,7 @@
 #include <QPushButton>
 
 #include "base/global.h"
+#include "dosetheme.h"
 #include "gui/uithememanager.h"
 
 bool DosePaint::active()
@@ -69,8 +70,15 @@ void DosePaint::styleCell(QStyleOptionViewItem *option, const QModelIndex &index
 
 void DosePaint::progress(QPainter *painter, const QStyleOptionViewItem &option, const qreal percent, const QString &text, const QColor &fill)
 {
-    const QStyle *style = option.widget ? option.widget->style() : QApplication::style();
-    style->drawPrimitive(QStyle::PE_PanelItemViewItem, &option, painter, option.widget);
+    if (paintsOwnRows(option.widget))
+    {
+        rowBackground(painter, option);
+    }
+    else
+    {
+        const QStyle *style = option.widget ? option.widget->style() : QApplication::style();
+        style->drawPrimitive(QStyle::PE_PanelItemViewItem, &option, painter, option.widget);
+    }
 
     const QFont font = numberFont(option.font);
     const int textWidth = QFontMetrics(font).horizontalAdvance(u"100.0%"_s) + 2;
@@ -131,6 +139,28 @@ void DosePaint::selectButtonsAsIcons(QWidget *root)
         button->style()->unpolish(button);
         button->style()->polish(button);
     }
+}
+
+bool DosePaint::paintsOwnRows(const QWidget *view)
+{
+    return active() && view && view->inherits("TransferListWidget");
+}
+
+int DosePaint::rowPadding()
+{
+    return active() ? DoseThemeSource::rowPadding(UIThemeManager::instance()->lookDensity()) : 0;
+}
+
+void DosePaint::rowBackground(QPainter *painter, const QStyleOptionViewItem &option)
+{
+    QColor fill;
+    if (option.state.testFlag(QStyle::State_Selected))
+        fill = token(u"select"_s);
+    else if (option.state.testFlag(QStyle::State_MouseOver))
+        fill = token(u"hover"_s);
+    if (fill.isValid())
+        painter->fillRect(option.rect, fill);
+    painter->fillRect(QRect(option.rect.left(), option.rect.bottom(), option.rect.width(), 1), token(u"rowRule"_s));
 }
 
 void DosePaint::selectionBar(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index)
