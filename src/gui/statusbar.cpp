@@ -41,6 +41,7 @@
 #include "base/bittorrent/sessionstatus.h"
 #include "base/preferences.h"
 #include "base/settingsstorage.h"
+#include "dose/dosememory.h"
 #include "dose/dosepaint.h"
 #include "base/utils/misc.h"
 #include "speedlimitdialog.h"
@@ -162,6 +163,7 @@ StatusBar::StatusBar(QWidget *parent)
     m_memoryLbl = new QLabel(this);
     m_memoryLbl->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
     m_memoryLbl->setToolTip(tr("Memory tTorrent uses (Task Manager's private working set)"));
+    DoseMemory::attachToLabel(m_memoryLbl); // tTorrent: click for the memory graph
     m_memorySeparator = createSeparator(this);
     m_connectionSeparator = createSeparator(this);
     m_altSpeedsSeparator = createSeparator(this);

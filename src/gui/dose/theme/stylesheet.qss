@@ -398,3 +398,7 @@ QPushButton#doseCardButton { padding: 2px 10px; min-width: 0; }
 QToolButton#doseCardClose { border: none; border-radius: 6px; }
 QToolButton#doseCardClose:hover { background: @hover@; }
 QLabel#dosePairLink { font-family: "DM Mono"; color: @text@; }
+
+/* Memory card: opened from the status bar's Memory label. */
+QFrame#doseMemoryCard { background: @raised@; border: 1px solid @line@; border-top-color: @edgeHi@; border-radius: 12px; }
+QLabel#doseMemoryValue { font-family: "DM Mono"; color: @text@; }

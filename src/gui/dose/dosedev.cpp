@@ -22,7 +22,9 @@
 #include <QDialog>
 #include <QDir>
 #include <QLayout>
+#include <QLabel>
 #include <QListWidget>
+#include <QMouseEvent>
 #include <QMainWindow>
 #include <QMenu>
 #include <QMenuBar>
@@ -250,6 +252,29 @@ void DoseDev::scheduleShots(QMainWindow *window)
             save(window, dir + u"/main-" + name.mid(6).toLower() + u".png");
         };
     }
+    // The memory card, opened as a click on the status bar's Memory label would.
+    steps << [window]
+    {
+        for (QLabel *label : window->findChildren<QLabel *>())
+        {
+            if (label->toolTip().contains(u"graph since start"))
+            {
+                QMouseEvent release {QEvent::MouseButtonRelease, QPointF(4, 4), label->mapToGlobal(QPointF(4, 4)), Qt::LeftButton, Qt::NoButton, Qt::NoModifier};
+                QApplication::sendEvent(label, &release);
+            }
+        }
+    };
+    steps << [dir]
+    {
+        for (QWidget *top : QApplication::topLevelWidgets())
+        {
+            if (top->isVisible() && (top->objectName() == u"doseMemoryPopup"))
+            {
+                save(top, dir + u"/memory.png");
+                top->close();
+            }
+        }
+    };
     steps << [window]
     {
         if (auto *pair = window->findChild<QAction *>(u"doseActionPair"_s))
