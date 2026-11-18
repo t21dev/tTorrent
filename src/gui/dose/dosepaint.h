@@ -39,7 +39,13 @@ namespace DosePaint
     // Only the status column keeps its state colour; others use `text`.
     void styleCell(QStyleOptionViewItem *option, const QModelIndex &index, bool keepStateColour, bool isZero);
 
-    // A 4 px pill on `track` with the percentage beside it, in `fill`.
+    // Progress bar style for the transfer list (Appearance/ProgressStyle):
+    // "line" (4 px, the default), "bar" (8 px) or "filled" (the whole cell,
+    // percentage inside).
+    QString progressStyle();
+    void setProgressStyle(const QString &style);
+
+    // A bar on `track` in `fill` with the percentage, drawn in progressStyle().
     void progress(QPainter *painter, const QStyleOptionViewItem &option, qreal percent, const QString &text, const QColor &fill);
 
     // The 3 px accent bar on the selected row's first visible cell.

@@ -16,6 +16,7 @@
 #include "dosepaint.h"
 
 #include <QApplication>
+#include <QAbstractItemView>
 #include <QHeaderView>
 #include <QPainter>
 #include <QPainterPath>
@@ -27,6 +28,7 @@
 #include <QPushButton>
 
 #include "base/global.h"
+#include "base/settingsstorage.h"
 #include "dosetheme.h"
 #include "gui/uithememanager.h"
 
@@ -68,6 +70,38 @@ void DosePaint::styleCell(QStyleOptionViewItem *option, const QModelIndex &index
     }
 }
 
+namespace
+{
+    QString &cachedProgressStyle()
+    {
+        static QString style;
+        return style;
+    }
+}
+
+QString DosePaint::progressStyle()
+{
+    QString &style = cachedProgressStyle();
+    if (style.isEmpty())
+    {
+        style = SettingsStorage::instance()->loadValue<QString>(u"Appearance/ProgressStyle"_s, u"line"_s);
+        if ((style != u"bar") && (style != u"filled"))
+            style = u"line"_s;
+    }
+    return style;
+}
+
+void DosePaint::setProgressStyle(const QString &style)
+{
+    SettingsStorage::instance()->storeValue(u"Appearance/ProgressStyle"_s, style);
+    cachedProgressStyle().clear();
+    for (QWidget *top : QApplication::topLevelWidgets())
+    {
+        for (QAbstractItemView *view : top->findChildren<QAbstractItemView *>())
+            view->viewport()->update();
+    }
+}
+
 void DosePaint::progress(QPainter *painter, const QStyleOptionViewItem &option, const qreal percent, const QString &text, const QColor &fill)
 {
     if (paintsOwnRows(option.widget))
@@ -81,25 +115,58 @@ void DosePaint::progress(QPainter *painter, const QStyleOptionViewItem &option, 
     }
 
     const QFont font = numberFont(option.font);
-    const int textWidth = QFontMetrics(font).horizontalAdvance(u"100.0%"_s) + 2;
-    const QRect cell = option.rect.adjusted(8, 0, -8, 0);
-    const QRect textRect {cell.right() - textWidth + 1, cell.top(), textWidth, cell.height()};
-    const int barHeight = 4;
-    const QRectF bar {qreal(cell.left()), cell.center().y() - (barHeight / 2.0) + 1, qreal(std::max(0, cell.width() - textWidth - 8)), qreal(barHeight)};
-
+    const QColor done = fill.isValid() ? fill : token(u"accent"_s);
+    const qreal fraction = std::clamp(percent, 0.0, 100.0) / 100.0;
+    const QString styleName = progressStyle();
     painter->save();
     painter->setRenderHint(QPainter::Antialiasing);
     painter->setPen(Qt::NoPen);
-    painter->setBrush(token(u"track"_s));
-    painter->drawRoundedRect(bar, 2, 2);
-    if (percent > 0)
-    {
-        QRectF done = bar;
-        done.setWidth(std::max(qreal(barHeight), bar.width() * std::clamp(percent, 0.0, 100.0) / 100.0));
-        painter->setBrush(fill.isValid() ? fill : token(u"accent"_s));
-        painter->drawRoundedRect(done, 2, 2);
-    }
     painter->setFont(font);
+
+    if (styleName == u"filled")
+    {
+        // The whole cell, rounded, the percentage centred; the text switches
+        // colour where the fill passes under it.
+        const QRectF box = QRectF(option.rect).adjusted(6, 4, -6, -4);
+        const qreal radius = std::min<qreal>(6, box.height() / 2);
+        painter->setBrush(token(u"track"_s));
+        painter->drawRoundedRect(box, radius, radius);
+        QRectF filled = box;
+        filled.setWidth(box.width() * fraction);
+        if (fraction > 0)
+        {
+            QPainterPath clip;
+            clip.addRoundedRect(box, radius, radius);
+            painter->setClipPath(clip);
+            painter->setBrush(done);
+            painter->drawRect(filled);
+            painter->setClipping(false);
+        }
+        painter->setPen(token(u"text"_s));
+        painter->setClipRect(QRectF(filled.right(), box.top(), box.width(), box.height()));
+        painter->drawText(box, Qt::AlignCenter, text);
+        painter->setPen(token(u"onAccent"_s));
+        painter->setClipRect(filled);
+        painter->drawText(box, Qt::AlignCenter, text);
+        painter->restore();
+        return;
+    }
+
+    const int textWidth = QFontMetrics(font).horizontalAdvance(u"100.0%"_s) + 2;
+    const QRect cell = option.rect.adjusted(8, 0, -8, 0);
+    const QRect textRect {cell.right() - textWidth + 1, cell.top(), textWidth, cell.height()};
+    const int barHeight = (styleName == u"bar") ? 8 : 4;
+    const QRectF bar {qreal(cell.left()), cell.center().y() - (barHeight / 2.0) + 1, qreal(std::max(0, cell.width() - textWidth - 8)), qreal(barHeight)};
+    const qreal radius = barHeight / 2.0;
+    painter->setBrush(token(u"track"_s));
+    painter->drawRoundedRect(bar, radius, radius);
+    if (fraction > 0)
+    {
+        QRectF part = bar;
+        part.setWidth(std::max(qreal(barHeight), bar.width() * fraction));
+        painter->setBrush(done);
+        painter->drawRoundedRect(part, radius, radius);
+    }
     painter->setPen(token(u"muted"_s));
     painter->drawText(textRect, Qt::AlignRight | Qt::AlignVCenter, text);
     painter->restore();

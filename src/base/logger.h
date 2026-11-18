@@ -35,7 +35,7 @@
 #include <QString>
 #include <QtContainerFwd>
 
-inline const int MAX_LOG_MESSAGES = 20000;
+inline const int MAX_LOG_MESSAGES = 2000; // tTorrent: 20000 kept up to ~5 MB in memory (owner's pick, 2026-11-18)
 
 namespace Log
 {

@@ -328,6 +328,18 @@ QGroupBox#doseInfoBox { border: none; margin-top: 0; padding: 0 0 0 22px; }
             DoseToolbar::setIconSize(bar, icons->currentData().toInt());
         });
 
+        auto *bars = new QComboBox;
+        bars->addItem(QDialog::tr("Line"), u"line"_s);
+        bars->addItem(QDialog::tr("Bar"), u"bar"_s);
+        bars->addItem(QDialog::tr("Filled, percentage inside"), u"filled"_s);
+        bars->setCurrentIndex(std::max(0, bars->findData(DosePaint::progressStyle())));
+        form->addWidget(new QLabel(QDialog::tr("Progress bars:")), row, 0);
+        form->addWidget(bars, row++, 1, Qt::AlignLeft);
+        QObject::connect(bars, &QComboBox::activated, group, [bars](int)
+        {
+            DosePaint::setProgressStyle(bars->currentData().toString());
+        });
+
         auto *height = new QComboBox;
         height->addItem(QDialog::tr("Slim"), true);
         height->addItem(QDialog::tr("Regular"), false);
