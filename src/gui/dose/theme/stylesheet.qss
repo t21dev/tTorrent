@@ -183,7 +183,8 @@ QCheckBox::indicator:checked, QGroupBox::indicator:checked, QTreeView::indicator
 QCheckBox::indicator:indeterminate, QTreeView::indicator:indeterminate {
     background: @accent@; border-color: @accent@; image: url(@partial@);
 }
-QCheckBox::indicator:disabled { border-color: @line@; background: @panel@; }
+QCheckBox::indicator:disabled { border-color: @ring@; background: transparent; }
+QCheckBox:disabled { color: @faint@; }
 QRadioButton::indicator { width: 14px; height: 14px; border: 1.5px solid @ring@; border-radius: 8px; background: @bg@; }
 QRadioButton::indicator:hover { border-color: @muted@; }
 QRadioButton::indicator:checked { background: @accent@; border-color: @accent@; image: url(@radioDot@); }
@@ -193,8 +194,8 @@ QGroupBox {
     border: 1px solid @line@;
     border-top-color: @edgeHi@;
     border-radius: 14px;
-    margin-top: 32px;
-    padding: 14px 14px 12px 14px;
+    margin-top: 30px;
+    padding: 6px 12px 8px 12px;
     background: @card@;
 }
 QGroupBox::title {
@@ -211,11 +212,13 @@ QGroupBox::indicator { margin-right: 6px; }
 QProgressBar {
     background: @track@;
     border: none;
-    border-radius: 4px;
+    border-radius: 6px;
     text-align: center;
     color: @text@;
+    max-height: 18px;
+    font-size: @fontSmall@px;
 }
-QProgressBar::chunk { background: @accent@; border-radius: 4px; }
+QProgressBar::chunk { background: @accent@; border-radius: 6px; }
 
 QScrollBar:vertical { background: transparent; width: 9px; margin: 0; border: none; }
 QScrollBar:horizontal { background: transparent; height: 9px; margin: 0; border: none; }
@@ -283,15 +286,21 @@ QToolButton#dosePrimary {
 QToolButton#dosePrimary:hover { background: @accentHover@; border-color: @accentHover@; }
 QToolButton#dosePrimary:pressed { background: @accentBottom@; }
 
+/* Slim toolbar (the default): one tight row. */
+QToolBar[doseSlim="true"] { padding: 2px 8px; spacing: 2px; }
+QToolBar[doseSlim="true"]::separator { margin: 5px 5px; }
+QToolBar[doseSlim="true"] QToolButton { padding: 2px; min-height: 0; max-height: 26px; }
+QToolBar[doseSlim="true"] QToolButton#dosePrimary { padding: 2px 12px 2px 8px; max-height: 26px; }
+
 /* Status bar: short dividers, items as quiet buttons. */
 QStatusBar QFrame[frameShape="5"] { max-height: 14px; min-height: 14px; }
 QStatusBar QPushButton { text-align: left; }
 
-/* Content tab: Select all / none as text buttons. */
+/* Select all / none: square icon buttons (text moves to the tooltip). */
 QPushButton#selectAllButton, QPushButton#selectNoneButton, QPushButton#buttonSelectAll, QPushButton#buttonSelectNone {
-    background: transparent; border: none; color: @muted@; padding: 4px 10px; min-width: 0; font-weight: 500;
+    background: transparent; border: 1px solid transparent; border-radius: 7px; padding: 0; min-width: 0; min-height: 0;
 }
-QPushButton#selectAllButton:hover, QPushButton#selectNoneButton:hover, QPushButton#buttonSelectAll:hover, QPushButton#buttonSelectNone:hover { background: @hover@; color: @text@; }
+QPushButton#selectAllButton:hover, QPushButton#selectNoneButton:hover, QPushButton#buttonSelectAll:hover, QPushButton#buttonSelectNone:hover { background: @hover@; border-color: @line@; }
 
 /* Filter sidebar (DESIGN.md › Sidebar): panel colour, sentence-case headings,
    rounded selection, no row dividers. */
@@ -338,3 +347,44 @@ QFrame#doseSearchField QLineEdit, QFrame#doseSearchField QLineEdit:hover, QFrame
 }
 QToolButton#doseSearchIcon { border: none; border-radius: 6px; padding: 0; background: transparent; }
 QToolButton#doseSearchIcon:hover { background: @hover@; }
+
+/* Sliders: a thin track, the filled part in the accent, a round handle. */
+QSlider::groove:horizontal { height: 4px; background: @track@; border-radius: 2px; }
+QSlider::sub-page:horizontal { background: @accent@; border-radius: 2px; }
+QSlider::handle:horizontal { width: 14px; height: 14px; margin: -6px 0; border-radius: 8px; background: @raised@; border: 1px solid @ring@; }
+QSlider::handle:horizontal:hover { border-color: @accent@; }
+QSlider::groove:vertical { width: 4px; background: @track@; border-radius: 2px; }
+QSlider::handle:vertical { width: 14px; height: 14px; margin: 0 -6px; border-radius: 8px; background: @raised@; border: 1px solid @ring@; }
+
+/* The small arrow on buttons with a menu (the Lock button). */
+QToolButton::menu-indicator { image: url(@chevronDown@); width: 10px; height: 10px; subcontrol-origin: padding; subcontrol-position: bottom right; }
+QToolButton[popupMode="1"] { padding-right: 12px; }
+
+/* Icon buttons (Select all / none): quiet until hovered. */
+QPushButton[doseIconButton="true"] { background: transparent; border: 1px solid transparent; border-radius: 7px; padding: 0; min-width: 0; }
+QPushButton[doseIconButton="true"]:hover { background: @hover@; border-color: @line@; }
+
+/* Wide splitter gaps draw a single hairline in the middle. */
+QSplitter#splitter::handle:horizontal {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 transparent, stop:0.46 transparent, stop:0.47 @line@, stop:0.53 @line@, stop:0.54 transparent, stop:1 transparent);
+}
+
+/* Keyboard shortcuts: keys drawn as caps (DM Mono on a well, deeper bottom edge). */
+QLabel[doseKeycap="true"], QKeySequenceEdit[doseKeycap="true"] QLineEdit {
+    background: @well@; color: @muted@; font-family: "DM Mono"; font-size: @fontSmall@px;
+    border: 1px solid @line@; border-bottom: 2px solid @line@; border-radius: 6px; padding: 2px 8px; min-height: 0;
+}
+QKeySequenceEdit[doseKeycap="true"] QLineEdit:hover { border-color: @ring@; color: @text@; }
+QKeySequenceEdit[doseKeycap="true"] QLineEdit:focus { border-color: @accent@; color: @text@; }
+QLabel#doseMuted { color: @muted@; }
+
+/* Command palette: a floating card under the title bar. */
+QFrame#dosePaletteCard { background: @panel@; border: 1px solid @line@; border-top-color: @edgeHi@; border-radius: 12px; }
+QLineEdit#dosePaletteEdit { background: @well@; border: 1px solid @line@; border-radius: 8px; padding: 6px 8px; font-size: @font@px; }
+QLineEdit#dosePaletteEdit:focus { border-color: @accentLine@; }
+QListWidget#dosePaletteList { background: transparent; border: none; outline: none; }
+QListWidget#dosePaletteList::item { border: none; border-radius: 7px; padding-left: 8px; }
+QListWidget#dosePaletteList::item:hover { background: @hover@; }
+QListWidget#dosePaletteList::item:selected { background: @select@; color: @text@; }
+QLabel#dosePaletteEmpty { color: @faint@; padding: 24px; }
+QLabel#dosePaletteHint { color: @faint@; font-size: @fontSmall@px; padding: 2px 4px 0 4px; }

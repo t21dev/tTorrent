@@ -33,6 +33,8 @@ public:
     void polish(QWidget *widget) override;
     // Folders, files, browse and message icons from tTorrent's line set.
     QIcon standardIcon(StandardPixmap icon, const QStyleOption *option, const QWidget *widget) const override;
+    // No dotted focus rectangle around list rows (selection already shows it).
+    void drawPrimitive(PrimitiveElement element, const QStyleOption *option, QPainter *painter, const QWidget *widget) const override;
     using QProxyStyle::polish;
 
     // Wraps the application's current style once; safe to call again.

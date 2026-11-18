@@ -47,6 +47,23 @@ namespace
         return ((px == 16) || (px == 20) || (px == 24)) ? px : 16;
     }
 
+    const QString SLIM_KEY = QStringLiteral("Appearance/ToolbarSlim");
+
+    void applySlim(QToolBar *toolBar, const bool slim)
+    {
+        if (!toolBar)
+            return;
+        toolBar->setProperty("doseSlim", slim);
+        for (QWidget *w : toolBar->findChildren<QWidget *>())
+        {
+            w->style()->unpolish(w);
+            w->style()->polish(w);
+        }
+        toolBar->style()->unpolish(toolBar);
+        toolBar->style()->polish(toolBar);
+        toolBar->updateGeometry();
+    }
+
     QStringList hiddenButtons()
     {
         return SettingsStorage::instance()->loadValue<QStringList>(HIDDEN_KEY);
@@ -151,8 +168,19 @@ void DoseToolbar::install(QToolBar *toolBar, QMenu *contextMenu)
     const QList<QAction *> original = toolBar->actions();
 
     toolBar->setIconSize({storedIconSize(), storedIconSize()});
+    applySlim(toolBar, DoseToolbar::isSlim());
 
     contextMenu->addSeparator();
+    QMenu *heights = contextMenu->addMenu(QToolBar::tr("Height"));
+    auto *heightGroup = new QActionGroup(heights);
+    for (const auto &[slim, name] : {std::pair {true, QToolBar::tr("Slim")}, std::pair {false, QToolBar::tr("Regular")}})
+    {
+        QAction *choice = heights->addAction(name);
+        choice->setCheckable(true);
+        choice->setChecked(slim == DoseToolbar::isSlim());
+        heightGroup->addAction(choice);
+        QObject::connect(choice, &QAction::triggered, toolBar, [toolBar, slim] { DoseToolbar::setSlim(toolBar, slim); });
+    }
     QMenu *sizes = contextMenu->addMenu(QToolBar::tr("Icon size"));
     auto *sizeGroup = new QActionGroup(sizes);
     for (const auto &[px, name] : {std::pair {16, QToolBar::tr("Small")}, std::pair {20, QToolBar::tr("Medium")}, std::pair {24, QToolBar::tr("Large")}})
@@ -279,6 +307,17 @@ void DoseToolbar::polishFilter(QLineEdit *edit, QComboBox *columns)
 int DoseToolbar::iconSize()
 {
     return storedIconSize();
+}
+
+bool DoseToolbar::isSlim()
+{
+    return SettingsStorage::instance()->loadValue<bool>(SLIM_KEY, true);
+}
+
+void DoseToolbar::setSlim(QToolBar *toolBar, const bool slim)
+{
+    SettingsStorage::instance()->storeValue(SLIM_KEY, slim);
+    applySlim(toolBar, slim);
 }
 
 void DoseToolbar::setIconSize(QToolBar *toolBar, const int px)

@@ -40,6 +40,7 @@
 #include <QShortcut>
 #include <QString>
 
+#include "gui/dose/dosepaint.h"
 #include "base/global.h"
 #include "base/logger.h"
 #include "base/net/downloadmanager.h"
@@ -185,6 +186,7 @@ RSSWidget::RSSWidget(IGUIApplication *app, QWidget *parent)
 
     if (RSS::Session::instance()->isProcessingEnabled())
         m_ui->labelWarn->hide();
+    DosePaint::warningBanner(m_ui->labelWarn); // tTorrent: a calm banner, not red italics
     connect(RSS::Session::instance(), &RSS::Session::processingStateChanged
             , this, &RSSWidget::handleSessionProcessingStateChanged);
     connect(RSS::Session::instance()->rootFolder(), &RSS::Folder::unreadCountChanged

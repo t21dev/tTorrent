@@ -200,5 +200,9 @@
         <file>icons/dark/qbittorrent-tray-filled-light.svg</file>
         <file>icons/qbittorrent-tray-filled-dark.svg</file>
         <file>icons/dark/qbittorrent-tray-filled-dark.svg</file>
+        <file>icons/dose-select-all.svg</file>
+        <file>icons/dark/dose-select-all.svg</file>
+        <file>icons/dose-select-none.svg</file>
+        <file>icons/dark/dose-select-none.svg</file>
     </qresource>
 </RCC>

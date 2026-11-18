@@ -132,6 +132,30 @@ void DoseDev::scheduleShots(QMainWindow *window)
             save(window, dir + u"/tab-" + tab.toLower() + u".png");
         };
     }
+    // Keyboard shortcuts sheet and the command palette.
+    steps << [window]
+    {
+        if (auto *sheet = window->findChild<QAction *>(u"doseActionShortcuts"_s))
+            sheet->trigger();
+    };
+    steps << [window, dir]
+    {
+        for (QDialog *dialog : openDialogs())
+        {
+            save(dialog, dir + u"/shortcuts.png");
+            dialog->close();
+        }
+        if (auto *palette = window->findChild<QAction *>(u"doseActionPalette"_s))
+            palette->trigger();
+    };
+    steps << [dir]
+    {
+        if (auto *popup = QApplication::activePopupWidget())
+        {
+            save(popup, dir + u"/palette.png");
+            popup->close();
+        }
+    };
     steps << [window]
     {
         if (auto *options = window->findChild<QAction *>(u"actionOptions"_s))

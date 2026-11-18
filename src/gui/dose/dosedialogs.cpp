@@ -16,6 +16,8 @@
 #include "dosedialogs.h"
 
 #include <QAbstractButton>
+#include <QTreeView>
+#include <QHeaderView>
 #include <QSvgRenderer>
 #include <QPainter>
 #include <QToolBar>
@@ -49,6 +51,7 @@
 #include "base/settingsstorage.h"
 #include "gui/uithememanager.h"
 #include "doseimport.h"
+#include "dosepaint.h"
 #include "dosetheme.h"
 #include "dosethemeeditor.h"
 #include "dosetoolbar.h"
@@ -321,6 +324,21 @@ QGroupBox#doseInfoBox { border: none; margin-top: 0; padding: 0 0 0 22px; }
             DoseToolbar::setIconSize(bar, icons->currentData().toInt());
         });
 
+        auto *height = new QComboBox;
+        height->addItem(QDialog::tr("Slim"), true);
+        height->addItem(QDialog::tr("Regular"), false);
+        height->setCurrentIndex(DoseToolbar::isSlim() ? 0 : 1);
+        form->addWidget(new QLabel(QDialog::tr("Toolbar height:")), row, 0);
+        form->addWidget(height, row++, 1, Qt::AlignLeft);
+        QObject::connect(height, &QComboBox::activated, group, [height](int)
+        {
+            for (QWidget *top : QApplication::topLevelWidgets())
+            {
+                if (auto *main = qobject_cast<QMainWindow *>(top))
+                    DoseToolbar::setSlim(main->findChild<QToolBar *>(u"toolBar"_s), height->currentData().toBool());
+            }
+        });
+
         // Shows the current choice: swatches tinted for the resolved theme,
         // the hex field with the accent's measured contrast.
         const auto refresh = [=]
@@ -573,10 +591,15 @@ void DoseDialogs::decorateAddTorrent(QDialog *dialog)
             if (total > 200)
                 split->setSizes({total * 45 / 100, total * 55 / 100});
         });
-        for (const char *name : {"buttonSelectAll", "buttonSelectNone"})
+        DosePaint::selectButtonsAsIcons(dialog);
+        // The file name gets the room the size and priority columns leave.
+        if (auto *tree = dialog->findChild<QTreeView *>(QStringLiteral("contentTreeView")))
         {
-            if (auto *b = dialog->findChild<QWidget *>(QLatin1String(name)))
-                b->setMinimumWidth(b->sizeHint().width());
+            QTimer::singleShot(0, tree, [tree]
+            {
+                const int rest = tree->header()->sectionSize(1) + tree->header()->sectionSize(3);
+                tree->header()->resizeSection(0, std::max(160, tree->viewport()->width() - rest - 8));
+            });
         }
         for (int i = 0; i < split->count(); ++i)
         {

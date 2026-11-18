@@ -21,7 +21,10 @@
 #include <QPainterPath>
 #include <QStyle>
 #include <QStyleOptionViewItem>
+#include <QTextDocumentFragment>
 #include <QTreeView>
+#include <QLabel>
+#include <QPushButton>
 
 #include "base/global.h"
 #include "gui/uithememanager.h"
@@ -91,6 +94,42 @@ void DosePaint::progress(QPainter *painter, const QStyleOptionViewItem &option, 
     painter->setPen(token(u"muted"_s));
     painter->drawText(textRect, Qt::AlignRight | Qt::AlignVCenter, text);
     painter->restore();
+}
+
+void DosePaint::warningBanner(QLabel *label)
+{
+    if (!label || !active())
+        return;
+    const QString plain = QTextDocumentFragment::fromHtml(label->text()).toPlainText().trimmed();
+    const QColor warn = token(u"warn"_s);
+    const bool link = label->text().contains(u"<a "_s);
+    label->setText(link ? u"<a href=\"#\" style=\"color:%1; text-decoration:none;\">%2</a>"_s.arg(warn.name(), plain.toHtmlEscaped()) : plain);
+    QColor wash = warn;
+    wash.setAlphaF(0.12f);
+    label->setStyleSheet(u"QLabel { color: %1; background: rgba(%2, %3, %4, %5); border: 1px solid rgba(%2, %3, %4, 0.35); border-radius: 8px; padding: 6px 10px; font-style: normal; }"_s
+        .arg(warn.name()).arg(wash.red()).arg(wash.green()).arg(wash.blue()).arg(wash.alphaF()));
+}
+
+void DosePaint::selectButtonsAsIcons(QWidget *root)
+{
+    if (!root || !active())
+        return;
+    for (QPushButton *button : root->findChildren<QPushButton *>())
+    {
+        const QString name = button->objectName();
+        const bool all = (name == u"selectAllButton") || (name == u"buttonSelectAll");
+        const bool none = (name == u"selectNoneButton") || (name == u"buttonSelectNone");
+        if ((!all && !none) || button->property("doseIconButton").toBool())
+            continue;
+        button->setProperty("doseIconButton", true);
+        button->setToolTip(button->text().remove(u'&'));
+        button->setText(QString());
+        button->setIcon(UIThemeManager::instance()->getIcon(all ? u"dose-select-all"_s : u"dose-select-none"_s));
+        button->setIconSize({16, 16});
+        button->setFixedSize(30, 28);
+        button->style()->unpolish(button);
+        button->style()->polish(button);
+    }
 }
 
 void DosePaint::selectionBar(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index)

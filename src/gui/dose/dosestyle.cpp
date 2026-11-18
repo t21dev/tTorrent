@@ -16,11 +16,15 @@
 #include "dosestyle.h"
 
 #include <QApplication>
+#include <QAbstractItemView>
 #include <QDialog>
 #include <QFileDialog>
 #include <QMenu>
 #include <QPropertyAnimation>
+#include <QPushButton>
+#include <QTimer>
 
+#include "dosepaint.h"
 #include "gui/titlebar/dosetitlebar.h"
 #include "gui/uithememanager.h"
 
@@ -90,7 +94,16 @@ int DoseStyle::styleHint(const StyleHint hint, const QStyleOption *option, const
 void DoseStyle::polish(QWidget *widget)
 {
     QProxyStyle::polish(widget);
-    if (!widget || !widget->isWindow())
+    if (!widget)
+        return;
+    // Select all / none: icon buttons once the form around them is built
+    // (qBittorrent sets their text after polish, so wait one turn).
+    if (auto *button = qobject_cast<QPushButton *>(widget);
+        button && (button->objectName().startsWith(u"select") || button->objectName().startsWith(u"buttonSelect")))
+    {
+        QTimer::singleShot(0, button, [button] { DosePaint::selectButtonsAsIcons(button->parentWidget()); });
+    }
+    if (!widget->isWindow())
         return;
 
     // Every dialog gets the custom title bar (never the system one), as soon
@@ -166,6 +179,13 @@ QIcon DoseStyle::standardIcon(const StandardPixmap icon, const QStyleOption *opt
     if (id && UIThemeManager::instance() && UIThemeManager::instance()->usesDoseTheme())
         return UIThemeManager::instance()->getIcon(QString::fromLatin1(id));
     return QProxyStyle::standardIcon(icon, option, widget);
+}
+
+void DoseStyle::drawPrimitive(const PrimitiveElement element, const QStyleOption *option, QPainter *painter, const QWidget *widget) const
+{
+    if ((element == PE_FrameFocusRect) && qobject_cast<const QAbstractItemView *>(widget))
+        return;
+    QProxyStyle::drawPrimitive(element, option, painter, widget);
 }
 
 void DoseStyle::install()

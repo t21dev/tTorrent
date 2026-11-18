@@ -33,6 +33,11 @@ namespace DoseToolbar
     void setIconSize(QToolBar *toolBar, int px);
     int iconSize();
 
+    // Toolbar height: true is slim (the default), false is regular
+    // (Appearance/ToolbarSlim). Applied as the toolbar's doseSlim property.
+    void setSlim(QToolBar *toolBar, bool slim);
+    bool isSlim();
+
     // The filter field: wider, its "Filter by" choice moved into a menu on
     // the field's search icon (the combo box stays, hidden, as the model).
     void polishFilter(QLineEdit *edit, QComboBox *columns);

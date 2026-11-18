@@ -18,6 +18,8 @@
 #include <QColor>
 #include <QFont>
 
+class QLabel;
+class QWidget;
 class QModelIndex;
 class QPainter;
 class QStyleOptionViewItem;
@@ -42,4 +44,12 @@ namespace DosePaint
 
     // The 3 px accent bar on the selected row's first visible cell.
     void selectionBar(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index);
+
+    // A label that qBittorrent colours red in its HTML becomes a quiet banner
+    // in the theme's warning colour; a link in it stays clickable.
+    void warningBanner(QLabel *label);
+
+    // Select all / none buttons under `root` (Content tab, Add dialog)
+    // become compact icon buttons with the text as their tooltip.
+    void selectButtonsAsIcons(QWidget *root);
 }

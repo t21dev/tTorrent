@@ -102,6 +102,7 @@
 #include "transferlistwidget.h"
 #include "dose/doseabout.h"
 #include "dose/dosedev.h"
+#include "dose/doseshortcuts.h"
 #include "dose/dosetrim.h"
 #include "dose/dosetoolbar.h"
 #include "titlebar/dosetitlebar.h"
@@ -400,6 +401,7 @@ MainWindow::MainWindow(IGUIApplication *app, const WindowState initialState, con
     connect(BitTorrent::Session::instance(), &BitTorrent::Session::torrentsUpdated, this, &MainWindow::reloadTorrentStats);
 
     createKeyboardShortcuts();
+    DoseShortcuts::install(this); // tTorrent: shortcut sheet, command palette, custom keys
 
 #ifdef Q_OS_MACOS
     setUnifiedTitleAndToolBarOnMac(true);
