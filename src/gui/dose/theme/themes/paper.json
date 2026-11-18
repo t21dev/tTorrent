@@ -1,0 +1,20 @@
+{
+  "id": "paper",
+  "name": "Paper",
+  "appearance": "light",
+  "colors": {
+    "bg": "#F4EEE3",
+    "panel": "#EFE8DB",
+    "raised": "#FAF6EE",
+    "hover": "#EDE5D7",
+    "line": "#DCD1BF",
+    "text": "#2B241D",
+    "muted": "#5F5346",
+    "faint": "#6E6253",
+    "ring": "#B5A893",
+    "accent": "#A65424",
+    "ok": "#4E8A57",
+    "warn": "#B87A1E",
+    "bad": "#B5402F"
+  }
+}

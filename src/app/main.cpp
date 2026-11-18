@@ -46,6 +46,7 @@
 #endif
 
 #include <QCoreApplication>
+#include <QSettings>
 #include <QString>
 #include <QThread>
 
@@ -176,6 +177,22 @@ namespace
 }
 
 // Main
+#ifndef DISABLE_GUI
+// tTorrent: Settings › Behavior › Look › Interface size. Qt reads its scale
+// factor before the application object exists, so the value is read straight
+// from the default profile's tTorrent.ini (a custom --profile keeps 100 %),
+// and an explicit QT_SCALE_FACTOR in the environment wins.
+static void applyInterfaceScale()
+{
+    if (qEnvironmentVariableIsSet("QT_SCALE_FACTOR"))
+        return;
+    const QSettings settings {QSettings::IniFormat, QSettings::UserScope, u"tTorrent"_s, u"tTorrent"_s};
+    const double scale = settings.value(u"Appearance/InterfaceScale"_s, 1.0).toDouble();
+    if ((scale >= 0.75) && (scale <= 2.0) && !qFuzzyCompare(scale, 1.0))
+        qputenv("QT_SCALE_FACTOR", QByteArray::number(scale, 'f', 2));
+}
+#endif
+
 int main(int argc, char *argv[])
 {
 #ifdef DISABLE_GUI
@@ -185,6 +202,10 @@ int main(int argc, char *argv[])
 #ifdef Q_OS_UNIX
     adjustLocale();
     adjustFileDescriptorLimit();
+#endif
+
+#ifndef DISABLE_GUI
+    applyInterfaceScale();
 #endif
 
     // `app` must be declared out of try block to allow display message box in case of exception

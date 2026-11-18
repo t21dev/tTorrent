@@ -71,6 +71,7 @@
 #include "lineedit.h"
 #include "torrenttagsdialog.h"
 
+#include "dose/dosedialogs.h"
 #include "ui_addnewtorrentdialog.h"
 
 namespace
@@ -263,6 +264,7 @@ AddNewTorrentDialog::AddNewTorrentDialog(const BitTorrent::TorrentDescriptor &to
         settings()->storeValue(KEY_SAVEPATHHISTORY, settings()->loadValue<QStringList>(KEY_SAVEPATHHISTORY).mid(0, length));
     });
 
+    DoseDialogs::decorateAddTorrent(this);
     setCurrentContext(std::make_shared<Context>(Context {torrentDescr, inParams}));
 }
 

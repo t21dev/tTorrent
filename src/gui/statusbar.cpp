@@ -28,21 +28,54 @@
 
 #include "statusbar.h"
 
+#include <utility>
+
+#include <QContextMenuEvent>
 #include <QFrame>
 #include <QLabel>
+#include <QMenu>
 #include <QPushButton>
 #include <QStyle>
 
 #include "base/bittorrent/session.h"
 #include "base/bittorrent/sessionstatus.h"
 #include "base/preferences.h"
+#include "base/settingsstorage.h"
 #include "base/utils/misc.h"
 #include "speedlimitdialog.h"
 #include "uithememanager.h"
 #include "utils.h"
 
+#ifdef Q_OS_WIN
+#include <windows.h>
+#include <psapi.h>
+#endif
+
 namespace
 {
+    // Items the user hid (Appearance/StatusBarHidden). Free space and the
+    // external IP keep qBittorrent's own preferences instead.
+    const QString HIDDEN_KEY = u"Appearance/StatusBarHidden"_s;
+
+    // This process's private working set: what Task Manager shows as Memory.
+    qint64 processMemory()
+    {
+#ifdef Q_OS_WIN
+        // PROCESS_MEMORY_COUNTERS_EX2's layout (Windows 10 1809+): the SDK only
+        // declares it for newer target versions than this build sets.
+        struct
+        {
+            PROCESS_MEMORY_COUNTERS_EX ex;
+            SIZE_T privateWorkingSetSize;
+            SIZE_T sharedCommitUsage;
+        } counters {};
+        counters.ex.cb = sizeof(counters);
+        if (::GetProcessMemoryInfo(::GetCurrentProcess(), reinterpret_cast<PROCESS_MEMORY_COUNTERS *>(&counters), counters.ex.cb))
+            return static_cast<qint64>(counters.privateWorkingSetSize);
+#endif
+        return -1;
+    }
+
     QWidget *createSeparator(QWidget *parent)
     {
         auto *separator = new QFrame(parent);
@@ -125,19 +158,30 @@ StatusBar::StatusBar(QWidget *parent)
     m_upSpeedLbl->setIconSize(smallIconSize);
     m_altSpeedsBtn->setIconSize({midIconSize.width(), smallIconSize.height()});
 
+    m_memoryLbl = new QLabel(this);
+    m_memoryLbl->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Preferred);
+    m_memoryLbl->setToolTip(tr("Memory tTorrent uses (Task Manager's private working set)"));
+    m_memorySeparator = createSeparator(this);
+    m_connectionSeparator = createSeparator(this);
+    m_altSpeedsSeparator = createSeparator(this);
+    m_dlSpeedSeparator = createSeparator(this);
+
     addPermanentWidget(m_freeDiskSpaceLbl);
     addPermanentWidget(m_freeDiskSpaceSeparator);
     addPermanentWidget(m_lastExternalIPsLbl);
     addPermanentWidget(m_lastExternalIPsSeparator);
     addPermanentWidget(m_DHTLbl);
     addPermanentWidget(m_DHTSeparator);
+    addPermanentWidget(m_memoryLbl);
+    addPermanentWidget(m_memorySeparator);
     addPermanentWidget(m_connecStatusLblIcon);
-    addPermanentWidget(createSeparator(this));
+    addPermanentWidget(m_connectionSeparator);
     addPermanentWidget(m_altSpeedsBtn);
-    addPermanentWidget(createSeparator(this));
+    addPermanentWidget(m_altSpeedsSeparator);
     addPermanentWidget(m_dlSpeedLbl);
-    addPermanentWidget(createSeparator(this));
+    addPermanentWidget(m_dlSpeedSeparator);
     addPermanentWidget(m_upSpeedLbl);
+    applyItemVisibility();
 
     updateExternalAddressesVisibility();
 
@@ -197,7 +241,7 @@ void StatusBar::updateConnectionStatus()
 
 void StatusBar::updateDHTNodesNumber()
 {
-    if (BitTorrent::Session::instance()->isDHTEnabled())
+    if (BitTorrent::Session::instance()->isDHTEnabled() && wants(u"dht"_s))
     {
         m_DHTLbl->setVisible(true);
         m_DHTSeparator->setVisible(true);
@@ -267,6 +311,7 @@ void StatusBar::updateSpeedLabels()
 
 void StatusBar::refresh()
 {
+    updateMemoryLabel();
     updateConnectionStatus();
     updateDHTNodesNumber();
     updateExternalAddressesLabel();
@@ -301,4 +346,75 @@ void StatusBar::optionsSaved()
 {
     updateFreeDiskSpaceVisibility();
     updateExternalAddressesVisibility();
+}
+
+bool StatusBar::wants(const QString &item) const
+{
+    return !SettingsStorage::instance()->loadValue<QStringList>(HIDDEN_KEY).contains(item);
+}
+
+void StatusBar::setWanted(const QString &item, const bool on)
+{
+    QStringList hidden = SettingsStorage::instance()->loadValue<QStringList>(HIDDEN_KEY);
+    hidden.removeAll(item);
+    if (!on)
+        hidden.append(item);
+    SettingsStorage::instance()->storeValue(HIDDEN_KEY, hidden);
+    applyItemVisibility();
+}
+
+void StatusBar::applyItemVisibility()
+{
+    const bool memory = wants(u"memory"_s) && (processMemory() >= 0);
+    m_memoryLbl->setVisible(memory);
+    m_memorySeparator->setVisible(memory);
+    m_connecStatusLblIcon->setVisible(wants(u"connection"_s));
+    m_connectionSeparator->setVisible(wants(u"connection"_s));
+    m_altSpeedsBtn->setVisible(wants(u"altSpeeds"_s));
+    m_altSpeedsSeparator->setVisible(wants(u"altSpeeds"_s));
+    m_dlSpeedLbl->setVisible(wants(u"download"_s));
+    m_dlSpeedSeparator->setVisible(wants(u"download"_s) && wants(u"upload"_s));
+    m_upSpeedLbl->setVisible(wants(u"upload"_s));
+    updateDHTNodesNumber();
+    updateMemoryLabel();
+}
+
+void StatusBar::updateMemoryLabel()
+{
+    if (!m_memoryLbl || !m_memoryLbl->isVisible())
+        return;
+    const qint64 bytes = processMemory();
+    m_memoryLbl->setText(tr("Memory: %1").arg(Utils::Misc::friendlyUnit(bytes)));
+}
+
+void StatusBar::contextMenuEvent(QContextMenuEvent *event)
+{
+    QMenu menu {this};
+    menu.setToolTipsVisible(true);
+    const auto add = [&menu](const QString &label, const bool checked, auto onToggle)
+    {
+        QAction *action = menu.addAction(label);
+        action->setCheckable(true);
+        action->setChecked(checked);
+        QObject::connect(action, &QAction::toggled, &menu, onToggle);
+    };
+    Preferences *pref = Preferences::instance();
+    add(tr("Free space"), pref->isStatusbarFreeDiskSpaceDisplayed(), [pref](const bool on) { pref->setStatusbarFreeDiskSpaceDisplayed(on); pref->apply(); });
+    add(tr("External IP"), pref->isStatusbarExternalIPDisplayed(), [pref](const bool on) { pref->setStatusbarExternalIPDisplayed(on); pref->apply(); });
+    for (const auto &[id, label] : {std::pair {u"dht"_s, tr("DHT nodes")}, std::pair {u"memory"_s, tr("Memory")}
+            , std::pair {u"connection"_s, tr("Connection status")}, std::pair {u"altSpeeds"_s, tr("Alternative speed limits")}
+            , std::pair {u"download"_s, tr("Download speed")}, std::pair {u"upload"_s, tr("Upload speed")}})
+    {
+        add(label, wants(id), [this, id](const bool on) { setWanted(id, on); });
+    }
+    menu.addSeparator();
+    menu.addAction(tr("Show all"), this, [this, pref]
+    {
+        SettingsStorage::instance()->storeValue(HIDDEN_KEY, QStringList());
+        pref->setStatusbarFreeDiskSpaceDisplayed(true);
+        pref->setStatusbarExternalIPDisplayed(true);
+        pref->apply();
+        applyItemVisibility();
+    });
+    menu.exec(event->globalPos());
 }

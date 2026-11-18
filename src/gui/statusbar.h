@@ -30,6 +30,7 @@
 
 #include <QStatusBar>
 
+class QContextMenuEvent;
 class QLabel;
 class QPushButton;
 
@@ -59,7 +60,15 @@ private slots:
     void capSpeed();
     void optionsSaved();
 
+protected:
+    // tTorrent: right-click chooses which items show.
+    void contextMenuEvent(QContextMenuEvent *event) override;
+
 private:
+    bool wants(const QString &item) const;
+    void setWanted(const QString &item, bool on);
+    void applyItemVisibility();
+    void updateMemoryLabel();
     void updateConnectionStatus();
     void updateDHTNodesNumber();
     void updateFreeDiskSpaceLabel(qint64 value);
@@ -78,4 +87,9 @@ private:
     QWidget *m_DHTSeparator = nullptr;
     QPushButton *m_connecStatusLblIcon = nullptr;
     QPushButton *m_altSpeedsBtn = nullptr;
+    QWidget *m_connectionSeparator = nullptr;
+    QWidget *m_altSpeedsSeparator = nullptr;
+    QWidget *m_dlSpeedSeparator = nullptr;
+    QLabel *m_memoryLbl = nullptr;
+    QWidget *m_memorySeparator = nullptr;
 };

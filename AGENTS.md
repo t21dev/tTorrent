@@ -49,3 +49,7 @@ AI may be used for assistance, but a human must review, take responsibility for,
 
 This document provides policy and guidelines for AI operations. \
 Do not expect this file to contain detailed instructions for compilation and testing.
+
+## tTorrent
+
+This is tTorrent, a fork of qBittorrent. Read [ttorrent/AGENTS.md](ttorrent/AGENTS.md) and [UPSTREAM.md](UPSTREAM.md) before changing anything.

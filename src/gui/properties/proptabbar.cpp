@@ -99,6 +99,9 @@ PropTabBar::PropTabBar(QWidget *parent)
     addWidget(speedButton);
     m_btnGroup->addButton(speedButton, SpeedTab);
     // SIGNAL/SLOT
+    // tTorrent: flat tabs (text, not chips); the current one shows as pressed.
+    for (QAbstractButton *button : m_btnGroup->buttons())
+        static_cast<QPushButton *>(button)->setFlat(true);
     connect(m_btnGroup, &QButtonGroup::idClicked
             , this, &PropTabBar::setCurrentIndex);
 }

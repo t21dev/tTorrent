@@ -1,0 +1,20 @@
+{
+  "id": "light",
+  "name": "Light",
+  "appearance": "light",
+  "colors": {
+    "bg": "#FFFFFF",
+    "panel": "#FAFAFB",
+    "raised": "#FFFFFF",
+    "hover": "#F3F3F5",
+    "line": "#E8E8EC",
+    "text": "#18181B",
+    "muted": "#55555D",
+    "faint": "#6B6B73",
+    "ring": "#B5B5BC",
+    "accent": "#B7791F",
+    "ok": "#1F9D63",
+    "warn": "#B7791F",
+    "bad": "#D33B3B"
+  }
+}

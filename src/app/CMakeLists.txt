@@ -67,9 +67,9 @@ target_link_libraries(qbt_app PRIVATE
 
 set_target_properties(qbt_app PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 if (GUI)
-    set_target_properties(qbt_app PROPERTIES OUTPUT_NAME qbittorrent)
+    set_target_properties(qbt_app PROPERTIES OUTPUT_NAME ttorrent)
 else()
-    set_target_properties(qbt_app PROPERTIES OUTPUT_NAME qbittorrent-nox)
+    set_target_properties(qbt_app PROPERTIES OUTPUT_NAME ttorrent-nox)
 endif()
 
 # Additional platform specific configuration
@@ -107,7 +107,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     set(MACOSX_DEPLOYMENT_TARGET ${CMAKE_OSX_DEPLOYMENT_TARGET})
     set_target_properties(qbt_app PROPERTIES
         MACOSX_BUNDLE ON
-        MACOSX_BUNDLE_BUNDLE_NAME "qBittorrent"
+        MACOSX_BUNDLE_BUNDLE_NAME "tTorrent"
         MACOSX_BUNDLE_INFO_PLIST ${qBittorrent_SOURCE_DIR}/dist/mac/Info.plist
     )
     target_sources(qbt_app PRIVATE

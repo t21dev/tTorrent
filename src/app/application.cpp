@@ -317,10 +317,10 @@ Application::Application(int &argc, char **argv)
     qRegisterMetaType<Log::Msg>("Log::Msg");
     qRegisterMetaType<Log::Peer>("Log::Peer");
 
-    setApplicationName(u"qBittorrent"_s);
-    setOrganizationDomain(u"qbittorrent.org"_s);
+    setApplicationName(u"tTorrent"_s);
+    setOrganizationDomain(u"t21.dev"_s);
 #if !defined(DISABLE_GUI)
-    setDesktopFileName(u"org.qbittorrent.qBittorrent"_s);
+    setDesktopFileName(u"dev.t21.tTorrent"_s);
     setQuitOnLastWindowClosed(false);
     setQuitLockEnabled(false);
     QPixmapCache::setCacheLimit(PIXMAP_CACHE_SIZE);

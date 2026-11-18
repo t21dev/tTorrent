@@ -1,60 +1,28 @@
-# qBittorrent - A BitTorrent client in Qt
+# tTorrent
 
-[![GitHub Actions CI Status](https://github.com/qbittorrent/qBittorrent/actions/workflows/ci_ubuntu.yaml/badge.svg)](https://github.com/qbittorrent/qBittorrent/actions)
-[![Coverity Status](https://scan.coverity.com/projects/5494/badge.svg)](https://scan.coverity.com/projects/5494)
+A torrent client with qBittorrent's features and a modern finish: a custom title bar, themes with any accent colour, three densities, interface scaling, a status bar and toolbar you choose the contents of, and a redesigned Settings and Add Torrent dialog.
 
-qBittorrent is a [BitTorrent] client programmed in C++ / Qt that uses
-[libtorrent] (sometimes called libtorrent-rasterbar) by Arvid Norberg.
+tTorrent is built on [qBittorrent](https://www.qbittorrent.org/) 5.3 and [libtorrent](https://www.libtorrent.org/). It keeps qBittorrent's engine, settings, Web API and file formats, and takes in each qBittorrent release (see [UPSTREAM.md](UPSTREAM.md)).
 
-It aims to be a good alternative to all other BitTorrent clients
-out there. qBittorrent is fast, stable and provides Unicode
-support as well as many features.
+## Look
 
-The free [IP to Country Lite database] by [DB-IP] is used for resolving the countries of peers.
-The database is licensed under the [Creative Commons Attribution 4.0 International License].
+- **Themes:** Follow system, Light, Paper, Sand, Linen, Dark, Gray, Nord, Noctua, Vampire, Ink.
+- **Accent:** eight presets or any hex colour. tTorrent adjusts the colour's lightness until it reaches 3:1 contrast on the theme, and shows the measured ratio.
+- **Density:** Dense, Compact, Standard. **Interface size:** 80 to 150 %.
+- **Status bar:** right-click to choose what it shows, including the memory tTorrent uses.
+- **Toolbar:** right-click › Show buttons.
 
-[BitTorrent]: https://en.wikipedia.org/wiki/BitTorrent
-[Creative Commons Attribution 4.0 International License]: https://creativecommons.org/licenses/by/4.0/
-[DB-IP]: https://db-ip.com/
-[IP to Country Lite database]: https://db-ip.com/db/download/ip-to-country-lite
-[libtorrent]: https://libtorrent.org/
+All of these are in Tools › Options › Behavior › Look.
 
-## Installation
+## Build (Windows)
 
-Refer to the [INSTALL] file.
+```powershell
+powershell -ExecutionPolicy Bypass -File ttorrent\scripts\setup.ps1   # Qt 6.8, vcpkg, libtorrent
+powershell -ExecutionPolicy Bypass -File ttorrent\scripts\build.ps1   # build\Release\ttorrent.exe
+```
 
-[INSTALL]: INSTALL
+Needs Visual Studio Build Tools 2022, CMake and Python (for `aqtinstall`). qBittorrent's own build notes are in [INSTALL](INSTALL) and [README.qBittorrent.md](README.qBittorrent.md).
 
-## License
+## Licence and credits
 
-Refer to the [COPYING] file.
-
-[COPYING]: COPYING
-
-## PGP Public Key
-
-Starting from v3.3.4 all source tarballs and binaries are signed. \
-The key currently used is 4096R/[5B7CC9A2](https://pgp.mit.edu/pks/lookup?op=get&search=0x6E4A2D025B7CC9A2) with fingerprint `D8F3DA77AAC6741053599C136E4A2D025B7CC9A2`. \
-You can also [download it](https://github.com/qbittorrent/qBittorrent/raw/master/5B7CC9A2.asc). \
-**PREVIOUSLY** the following key was used to sign the v3.3.4 source tarballs and v3.3.4 Windows installer **only**: 4096R/[520EC6F6](https://pgp.mit.edu/pks/lookup?op=get&search=0xA1ACCAE4520EC6F6) with fingerprint `F4A5FD201B117B1C2AB590E2A1ACCAE4520EC6F6`.
-
-## Misc
-
-For more information please visit:
-<https://www.qbittorrent.org>
-
-Check out our wiki at:
-<https://wiki.qbittorrent.org>
-
-Use the forum for troubleshooting before reporting bugs:
-<https://forum.qbittorrent.org>
-
-Please report any bug (or feature request) to:
-<https://bugs.qbittorrent.org>
-
-Official IRC channel:
-[#qbittorrent on irc.libera.chat](ircs://irc.libera.chat:6697/qbittorrent)
-
------------------------------------------------------
-
-sledgehammer999 \<<sledgehammer999@qbittorrent.org>\>
+tTorrent is GPL, like qBittorrent: source files GPLv2 or later, binaries GPLv3 or later (see [COPYING](COPYING) and [COPYING.GPLv3](COPYING.GPLv3)). It's a fork of qBittorrent by the qBittorrent project and its contributors. The custom title bar uses [QWindowKit](https://github.com/stdware/qwindowkit) (Apache-2.0), the UI font is Instrument Sans (OFL), and the Nord theme's colours come from [Nord](https://www.nordtheme.com/) (MIT).

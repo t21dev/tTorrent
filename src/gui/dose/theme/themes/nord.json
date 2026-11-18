@@ -1,0 +1,20 @@
+{
+  "id": "nord",
+  "name": "Nord",
+  "appearance": "dark",
+  "colors": {
+    "bg": "#2E3440",
+    "panel": "#2A303B",
+    "raised": "#3B4252",
+    "hover": "#343A47",
+    "line": "#434C5E",
+    "text": "#ECEFF4",
+    "muted": "#C3CAD6",
+    "faint": "#A3ACBC",
+    "ring": "#4C566A",
+    "accent": "#88C0D0",
+    "ok": "#A3BE8C",
+    "warn": "#EBCB8B",
+    "bad": "#BF616A"
+  }
+}

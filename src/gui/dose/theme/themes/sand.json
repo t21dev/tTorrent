@@ -1,0 +1,20 @@
+{
+  "id": "sand",
+  "name": "Sand",
+  "appearance": "light",
+  "colors": {
+    "bg": "#EDE3CF",
+    "panel": "#E6DBC5",
+    "raised": "#F6EEDD",
+    "hover": "#E3D8C1",
+    "line": "#CFC1A4",
+    "text": "#2A2418",
+    "muted": "#564B39",
+    "faint": "#635843",
+    "ring": "#A99A7C",
+    "accent": "#8A5A12",
+    "ok": "#476F3E",
+    "warn": "#99610F",
+    "bad": "#A8392A"
+  }
+}

@@ -1,0 +1,188 @@
+/* tTorrent's look, on Kitab's model. A template: DoseThemeSource replaces
+   @token@ with the theme's colours (themes/*.json, accent adjusted for
+   contrast) and the density's sizes. One surface, hairlines between panes,
+   colour only for the accent and states. */
+
+* {
+    font-family: "Instrument Sans", "Segoe UI Variable Text", "Segoe UI", sans-serif;
+    font-size: @font@px;
+}
+
+QMainWindow, QDialog, QDockWidget { background: @bg@; color: @text@; }
+QWidget { color: @text@; }
+
+QToolBar {
+    background: @bg@;
+    border: none;
+    border-bottom: 1px solid @line@;
+    padding: @toolPad@px 8px;
+    spacing: 4px;
+}
+QToolBar::separator { width: 1px; background: @line@; margin: 6px 6px; }
+QToolButton {
+    border: 1px solid transparent;
+    border-radius: @radius@px;
+    padding: @toolPad@px;
+    color: @text@;
+}
+QToolButton:hover { background: @hover@; }
+QToolButton:pressed { background: @panel@; }
+QToolButton:checked { background: @select@; }
+
+QMenuBar { background: transparent; padding: 2px 4px; }
+QMenuBar::item { padding: @padV@px 10px; border-radius: 6px; background: transparent; color: @muted@; }
+QMenuBar::item:selected { background: @hover@; color: @text@; }
+QMenu {
+    background: @raised@;
+    border: 1px solid @line@;
+    border-radius: 12px;
+    padding: 6px;
+}
+QMenu::item { padding: @padV@px 28px @padV@px 10px; border-radius: 6px; }
+QMenu::item:selected { background: @hover@; color: @text@; }
+QMenu::item:disabled { color: @ring@; }
+QMenu::separator { height: 1px; background: @line@; margin: 6px 4px; }
+QMenu::icon { padding-left: 6px; }
+QMenu::indicator { width: 14px; height: 14px; }
+
+QTreeView, QTableView, QListView, QTreeWidget, QListWidget {
+    background: @bg@;
+    alternate-background-color: @bg@;
+    border: none;
+    selection-background-color: @select@;
+    selection-color: @text@;
+    outline: 0;
+}
+QTreeView::item, QTableView::item, QListView::item {
+    padding: @rowPad@px 4px;
+    border-bottom: 1px solid @line@;
+}
+QTreeView::item:hover, QListView::item:hover { background: @hover@; }
+QTreeView::item:selected, QTableView::item:selected, QListView::item:selected {
+    background: @select@;
+    color: @text@;
+}
+
+QHeaderView { background: @bg@; border: none; }
+QHeaderView::section {
+    background: @bg@;
+    color: @muted@;
+    border: none;
+    border-bottom: 1px solid @line@;
+    border-right: 1px solid @line@;
+    padding: @padV@px 8px;
+    font-weight: 500;
+}
+QHeaderView::section:hover { color: @text@; }
+
+QTabWidget::pane { border: none; border-top: 1px solid @line@; }
+QTabBar::tab {
+    background: transparent;
+    color: @muted@;
+    padding: @padV@px @padH@px;
+    border: none;
+    border-bottom: 2px solid transparent;
+}
+QTabBar::tab:hover { color: @text@; }
+QTabBar::tab:selected { color: @text@; border-bottom: 2px solid @accent@; }
+
+QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox, QDateTimeEdit, QPlainTextEdit, QTextEdit, QKeySequenceEdit {
+    background: @panel@;
+    border: 1px solid @line@;
+    border-radius: @radius@px;
+    padding: @padV@px @padH@px;
+    color: @text@;
+    selection-background-color: @select@;
+    selection-color: @text@;
+}
+QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QDoubleSpinBox:focus, QPlainTextEdit:focus, QTextEdit:focus {
+    border: 1px solid @accent@;
+}
+QLineEdit:disabled, QComboBox:disabled, QSpinBox:disabled { color: @ring@; }
+QComboBox::drop-down { border: none; width: 22px; }
+QComboBox QAbstractItemView {
+    background: @raised@;
+    border: 1px solid @line@;
+    selection-background-color: @hover@;
+    selection-color: @text@;
+    padding: 4px;
+}
+
+QPushButton {
+    background: @raised@;
+    border: 1px solid @line@;
+    border-radius: @radius@px;
+    padding: @padV@px 14px;
+    color: @text@;
+}
+QPushButton:hover { background: @hover@; }
+QPushButton:pressed { background: @panel@; }
+QPushButton:default {
+    background: @accent@;
+    border-color: @accent@;
+    color: @onAccent@;
+    font-weight: 600;
+}
+QPushButton:disabled { color: @ring@; }
+
+QCheckBox, QRadioButton { spacing: 8px; }
+
+QGroupBox {
+    border: 1px solid @line@;
+    border-radius: 12px;
+    margin-top: 14px;
+    padding: 10px 10px 8px 10px;
+}
+QGroupBox::title {
+    subcontrol-origin: margin;
+    left: 10px;
+    padding: 0 4px;
+    font-weight: 600;
+}
+
+QProgressBar {
+    background: @hover@;
+    border: none;
+    border-radius: 4px;
+    text-align: center;
+    color: @text@;
+}
+QProgressBar::chunk { background: @accent@; border-radius: 4px; }
+
+QScrollBar:vertical { background: transparent; width: 10px; margin: 0; }
+QScrollBar:horizontal { background: transparent; height: 10px; margin: 0; }
+QScrollBar::handle { background: @line@; border-radius: 4px; margin: 2px; }
+QScrollBar::handle:vertical { min-height: 28px; }
+QScrollBar::handle:horizontal { min-width: 28px; }
+QScrollBar::handle:hover { background: @ring@; }
+QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; }
+QScrollBar::add-page, QScrollBar::sub-page { background: none; }
+
+QSplitter::handle { background: @line@; }
+QSplitter::handle:horizontal { width: 1px; }
+QSplitter::handle:vertical { height: 1px; }
+
+QStatusBar {
+    background: @bg@;
+    border-top: 1px solid @line@;
+    color: @muted@;
+}
+QStatusBar::item { border: none; }
+QStatusBar QLabel { color: @muted@; padding: 0 4px; }
+QStatusBar QPushButton, QStatusBar QPushButton:default {
+    background: transparent;
+    border: none;
+    border-radius: @radius@px;
+    color: @muted@;
+    font-weight: 400;
+    padding: 2px 8px;
+}
+QStatusBar QPushButton:hover { background: @hover@; color: @text@; }
+QStatusBar QFrame[frameShape="5"] { color: @line@; background: @line@; max-width: 1px; border: none; margin: 4px 2px; }
+
+/* Flat buttons (the details pane's tab row, filters): text, not chips. */
+QPushButton:flat, QPushButton[flat="true"] { background: transparent; border: none; color: @muted@; }
+QPushButton:flat:hover { background: @hover@; color: @text@; }
+QPushButton:flat:checked, QPushButton:flat:pressed { background: @select@; color: @text@; }
+
+QToolTip { background: @raised@; color: @text@; border: 1px solid @line@; padding: 4px 8px; border-radius: 6px; }

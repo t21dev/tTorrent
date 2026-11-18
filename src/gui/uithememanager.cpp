@@ -30,6 +30,10 @@
 
 #include "uithememanager.h"
 
+#include "base/settingsstorage.h"
+#include "dose/dosetheme.h"
+
+#include <QFontDatabase>
 #include <QApplication>
 #include <QPalette>
 #include <QPixmapCache>
@@ -121,14 +125,92 @@ UIThemeManager::UIThemeManager()
         }
     }
 
-    if (!m_themeSource)
-        m_themeSource = std::make_unique<DefaultThemeSource>();
-
-    if (m_useCustomTheme)
+    // Dose is this build's default look (src/gui/dose/theme): used whenever no
+    // custom theme is chosen or the chosen one can't be loaded.
+    const bool doseDefault = !m_themeSource;
+    if (doseDefault)
+    {
+        for (const QString &font : {u":/dosetheme/fonts/InstrumentSans-Regular.ttf"_s
+                , u":/dosetheme/fonts/InstrumentSans-Medium.ttf"_s
+                , u":/dosetheme/fonts/InstrumentSans-SemiBold.ttf"_s})
+        {
+            QFontDatabase::addApplicationFont(font);
+        }
+        m_doseTheme = true;
+        applyDose();
+    }
+    else if (m_useCustomTheme)
     {
         applyPalette();
         applyStyleSheet();
     }
+}
+
+bool UIThemeManager::systemIsDark() const
+{
+#ifdef Q_OS_WIN
+    return (m_systemColorMode == ColorMode::Dark);
+#else
+    return (QGuiApplication::styleHints()->colorScheme() == Qt::ColorScheme::Dark);
+#endif
+}
+
+void UIThemeManager::applyDose()
+{
+    const QString theme = lookTheme();
+    m_doseResolved = DoseThemeSource::resolveTheme(theme, systemIsDark());
+    auto source = std::make_unique<DoseThemeSource>(m_doseResolved, lookAccent(), lookDensity());
+    const bool dark = source->isDark();
+    m_themeSource = std::move(source);
+    m_icons.clear();
+    m_darkModeIcons.clear();
+    QPixmapCache::clear();
+    // Native parts (scroll arrows, dialogs Qt draws itself) follow the theme;
+    // with "Follow system" the scheme is left to the system so we hear changes.
+    if (theme == u"system")
+        qApp->styleHints()->unsetColorScheme();
+    else
+        qApp->styleHints()->setColorScheme(dark ? Qt::ColorScheme::Dark : Qt::ColorScheme::Light);
+    applyPalette();
+    applyStyleSheet();
+}
+
+void UIThemeManager::setLook(const QString &theme, const QString &accent, const QString &density)
+{
+    SettingsStorage *settings = SettingsStorage::instance();
+    settings->storeValue(DoseThemeSource::themeKey(), theme);
+    settings->storeValue(DoseThemeSource::accentKey(), accent);
+    settings->storeValue(DoseThemeSource::densityKey(), density);
+    if (!m_doseTheme)
+        return;
+    applyDose();
+    emit themeChanged();
+}
+
+QString UIThemeManager::lookTheme() const
+{
+    return SettingsStorage::instance()->loadValue<QString>(DoseThemeSource::themeKey(), u"system"_s);
+}
+
+QString UIThemeManager::lookAccent() const
+{
+    return DoseThemeSource::migrateAccent(
+        SettingsStorage::instance()->loadValue<QString>(DoseThemeSource::accentKey(), u"theme"_s));
+}
+
+QString UIThemeManager::lookDensity() const
+{
+    return SettingsStorage::instance()->loadValue<QString>(DoseThemeSource::densityKey(), u"compact"_s);
+}
+
+QString UIThemeManager::resolvedTheme() const
+{
+    return m_doseResolved;
+}
+
+bool UIThemeManager::usesDoseTheme() const
+{
+    return m_doseTheme;
 }
 
 UIThemeManager *UIThemeManager::instance()
@@ -188,6 +270,12 @@ void UIThemeManager::applyStyleSheet() const
 
 void UIThemeManager::onColorSchemeChanged()
 {
+    // "Follow system": the system switched, so switch theme with it.
+    if (m_doseTheme && (lookTheme() == u"system")
+        && (DoseThemeSource::resolveTheme(u"system"_s, systemIsDark()) != m_doseResolved))
+    {
+        applyDose();
+    }
     emit themeChanged();
 
     // workaround to refresh styled controls once color scheme is changed
@@ -356,6 +444,18 @@ void UIThemeManager::applyPalette() const
         const QColor newColor = m_themeSource->getColor(colorDescriptor.id, ColorMode::Light);
         if (newColor.isValid())
             palette.setColor(colorDescriptor.colorGroup, colorDescriptor.colorRole, newColor);
+    }
+
+    if (m_doseTheme)
+    {
+        // Same colours whether or not the window has focus.
+        for (int role = 0; role < QPalette::NColorRoles; ++role)
+        {
+            const auto r = static_cast<QPalette::ColorRole>(role);
+            palette.setColor(QPalette::Inactive, r, palette.color(QPalette::Active, r));
+        }
+        if (const auto *dose = dynamic_cast<const DoseThemeSource *>(m_themeSource.get()))
+            palette.setColor(QPalette::All, QPalette::PlaceholderText, dose->token(u"faint"_s));
     }
 
     qApp->setPalette(palette);

@@ -76,6 +76,7 @@
 #include "interfaces/iguiapplication.h"
 #include "ipsubnetwhitelistoptionsdialog.h"
 #include "rss/automatedrssdownloader.h"
+#include "dose/dosedialogs.h"
 #include "ui_optionsdialog.h"
 #include "uithemedialog.h"
 #include "uithememanager.h"
@@ -234,6 +235,7 @@ OptionsDialog::OptionsDialog(IGUIApplication *app, QWidget *parent)
     for (QSpinBox *widget : asConst(findChildren<QSpinBox *>()))
         widget->installEventFilter(wheelEventEater);
 
+    DoseDialogs::decorateOptions(this, m_ui->hsplitter, m_ui->tabSelection, m_ui->tabOption);
     m_ui->tabSelection->setCurrentRow(m_storeLastViewedPage);
 
     if (const QSize dialogSize = m_storeDialogSize; dialogSize.isValid())

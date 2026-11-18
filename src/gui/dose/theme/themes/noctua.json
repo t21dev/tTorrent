@@ -1,0 +1,20 @@
+{
+  "id": "noctua",
+  "name": "Noctua",
+  "appearance": "dark",
+  "colors": {
+    "bg": "#0E1626",
+    "panel": "#0B1220",
+    "raised": "#17223A",
+    "hover": "#121C30",
+    "line": "#1F2B45",
+    "text": "#E6ECF7",
+    "muted": "#A9B5CE",
+    "faint": "#8A97B3",
+    "ring": "#33405E",
+    "accent": "#F2A65A",
+    "ok": "#5FD3A3",
+    "warn": "#F2C14E",
+    "bad": "#F07A7A"
+  }
+}

@@ -75,6 +75,17 @@ public:
 
     QColor getColor(const QString &id) const;
 
+    // tTorrent's built-in look (DoseThemeSource): theme ("system" or a
+    // theme id), accent (preset id or "#RRGGBB") and density. Applied at
+    // once; stored even when a custom theme is in use.
+    void setLook(const QString &theme, const QString &accent, const QString &density);
+    QString lookTheme() const;
+    QString lookAccent() const;
+    QString lookDensity() const;
+    // The theme actually shown ("system" resolved).
+    QString resolvedTheme() const;
+    bool usesDoseTheme() const;
+
 #ifdef Q_OS_WIN
     void updateSystemColorMode();
 #endif
@@ -88,6 +99,8 @@ private:
     void applyPalette() const;
     void applyStyleSheet() const;
     void onColorSchemeChanged();
+    void applyDose();
+    bool systemIsDark() const;
 
 #ifdef QBT_HAS_COLORSCHEME_OPTION
     void applyColorScheme() const;
@@ -105,6 +118,8 @@ private:
     const bool m_useSystemIcons;
 #endif
     std::unique_ptr<UIThemeSource> m_themeSource;
+    bool m_doseTheme = false;
+    QString m_doseResolved;
     mutable QHash<QString, QIcon> m_icons;
     mutable QHash<QString, QIcon> m_darkModeIcons;
     mutable QHash<QString, QIcon> m_flags;

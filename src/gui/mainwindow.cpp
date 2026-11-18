@@ -100,6 +100,8 @@
 #include "transferlistfilterswidget.h"
 #include "transferlistmodel.h"
 #include "transferlistwidget.h"
+#include "dose/dosetoolbar.h"
+#include "titlebar/dosetitlebar.h"
 #include "ui_mainwindow.h"
 #include "uithememanager.h"
 #include "utils.h"
@@ -167,11 +169,14 @@ MainWindow::MainWindow(IGUIApplication *app, const WindowState initialState, con
 
     setTitleSuffix(titleSuffix);
 
+    DoseTitleBar::install(this, m_ui->menubar);
+
 #if (defined(Q_OS_UNIX))
     m_ui->actionOptions->setText(tr("Preferences"));
 #endif
 
     addToolbarContextMenu();
+    DoseToolbar::install(m_ui->toolBar, m_toolbarMenu);
 
     m_ui->actionOpen->setIcon(UIThemeManager::instance()->getIcon(u"list-add"_s));
     m_ui->actionDownloadFromURL->setIcon(UIThemeManager::instance()->getIcon(u"insert-link"_s));
@@ -593,7 +598,7 @@ void MainWindow::setTitleSuffix(const QString &suffix)
 {
     const auto emDash = QChar(0x2014);
     const QString separator = u' ' + emDash + u' ';
-    m_windowTitle = QStringLiteral("qBittorrent " QBT_VERSION)
+    m_windowTitle = QStringLiteral("tTorrent " QBT_VERSION)
         + (!suffix.isEmpty() ? (separator + suffix) : QString());
 
     refreshWindowTitle();
@@ -1741,7 +1746,7 @@ void MainWindow::handleUpdateCheckFinished(ProgramUpdater *updater, const bool i
     {
         if (invokedByUser)
         {
-            auto *msgBox = new QMessageBox {QMessageBox::Information, u"qBittorrent"_s
+            auto *msgBox = new QMessageBox {QMessageBox::Information, u"tTorrent"_s
                 , tr("No updates available.\nYou are already using the latest version.")
                 , QMessageBox::Ok, this};
             msgBox->setAttribute(Qt::WA_DeleteOnClose);

@@ -1,0 +1,20 @@
+{
+  "id": "vampire",
+  "name": "Vampire",
+  "appearance": "dark",
+  "colors": {
+    "bg": "#17121A",
+    "panel": "#130F16",
+    "raised": "#231B28",
+    "hover": "#1D1621",
+    "line": "#2F2534",
+    "text": "#F2EAF0",
+    "muted": "#C2B2BF",
+    "faint": "#A2909F",
+    "ring": "#4A3B50",
+    "accent": "#E0466A",
+    "ok": "#6CCB97",
+    "warn": "#E8B04A",
+    "bad": "#FF8F5A"
+  }
+}
