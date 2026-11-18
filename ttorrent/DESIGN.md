@@ -1,19 +1,25 @@
 # tTorrent design
 
-How tTorrent looks. New UI follows it; if the code and this file disagree, fix one of them on purpose in the same change. Chosen 18 November 2026: **variant A, Quiet** of the window mock-up (https://claude.ai/artifact/UKsxeqvLk4U9Diyz8eqj1N).
+How tTorrent looks. New UI follows it; if the code and this file disagree, fix one of them on purpose in the same change. Chosen 18 November 2026: **variant A, Quiet** of the window mock-up (https://claude.ai/artifact/UKsxeqvLk4U9Diyz8eqj1N), refined since with the owner's feedback (below).
 
-Source of truth in code: `src/gui/dose/` (`dosetheme.*` for tokens, accent and density; `theme/themes/*.json`; `theme/stylesheet.qss`, a token template with no colour literals).
+Source of truth in code: `src/gui/dose/` (`dosetheme.*` for tokens, accent and density; `theme/themes/*.json`; `theme/stylesheet.qss`, a token template with no colour literals; `dosepaint.*` for what is painted in code).
 
 ## Principles
 
 - **Familiar map, new finish.** Menu, toolbar, filter sidebar, transfer list, details tabs and status bar stay where people expect them.
 - **Data is the loudest thing.** Chrome is quiet greys. Colour is for the accent (selection, primary action, progress), states (seeding, checking, error) and category colours.
-- **Fast is a feature.** Nothing decorative costs a frame or memory. No blur, no idle redraws.
+- **Crisp and compact, never gimmicky.** Flat surfaces; depth comes from a lighter top edge, a darker bottom edge and fills, **never gradients**. Icon buttons and icon labels wherever they fit. Every interactive element has a hover state.
+- **Fast is a feature.** Nothing decorative costs a frame or memory. No blur, no idle redraws. Lists with hundreds of rows are painted in code, not through stylesheet rules (the transfer list's stylesheet rows cost a 68 MB start-up peak, measured 2026-11-18).
 - **Plain copy.** Sentence case, short sentences. No invented numbers.
 
 ## Colour
 
-Themes and tokens are Kitab's (`../kitab/DESIGN.md` › Colour): Follow system, Light, Paper, Sand, Linen, Dark, Gray, Nord, Noctua, Vampire, Ink. Tokens used: `bg`, `panel`, `raised`, `hover`, `line`, `text`, `muted`, `faint`, `ring`, `accent`, `ok`, `warn`, `bad`.
+17 themes, Kitab-style (`../kitab/DESIGN.md` › Colour), plus Follow system and the user's own from the theme editor:
+
+- Light: Light, Paper, Latte, Solarized, Blossom
+- Dark: Dark, Ink, Charcoal, Nord, Dracula, Mocha, Tokyo, Rosé Pine, Gruvbox, Vampire, Aurora, Ember
+
+Base tokens: `bg`, `panel`, `raised`, `hover`, `line`, `text`, `muted`, `faint`, `ring`, `accent`, `ok`, `warn`, `bad`.
 
 Derived per theme:
 
@@ -24,18 +30,24 @@ Derived per theme:
 | `accentLine` | accent over `bg`, 50 % | Partial pieces, focus borders |
 | `track` | `text` over `bg`: 9 % light, 14 % dark | Progress tracks, empty pieces |
 | `rowRule` | `line` over `bg`, 60 % | Row dividers |
-| `onAccent` | `bg` or `text`, whichever contrasts more with `accent` | Text on the primary button |
+| `onAccent` | `bg` or `text`, whichever contrasts more with `accent` | Text and icons on accent fills |
+| `edgeHi`, `edgeLo` | lighter and darker `line` | Top and bottom edges of raised surfaces |
+| `well`, `wellEdge` | darker than `bg` | Text fields and other inset surfaces |
+| `card` | between `bg` and `panel` | Settings groups |
+| `menuHover` | `hover` tuned for menus | Menu item hover |
 
 Accent presets: Theme (the theme's own), Emerald, Blue, Grape, Amber, Rose, Wine, Mono, or any hex.
 
-Torrent states: downloading, forced, metadata and moving use `accent`; seeding and completed `ok`; stalled and checking `warn`; errors and missing files `bad`; stopped and queued `faint`.
+Torrent states (status text and icon): downloading, forced, metadata and moving use `accent`; seeding and completed `ok`; stalled and checking `warn`; errors and missing files `bad`; stopped and queued `faint`.
+
+Progress bars use `accent`, `bad` on error or missing files, `muted` when stopped. They follow the state's text colour only when qBittorrent's "progress bar follows text colour" option is on.
 
 ## Type
 
 | Role | Face | Size |
 |---|---|---|
-| UI | Instrument Sans 400/500/600 | 13 px (12 Dense, 14 Standard) |
-| Numbers | DM Mono 400/500, tabular | UI size − 1 px; every size, speed, ratio, count, ETA, IP and date in a table |
+| UI | Instrument Sans 400/500/600, no hinting, antialiased | 13 px (12 Dense, 14 Standard) |
+| Numbers | DM Mono 400/500, tabular | UI size − 1 px; every size, speed, ratio, count, ETA, IP, date and key cap |
 | Headings (dialogs) | Instrument Sans 600 | 15 to 16 px |
 
 Table headers and labels are sentence case, never tracked capitals.
@@ -44,32 +56,42 @@ Table headers and labels are sentence case, never tracked capitals.
 
 | | Dense | Compact (default) | Standard |
 |---|---|---|---|
-| Row | 26 | 30 | 36 |
-| Control | 26 | 30 | 36 |
-| Radius | 7 | 8 | 9 |
+| UI text | 12 | 13 | 14 |
+| Control padding (vertical) | 3 | 4 | 7 |
+| Row padding (vertical) | 3 | 4 | 7 |
+| Radius | 7 | 8 | 10 |
+| Layout margins | 6 | 9 | 12 |
+| Layout spacing | 4 | 6 | 8 |
+| Small icons | 14 | 14 | 16 |
 
-Interface size 80 to 150 %, applied at the next start.
+Density changes spacing everywhere, through the stylesheet tokens and `DoseStyle::pixelMetric`. Interface size 80 to 150 %, applied at the next start. Toolbar: Slim (default) or Regular, and icons Small, Medium or Large.
 
-## Components (variant A)
+## Components
 
-- **Title bar** (38 px, `panel`): logo, the menus in `muted`, the title centred in `faint`, window buttons; Close turns red on hover.
-- **Toolbar** (`bg`, hairline below): "Add torrent" is the one primary button (accent fill, label); every other button is a 16 px icon at 30 px, labels optional. The filter field sits on the right with its shortcut shown.
-- **Sidebar** (`panel`): Status, Categories (each with its colour square), Tags, Trackers; counts in DM Mono `faint`, right-aligned. The selected filter has a `select` fill and an accent icon.
-- **Transfer list**: hairline row dividers (`rowRule`), no zebra stripes. Progress is a 4 px pill on `track` with the percentage beside it in DM Mono; its colour follows the state. Status is a 14 px icon plus a word, both in the state colour. Zero speeds and ∞ ETAs fade to `faint`. The selected row gets a `select` fill and a 3 px accent bar on its left edge.
-- **Details tabs**: icon and label, an accent underline under the current tab, and the selected torrent's name on the right in `faint`.
-- **General**: the **piece map** (the signature): 48 columns of 2 px-rounded squares, done in `accent`, partial in `accentLine`, missing in `track`. An availability bar sits below it and a two-column fact list beside it.
-- **Trackers**: DHT, PeX and LSD first, then tiers; status as an outlined pill (`ok` Working, `bad` Not working); errors in `bad`.
-- **Peers**: country flag, IP and port in DM Mono, client, and a small progress bar.
-- **Content**: checkboxes in the accent, a priority pill, a progress bar per file.
-- **Speed graph**: smooth download and upload lines with a fading area fill (accent and `ok`), dashed horizontal grid, axis labels in DM Mono `faint`, a dot on the latest value, a legend with live values and the peak, and period chips (1m, 5m, 30m, 6h, 24h).
-- **Status bar** (30 px, `panel`): free space, DHT, memory, then right-aligned connection (a dot), alternative speed limits, download and upload speeds (in `accent` and `ok`, session totals `faint`). Every item has a tooltip; right-click chooses what shows.
-- **Tooltips**: `raised`, 1 px `line`, 8 px radius, soft shadow; a title, its shortcut as a key cap, and an optional one-line hint in `muted`.
-- **Menus**: `raised`, 12 px radius, 30 px items with icons and right-aligned shortcuts; destructive items in `bad`.
+- **Title bar** (custom on every window and dialog, never the system one): the app icon, the menus in `muted`, the filter field centred, window buttons; Close turns red on hover. Dialogs show their title on the left unless they draw their own heading.
+- **Toolbar** (`bg`, hairline below): "Add torrent" is the one primary button (accent fill, `onAccent` icon and label); every other button is an icon. Right-click: icon size, height, which buttons show, reset.
+- **Filter field** (in the title bar): a rounded well with a search button that opens "Filter by" and the shortcut in the placeholder.
+- **Main tabs** (Transfers, RSS, Log): icon and label, accent underline; the bar hides when Transfers is the only tab, and right-clicking it shows or hides the others.
+- **Sidebar** (`panel`): Views (saved filters), Status, Categories, Tags, Trackers; counts in DM Mono `faint`, right-aligned. The selected filter has a `select` fill and an accent icon.
+- **Transfer list**: hairline row dividers (`rowRule`), no zebra stripes, rows painted in code. Progress in one of three styles (Settings › Look): **Line** (4 px), **Bar** (8 px), each with the percentage beside it, or **Filled** (the whole cell with the percentage inside, the text switching colour over the fill). Zero speeds and ∞ ETAs fade to `faint`. The selected row gets a `select` fill and a 3 px accent bar on its left edge.
+- **Details tabs**: icon and label, an accent underline under the current tab.
+- **General**: the **piece map** (the signature): 2 px-rounded squares, done in `accent`, partial in `accentLine`, missing in `track`.
+- **Speed graph**: smooth lines with a fading area fill (accent and `ok`), dashed grid, axis labels in DM Mono `faint`.
+- **Status bar** (`panel`): information on the left (free space, DHT, memory), connection and speeds on the right (download `accent`, upload `ok`). Right-click chooses what shows. Clicking Memory opens the **memory card**: now, peak, reserved, running time and a graph since start.
+- **Buttons**: flat `raised` fill, 1 px `line` border with a darker bottom edge; pressed sinks to `well`. The default button is accent-filled. Disabled buttons are `panel` with `faint` text. Icon buttons (Select all / none, card close) are square and transparent until hovered.
+- **Settings**: a sidebar of sections with 15 px icons; groups as `card` boxes with the title above, 12 px radius. Long help text wraps; nothing scrolls sideways.
+- **Cards** (notifications, low disk space): `raised`, 12 px radius, bottom-right of the window, an icon, a bold title, a `muted` line and up to two action buttons. They fade in and leave after 8 s unless hovered.
+- **Command palette** (Ctrl+K): a floating `panel` card under the title bar; a search well, rows with icon, name, menu name in `faint` and key caps.
+- **Key caps**: DM Mono on `well`, 1 px `line` with a 2 px bottom edge, 6 px radius.
+- **Tooltips**: `raised`, 1 px `line`, 9 px radius.
+- **Menus**: translucent window, `raised`, 10 px radius, compact items with icons and right-aligned shortcuts; menus longer than 16 items get tighter rows.
+- **Warning banners**: text in `warn` on a 12 % `warn` wash with a 35 % `warn` border, 8 px radius.
 
 ## Icons
 
-One set, Lucide geometry (ISC), 24 grid drawn at 16 px, 1.6 px stroke, round caps and joins. Icons are tinted from tokens when the theme loads, never stored in a colour: chrome icons in `muted`, state icons in their state colour, the primary button's icon in `onAccent`.
+- **UI icons:** one set, Lucide geometry (ISC), 24 grid drawn at 14 to 16 px, 1.6 px stroke, round caps and joins. Icons are tinted from tokens when the theme loads, never stored in a colour: chrome icons in `muted`, state icons in their state colour, icons on accent in `onAccent`. Every command has an icon, including in the palette and the shortcuts sheet.
+- **App icon:** the sprout-arrow in white on a `#10A874` tile with rounded corners (`ttorrent/brand/icon.svg`; `make_icon.py` draws the PNG and the multi-size ICO). The same icon is used in the title bar and the About dialog, whatever the theme. The tray icon can be the colour tile, outline or filled monochrome.
 
 ## Motion
 
-120 ms for hover and press, 220 ms for tabs and menus. Only opacity and colour animate. Nothing animates while idle.
+120 ms for hover and press, about 160 ms fades for dialogs and cards, 220 ms for tabs and menus. Only opacity and colour animate. Nothing animates while idle. Graphics effects are removed once a fade ends, so text stays crisp.

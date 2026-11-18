@@ -52,4 +52,4 @@ Do not expect this file to contain detailed instructions for compilation and tes
 
 ## tTorrent
 
-This is tTorrent, a fork of qBittorrent. Read [ttorrent/AGENTS.md](ttorrent/AGENTS.md) and [UPSTREAM.md](UPSTREAM.md) before changing anything.
+This is tTorrent, a fork of qBittorrent. Before changing anything, read [ttorrent/AGENTS.md](ttorrent/AGENTS.md) (rules and the change loop) and [UPSTREAM.md](UPSTREAM.md) (staying mergeable). UI work follows [ttorrent/DESIGN.md](ttorrent/DESIGN.md); every change is checked as [ttorrent/VERIFY.md](ttorrent/VERIFY.md) says.
