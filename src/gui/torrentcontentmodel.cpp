@@ -401,6 +401,9 @@ QVariant TorrentContentModel::data(const QModelIndex &index, const int role) con
         if (index.column() != TorrentContentModelItem::COL_NAME)
             return {};
 
+        if (UIThemeManager::instance()->usesDoseTheme()) // tTorrent: line icons, not the system's
+            return UIThemeManager::instance()->getIcon((item->itemType() == TorrentContentModelItem::FolderType) ? u"directory"_s : u"fileicon"_s);
+
         if (item->itemType() == TorrentContentModelItem::FolderType)
             return m_fileIconProvider->icon(QFileIconProvider::Folder);
 

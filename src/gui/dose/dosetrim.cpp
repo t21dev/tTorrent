@@ -22,9 +22,11 @@
 #include <QMainWindow>
 #include <QMenu>
 #include <QStackedWidget>
+#include <QHeaderView>
 #include <QTableWidget>
 
 #include "base/bittorrent/session.h"
+#include "base/global.h"
 #include "base/preferences.h"
 
 namespace
@@ -88,10 +90,15 @@ void DoseTrim::applyToOptions(QDialog *dialog)
     // Advanced: rows for the embedded tracker, host-name lookups and I2P.
     for (QTableWidget *table : dialog->findChildren<QTableWidget *>())
     {
+        table->verticalHeader()->setDefaultSectionSize(38);
+        table->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
         for (int row = 0; row < table->rowCount(); ++row)
         {
             const auto *label = qobject_cast<QLabel *>(table->cellWidget(row, 0));
             const QString text = label ? label->text() : QString();
+            // The app's own section is tTorrent's, not qBittorrent's.
+            if (label && text.contains(u"qBittorrent Section"))
+                const_cast<QLabel *>(label)->setText(QString(text).replace(u"qBittorrent Section"_s, QDialog::tr("tTorrent")));
             if (text.contains(u"embedded tracker", Qt::CaseInsensitive)
                 || text.contains(u"Resolve peer host names", Qt::CaseInsensitive)
                 || text.startsWith(u"I2P", Qt::CaseInsensitive))

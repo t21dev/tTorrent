@@ -22,6 +22,7 @@
 #include <QPropertyAnimation>
 
 #include "gui/titlebar/dosetitlebar.h"
+#include "gui/uithememanager.h"
 
 namespace
 {
@@ -39,9 +40,24 @@ namespace
             return filter;
         }
 
+        // Gives a dialog the custom title bar once it has a layout (dialogs
+        // are often polished before their layout exists).
+        static void frame(QDialog *dialog)
+        {
+            if (!dialog->layout() || dialog->property("doseFramed").toBool())
+                return;
+            dialog->setProperty("doseFramed", true);
+            DoseTitleBar::installDialog(dialog);
+        }
+
     protected:
         bool eventFilter(QObject *watched, QEvent *event) override
         {
+            if (auto *dialog = qobject_cast<QDialog *>(watched);
+                dialog && ((event->type() == QEvent::LayoutRequest) || (event->type() == QEvent::Show) || (event->type() == QEvent::Polish)))
+            {
+                frame(dialog);
+            }
             if ((event->type() == QEvent::Show) && QApplication::isEffectEnabled(Qt::UI_AnimateMenu))
             {
                 auto *window = static_cast<QWidget *>(watched);
@@ -74,7 +90,18 @@ int DoseStyle::styleHint(const StyleHint hint, const QStyleOption *option, const
 void DoseStyle::polish(QWidget *widget)
 {
     QProxyStyle::polish(widget);
-    if (!widget || !widget->isWindow() || widget->testAttribute(Qt::WA_WState_Created))
+    if (!widget || !widget->isWindow())
+        return;
+
+    // Every dialog gets the custom title bar (never the system one), as soon
+    // as it has a layout; the file picker stays native.
+    if (auto *dialog = qobject_cast<QDialog *>(widget); dialog && !qobject_cast<QFileDialog *>(dialog))
+    {
+        dialog->installEventFilter(FadeIn::instance());
+        FadeIn::frame(dialog);
+        return;
+    }
+    if (widget->testAttribute(Qt::WA_WState_Created))
         return;
 
     // Menus and the list a combo box opens: round corners need a clear backing.
@@ -93,15 +120,50 @@ void DoseStyle::polish(QWidget *widget)
         return;
     }
 
-    if (auto *dialog = qobject_cast<QDialog *>(widget))
+}
+
+QIcon DoseStyle::standardIcon(const StandardPixmap icon, const QStyleOption *option, const QWidget *widget) const
+{
+    const char *id = nullptr;
+    switch (icon)
     {
-        if (!qobject_cast<QFileDialog *>(dialog) && !dialog->property("doseFramed").toBool())
-        {
-            dialog->setProperty("doseFramed", true);
-            DoseTitleBar::installDialog(dialog);
-            dialog->installEventFilter(FadeIn::instance());
-        }
+    case SP_DirIcon:
+    case SP_DirOpenIcon:
+    case SP_DirClosedIcon:
+    case SP_DirLinkIcon:
+    case SP_DirLinkOpenIcon:
+    case SP_DialogOpenButton:
+    case SP_FileDialogStart:
+        id = "directory";
+        break;
+    case SP_FileIcon:
+    case SP_FileLinkIcon:
+        id = "fileicon";
+        break;
+    case SP_MessageBoxWarning:
+        id = "dialog-warning";
+        break;
+    case SP_MessageBoxCritical:
+        id = "error";
+        break;
+    case SP_MessageBoxInformation:
+        id = "help-about";
+        break;
+    case SP_MessageBoxQuestion:
+        id = "help-contents";
+        break;
+    case SP_BrowserReload:
+        id = "view-refresh";
+        break;
+    case SP_TrashIcon:
+        id = "list-remove";
+        break;
+    default:
+        break;
     }
+    if (id && UIThemeManager::instance() && UIThemeManager::instance()->usesDoseTheme())
+        return UIThemeManager::instance()->getIcon(QString::fromLatin1(id));
+    return QProxyStyle::standardIcon(icon, option, widget);
 }
 
 void DoseStyle::install()

@@ -29,6 +29,10 @@ namespace DoseToolbar
     // widgets added to the toolbar later (the search field) stay after them.
     void install(QToolBar *toolBar, QMenu *contextMenu);
 
+    // Toolbar icon size in px (16, 20 or 24; Appearance/ToolbarIconSize).
+    void setIconSize(QToolBar *toolBar, int px);
+    int iconSize();
+
     // The filter field: wider, its "Filter by" choice moved into a menu on
     // the field's search icon (the combo box stays, hidden, as the model).
     void polishFilter(QLineEdit *edit, QComboBox *columns);

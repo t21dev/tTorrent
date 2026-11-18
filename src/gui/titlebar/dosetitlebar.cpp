@@ -67,19 +67,23 @@ QWK--WindowBar QMenuBar#win-menu-bar::item {
 QWK--WindowBar QMenuBar#win-menu-bar::item:selected {
     background: palette(alternate-base);
 }
-QWK--WindowButton {
+QWK--WindowButton, QWK--WindowButton:default, QWK--WindowButton:flat {
     border: none;
+    border-radius: 0;
     background: transparent;
     min-width: 46px;
     max-width: 46px;
-    min-height: 36px;
-    max-height: 36px;
+    min-height: 38px;
+    max-height: 38px;
     padding: 0;
+    margin: 0;
 }
 QWK--WindowButton#icon-button {
-    min-width: 36px;
-    max-width: 36px;
+    min-width: 40px;
+    max-width: 40px;
 }
+QWK--WindowButton#icon-button:hover { background: transparent; }
+QWK--WindowBar QMenuBar#win-menu-bar { min-height: 38px; max-height: 38px; }
 QWK--WindowButton:hover {
     background: palette(alternate-base);
 }
@@ -208,6 +212,8 @@ void DoseTitleBar::install(QMainWindow *window, QMenuBar *menuBar)
     window->layout()->setMenuBar(nullptr);
     menuBar->setObjectName(QStringLiteral("win-menu-bar"));
     bar->setMenuBar(menuBar);
+    if (bar->layout())
+        bar->layout()->setAlignment(menuBar, Qt::AlignVCenter);
 
     auto *iconButton = new QWK::WindowButton;
     iconButton->setObjectName(QStringLiteral("icon-button"));

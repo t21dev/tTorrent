@@ -79,10 +79,13 @@ QHeaderView::section {
     color: @faint@;
     border: none;
     border-bottom: 1px solid @line@;
+    border-right: 1px solid @line@;
     padding: @padV@px 10px;
     font-weight: 500;
     font-size: @fontSmall@px;
 }
+QHeaderView::section:last, QHeaderView::section:only-one { border-right: none; }
+QHeaderView::section:hover { background: @hover@; }
 QHeaderView::section:first { padding-left: 12px; }
 QHeaderView::up-arrow { image: url(@chevronUp@); width: 10px; height: 10px; subcontrol-position: center right; right: 4px; }
 QHeaderView::down-arrow { image: url(@chevronDown@); width: 10px; height: 10px; subcontrol-position: center right; right: 4px; }
@@ -273,10 +276,10 @@ QStatusBar QFrame[frameShape="5"] { max-height: 14px; min-height: 14px; }
 QStatusBar QPushButton { text-align: left; }
 
 /* Content tab: Select all / none as text buttons. */
-QPushButton#selectAllButton, QPushButton#selectNoneButton {
+QPushButton#selectAllButton, QPushButton#selectNoneButton, QPushButton#buttonSelectAll, QPushButton#buttonSelectNone {
     background: transparent; border: none; color: @muted@; padding: 4px 10px; min-width: 0; font-weight: 500;
 }
-QPushButton#selectAllButton:hover, QPushButton#selectNoneButton:hover { background: @hover@; color: @text@; }
+QPushButton#selectAllButton:hover, QPushButton#selectNoneButton:hover, QPushButton#buttonSelectAll:hover, QPushButton#buttonSelectNone:hover { background: @hover@; color: @text@; }
 
 /* Filter sidebar (DESIGN.md › Sidebar): panel colour, sentence-case headings,
    rounded selection, no row dividers. */
@@ -293,3 +296,10 @@ QStatusBar QPushButton#doseDown { color: @accent@; }
 QStatusBar QPushButton#doseUp { color: @ok@; }
 
 *[doseNumber="true"] { font-family: "DM Mono", "Cascadia Mono", monospace; font-size: @fontSmall@px; }
+
+/* Editors inside tables (Advanced settings): no extra padding, so the value
+   is never sliced by the row height. */
+QTableView QComboBox, QTableView QSpinBox, QTableView QDoubleSpinBox, QTableView QLineEdit {
+    padding: 0 8px; border-radius: 6px; min-height: 0; margin: 2px 0;
+}
+QTableView QComboBox { padding-right: 26px; }

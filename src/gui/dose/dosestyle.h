@@ -31,6 +31,8 @@ public:
 
     int styleHint(StyleHint hint, const QStyleOption *option, const QWidget *widget, QStyleHintReturn *returnData) const override;
     void polish(QWidget *widget) override;
+    // Folders, files, browse and message icons from tTorrent's line set.
+    QIcon standardIcon(StandardPixmap icon, const QStyleOption *option, const QWidget *widget) const override;
     using QProxyStyle::polish;
 
     // Wraps the application's current style once; safe to call again.

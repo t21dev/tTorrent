@@ -16,6 +16,11 @@
 #include "dosedialogs.h"
 
 #include <QAbstractButton>
+#include <QSvgRenderer>
+#include <QPainter>
+#include <QToolBar>
+#include <QMainWindow>
+#include <QApplication>
 #include <QBoxLayout>
 #include <QButtonGroup>
 #include <QCheckBox>
@@ -44,6 +49,7 @@
 #include "gui/uithememanager.h"
 #include "dosetheme.h"
 #include "dosethemeeditor.h"
+#include "dosetoolbar.h"
 #include "dosetrim.h"
 
 namespace
@@ -102,12 +108,36 @@ QLabel#doseAddName {
 QWidget#doseAddHeader QLabel[doseRole="key"] {
     color: palette(dark);
 }
-QToolButton#doseInfoToggle {
+QToolButton#doseInfoToggle, QToolButton#doseInfoToggle:checked {
     border: none;
-    padding: 4px 0;
+    background: transparent;
+    padding: 6px 8px 6px 2px;
     color: palette(window-text);
+    font-weight: 600;
 }
+QToolButton#doseInfoToggle:hover { color: palette(link); }
+QGroupBox#doseInfoBox { border: none; margin-top: 0; padding: 0 0 0 22px; }
 )";
+
+    // A small chevron, right (closed) or down (open), in the text colour.
+    QIcon chevron(const bool open, const QColor &ink)
+    {
+        const QString svg = QStringLiteral("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%1' "
+            "stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='%2'/></svg>")
+            .arg(ink.name(), open ? QStringLiteral("m6 9 6 6 6-6") : QStringLiteral("m9 18 6-6-6-6"));
+        QSvgRenderer renderer {svg.toUtf8()};
+        QIcon icon;
+        for (const qreal scale : {1.0, 1.5, 2.0})
+        {
+            QPixmap pixmap {QSize(14, 14) * scale};
+            pixmap.setDevicePixelRatio(scale);
+            pixmap.fill(Qt::transparent);
+            QPainter painter {&pixmap};
+            renderer.render(&painter, QRectF(0, 0, 14, 14));
+            icon.addPixmap(pixmap);
+        }
+        return icon;
+    }
 
     // Text a reader would search for: labels, buttons, group titles,
     // advanced settings' names. Accelerators and markup removed.
@@ -216,10 +246,10 @@ QToolButton#doseInfoToggle {
         }
         swatches->addSpacing(8);
         swatches->addWidget(hex);
-        swatches->addWidget(ratio);
         swatches->addStretch();
         form->addWidget(new QLabel(QDialog::tr("Accent colour:")), row, 0);
         form->addLayout(swatches, row++, 1);
+        form->addWidget(ratio, row++, 1);
 
         auto *density = new QComboBox;
         for (const DoseThemeSource::Choice &c : DoseThemeSource::densities())
@@ -227,6 +257,23 @@ QToolButton#doseInfoToggle {
         density->setCurrentIndex(std::max(0, density->findData(manager->lookDensity())));
         form->addWidget(new QLabel(QDialog::tr("Density:")), row, 0);
         form->addWidget(density, row++, 1, Qt::AlignLeft);
+
+        auto *icons = new QComboBox;
+        for (const auto &[px, name] : {std::pair {16, QDialog::tr("Small")}, std::pair {20, QDialog::tr("Medium")}, std::pair {24, QDialog::tr("Large")}})
+            icons->addItem(name, px);
+        icons->setCurrentIndex(std::max(0, icons->findData(DoseToolbar::iconSize())));
+        form->addWidget(new QLabel(QDialog::tr("Toolbar icons:")), row, 0);
+        form->addWidget(icons, row++, 1, Qt::AlignLeft);
+        QObject::connect(icons, &QComboBox::activated, group, [icons](int)
+        {
+            QToolBar *bar = nullptr;
+            for (QWidget *top : QApplication::topLevelWidgets())
+            {
+                if (auto *main = qobject_cast<QMainWindow *>(top))
+                    bar = main->findChild<QToolBar *>(u"toolBar"_s);
+            }
+            DoseToolbar::setIconSize(bar, icons->currentData().toInt());
+        });
 
         // Shows the current choice: swatches tinted for the resolved theme,
         // the hex field with the accent's measured contrast.
@@ -439,6 +486,20 @@ void DoseDialogs::decorateOptions(QDialog *dialog, QSplitter *splitter, QListWid
 
 void DoseDialogs::decorateAddTorrent(QDialog *dialog)
 {
+    // Room either side of the splitter, so the columns' edges never touch.
+    if (auto *split = dialog->findChild<QSplitter *>(QStringLiteral("splitter")))
+    {
+        split->setHandleWidth(14);
+        for (int i = 0; i < split->count(); ++i)
+        {
+            if (QLayout *l = split->widget(i)->layout())
+            {
+                QMargins m = l->contentsMargins();
+                (i == 0) ? m.setRight(std::max(m.right(), 6)) : m.setLeft(std::max(m.left(), 6));
+                l->setContentsMargins(m);
+            }
+        }
+    }
     if (!dialog)
         return;
     auto *root = qobject_cast<QBoxLayout *>(dialog->layout());
@@ -488,14 +549,17 @@ void DoseDialogs::decorateAddTorrent(QDialog *dialog)
         toggle->setObjectName(QStringLiteral("doseInfoToggle"));
         toggle->setText(QDialog::tr("Torrent information"));
         toggle->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-        toggle->setArrowType(Qt::RightArrow);
+        const QColor ink = dialog->palette().color(QPalette::WindowText);
+        toggle->setIcon(chevron(false, ink));
+        toggle->setIconSize({14, 14});
         toggle->setCheckable(true);
         info->setTitle(QString());
         info->setFlat(true);
+        info->setObjectName(QStringLiteral("doseInfoBox"));
         info->hide();
-        QObject::connect(toggle, &QToolButton::toggled, info, [toggle, info](const bool open)
+        QObject::connect(toggle, &QToolButton::toggled, info, [toggle, info, ink](const bool open)
         {
-            toggle->setArrowType(open ? Qt::DownArrow : Qt::RightArrow);
+            toggle->setIcon(chevron(open, ink));
             info->setVisible(open);
         });
         filesLayout->addWidget(toggle);

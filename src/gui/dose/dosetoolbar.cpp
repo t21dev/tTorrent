@@ -16,6 +16,7 @@
 #include "dosetoolbar.h"
 
 #include <QAction>
+#include <QActionGroup>
 #include <QComboBox>
 #include <QLabel>
 #include <QLineEdit>
@@ -32,6 +33,13 @@
 namespace
 {
     const QString HIDDEN_KEY = QStringLiteral("Appearance/ToolbarHidden");
+    const QString ICON_SIZE_KEY = QStringLiteral("Appearance/ToolbarIconSize");
+
+    int storedIconSize()
+    {
+        const int px = SettingsStorage::instance()->loadValue<int>(ICON_SIZE_KEY, 16);
+        return ((px == 16) || (px == 20) || (px == 24)) ? px : 16;
+    }
 
     QStringList hiddenButtons()
     {
@@ -115,7 +123,23 @@ void DoseToolbar::install(QToolBar *toolBar, QMenu *contextMenu)
         return;
     const QList<QAction *> original = toolBar->actions();
 
+    toolBar->setIconSize({storedIconSize(), storedIconSize()});
+
     contextMenu->addSeparator();
+    QMenu *sizes = contextMenu->addMenu(QToolBar::tr("Icon size"));
+    auto *sizeGroup = new QActionGroup(sizes);
+    for (const auto &[px, name] : {std::pair {16, QToolBar::tr("Small")}, std::pair {20, QToolBar::tr("Medium")}, std::pair {24, QToolBar::tr("Large")}})
+    {
+        QAction *choice = sizes->addAction(name);
+        choice->setCheckable(true);
+        choice->setChecked(px == storedIconSize());
+        sizeGroup->addAction(choice);
+        QObject::connect(choice, &QAction::triggered, toolBar, [toolBar, px]
+        {
+            SettingsStorage::instance()->storeValue(ICON_SIZE_KEY, px);
+            toolBar->setIconSize({px, px});
+        });
+    }
     QMenu *show = contextMenu->addMenu(QToolBar::tr("Show buttons"));
     for (QAction *a : original)
     {
@@ -195,4 +219,16 @@ void DoseToolbar::polishFilter(QLineEdit *edit, QComboBox *columns)
         fill();
         menu->popup(edit->mapToGlobal(QPoint(0, edit->height() + 4)));
     });
+}
+
+int DoseToolbar::iconSize()
+{
+    return storedIconSize();
+}
+
+void DoseToolbar::setIconSize(QToolBar *toolBar, const int px)
+{
+    SettingsStorage::instance()->storeValue(ICON_SIZE_KEY, px);
+    if (toolBar)
+        toolBar->setIconSize({px, px});
 }
