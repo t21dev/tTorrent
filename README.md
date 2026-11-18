@@ -1,6 +1,14 @@
-# tTorrent
+<p align="center">
+  <img src="ttorrent/brand/ttorrent-256.png" width="96" height="96" alt="tTorrent logo: a white sprout-arrow on a green tile">
+</p>
 
-A fast, modern torrent client for Windows with a polished look and nothing in the way. It stays light with hundreds of torrents, and it handles what usually needs scripts or add-ons: disk space, webhooks, unpacking, backups, and AI agents.
+<h1 align="center">tTorrent</h1>
+
+<p align="center">A fast, modern torrent client for Windows with a polished look and nothing in the way.</p>
+
+It stays light with hundreds of torrents, and it handles what usually needs scripts or add-ons: disk space, webhooks, unpacking, backups and AI agents.
+
+![tTorrent's main window in the Dark theme, with three open-movie torrents seeding](ttorrent/docs/screenshots/main-dark.png)
 
 ## What's in it
 
@@ -37,6 +45,19 @@ A fast, modern torrent client for Windows with a polished look and nothing in th
 - **Density:** Dense, Compact or Standard. **Interface size:** 80 to 150 %.
 - **Toolbar:** slim or regular, choose which buttons show, and filter from the title bar.
 - **Progress bars:** Line, Bar, or Filled with the percentage inside.
+
+## Screenshots
+
+| | |
+|---|---|
+| ![The main window in the Light theme](ttorrent/docs/screenshots/main-light.png) | ![The Add dialog with seeds and peers from the trackers before adding](ttorrent/docs/screenshots/add-dialog.png) |
+| **Light theme** | **Add dialog** with health from the trackers |
+| ![The command palette listing commands with their shortcuts](ttorrent/docs/screenshots/command-palette.png) | ![The keyboard shortcuts window, grouped by menu](ttorrent/docs/screenshots/keyboard-shortcuts.png) |
+| **Command palette** (Ctrl+K) | **Keyboard shortcuts** (Ctrl+/) |
+| ![The theme editor with a live preview and contrast ratios](ttorrent/docs/screenshots/theme-editor.png) | ![The memory card with a graph since start](ttorrent/docs/screenshots/memory-card.png) |
+| **Theme editor** with a live preview | **Memory card** from the status bar |
+
+Screenshots use open movies from the Blender Foundation as sample torrents.
 
 ## Compared with qBittorrent
 

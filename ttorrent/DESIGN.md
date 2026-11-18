@@ -94,4 +94,9 @@ Density changes spacing everywhere, through the stylesheet tokens and `DoseStyle
 
 ## Motion
 
-120 ms for hover and press, about 160 ms fades for dialogs and cards, 220 ms for tabs and menus. Only opacity and colour animate. Nothing animates while idle. Graphics effects are removed once a fade ends, so text stays crisp.
+- **Hover and press fade** on every button, tool button, flat button, status bar button, icon button and Add torrent: 120 ms in, 180 ms out, ease-out (`dosemotion.cpp`). The stylesheet keeps size, padding and text colour; the background and border are painted underneath from the same tokens. At rest and at full hover the pixels match the stylesheet's old look.
+- **Progress glides** to its new value over 400 ms (ease-out cubic) in the transfer list, for rows on screen only; the percentage text always shows the exact value (`dosepaint.cpp`).
+- **Windows fade in:** dialogs over 180 ms; menus, drop-down lists and tooltips over 120 ms; notification cards over 160 ms (`dosestyle.cpp`, `doseautomation.cpp`). Tabs switch at once. Only opacity and colour animate.
+- **Nothing animates while idle.** Animations run only while something changes, and Windows' "Animation effects" setting off makes every change instant.
+- Graphics effects are removed once a fade ends, so text stays crisp.
+- **Base style:** Fusion under both light and dark themes (`DoseStyle`), so sizes match whatever the colour scheme.
