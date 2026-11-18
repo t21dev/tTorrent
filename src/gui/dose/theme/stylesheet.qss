@@ -37,15 +37,14 @@ QMenuBar::item:selected { background: @hover@; color: @text@; }
 QMenuBar::item:pressed { background: @select@; color: @text@; }
 /* Menus: room for icons on the left and shortcuts on the right, so nothing
    is clipped; rounded 14 px with 10 px items. */
-/* Menus: compact rows like the system's, a visible hover, room for a
-   soft shadow (drawn by DoseStyle in the margin). */
+/* Menus: compact rows like the system's and a visible hover. (No graphics
+   shadow: on Windows it stops translucent pop-ups repainting.) */
 QMenu {
     background: @raised@;
     border: 1px solid @line@;
     border-top-color: @edgeHi@;
     border-radius: 10px;
     padding: 4px;
-    margin: 4px 10px 14px 10px;
     min-width: 200px;
 }
 QMenu::item {
@@ -330,3 +329,12 @@ QPushButton#trackerUpButton, QPushButton#trackerDownButton {
 }
 
 QPushButton[doseTab="true"][doseCollapsed="true"] { color: @text@; border-bottom: 2px solid @ring@; }
+
+/* The filter field in the title bar: one rounded well, icon button inside. */
+QFrame#doseSearchField { background: @well@; border: 1px solid @line@; border-top-color: @wellEdge@; border-radius: 8px; }
+QFrame#doseSearchField:hover { border-color: @ring@; }
+QFrame#doseSearchField QLineEdit, QFrame#doseSearchField QLineEdit:hover, QFrame#doseSearchField QLineEdit:focus {
+    background: transparent; border: none; padding: 0 4px; min-height: 0;
+}
+QToolButton#doseSearchIcon { border: none; border-radius: 6px; padding: 0; background: transparent; }
+QToolButton#doseSearchIcon:hover { background: @hover@; }

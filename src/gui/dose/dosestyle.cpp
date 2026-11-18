@@ -19,7 +19,6 @@
 #include <QDialog>
 #include <QFileDialog>
 #include <QMenu>
-#include <QGraphicsDropShadowEffect>
 #include <QPropertyAnimation>
 
 #include "gui/titlebar/dosetitlebar.h"
@@ -115,16 +114,6 @@ void DoseStyle::polish(QWidget *widget)
         widget->installEventFilter(FadeIn::instance());
         if (auto *menu = qobject_cast<QMenu *>(widget); menu && (menu->actions().size() > 16))
             menu->setProperty("doseDense", true);
-        if (qobject_cast<QMenu *>(widget) && !widget->graphicsEffect())
-        {
-            // A soft float shadow in the stylesheet's margin around the menu.
-            auto *shadow = new QGraphicsDropShadowEffect(widget);
-            shadow->setBlurRadius(24);
-            shadow->setOffset(0, 6);
-            const bool dark = widget->palette().color(QPalette::Window).lightness() < 128;
-            shadow->setColor(QColor(0, 0, 0, dark ? 120 : 55));
-            widget->setGraphicsEffect(shadow);
-        }
         return;
     }
     if (widget->windowType() == Qt::ToolTip)

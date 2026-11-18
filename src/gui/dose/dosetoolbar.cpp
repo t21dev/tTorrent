@@ -16,6 +16,11 @@
 #include "dosetoolbar.h"
 
 #include <QAction>
+#include <QWidgetAction>
+#include <QMainWindow>
+#include <QHash>
+#include <QHBoxLayout>
+#include <QFrame>
 #include <QActionGroup>
 #include <QComboBox>
 #include <QLabel>
@@ -28,6 +33,7 @@
 #include <QToolButton>
 
 #include "base/settingsstorage.h"
+#include "gui/titlebar/dosetitlebar.h"
 #include "gui/uithememanager.h"
 
 namespace
@@ -66,23 +72,37 @@ namespace
     }
 
     // "Add torrent" is the one primary button: accent fill, icon and label.
-    void stylePrimary(QToolBar *toolBar)
+    // A widget of ours that triggers qBittorrent's Open action, so the icon
+    // and label stay ours whatever the action does with its own icon.
+    QHash<QToolBar *, QWidgetAction *> &primaries()
     {
-        const UIThemeManager *theme = UIThemeManager::instance();
-        if (!theme->usesDoseTheme())
-            return;
-        auto *open = toolBar->findChild<QAction *>(QStringLiteral("actionOpen"), Qt::FindDirectChildrenOnly);
-        if (!open)
-            open = toolBar->window()->findChild<QAction *>(QStringLiteral("actionOpen"));
-        auto *button = open ? qobject_cast<QToolButton *>(toolBar->widgetForAction(open)) : nullptr;
-        if (!button)
-            return;
+        static QHash<QToolBar *, QWidgetAction *> map;
+        return map;
+    }
+
+    QWidgetAction *primaryFor(QToolBar *toolBar, QAction *open)
+    {
+        if (QWidgetAction *existing = primaries().value(toolBar))
+            return existing;
+        auto *button = new QToolButton;
         button->setObjectName(QStringLiteral("dosePrimary"));
         button->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-        open->setIconText(QToolBar::tr("Add torrent")); // the toolbar label; menus keep "Open…"
-        button->setIcon(lineIcon(QStringLiteral("<path d='M12 5v14M5 12h14'/>"), theme->doseToken(QStringLiteral("onAccent"))));
-        button->style()->unpolish(button);
-        button->style()->polish(button);
+        button->setText(QToolBar::tr("Add torrent"));
+        button->setToolTip(open->toolTip());
+        button->setCursor(Qt::PointingHandCursor);
+        button->setIconSize({14, 14});
+        const auto paint = [button]
+        {
+            button->setIcon(lineIcon(QStringLiteral("<path d='M12 5v14M5 12h14'/>")
+                , UIThemeManager::instance()->doseToken(QStringLiteral("onAccent"))));
+        };
+        paint();
+        QObject::connect(UIThemeManager::instance(), &UIThemeManager::themeChanged, button, paint);
+        QObject::connect(button, &QToolButton::clicked, open, &QAction::trigger);
+        auto *action = new QWidgetAction(toolBar);
+        action->setDefaultWidget(button);
+        primaries().insert(toolBar, action);
+        return action;
     }
 
     // Puts the toolbar back together from `original`, without hidden buttons.
@@ -91,6 +111,8 @@ namespace
         const QStringList hidden = hiddenButtons();
         for (QAction *a : original)
             toolBar->removeAction(a);
+        if (QWidgetAction *primary = primaries().value(toolBar))
+            toolBar->removeAction(primary);
         // Anything added after install() (search field, spacer) stays last.
         QAction *before = toolBar->actions().value(0, nullptr);
         bool lastWasSeparator = true;
@@ -111,9 +133,14 @@ namespace
         }
         while (!keep.isEmpty() && keep.last()->isSeparator())
             keep.removeLast();
+        const bool dose = UIThemeManager::instance()->usesDoseTheme();
         for (QAction *a : keep)
-            toolBar->insertAction(before, a);
-        stylePrimary(toolBar);
+        {
+            if (dose && (a->objectName() == u"actionOpen"))
+                toolBar->insertAction(before, primaryFor(toolBar, a));
+            else
+                toolBar->insertAction(before, a);
+        }
     }
 }
 
@@ -173,17 +200,13 @@ void DoseToolbar::install(QToolBar *toolBar, QMenu *contextMenu)
     });
 
     rebuild(toolBar, original);
-    // The theme can change while running: redraw the primary button's icon.
-    QObject::connect(UIThemeManager::instance(), &UIThemeManager::themeChanged, toolBar, [toolBar] { stylePrimary(toolBar); });
 }
 
 void DoseToolbar::polishFilter(QLineEdit *edit, QComboBox *columns)
 {
     if (!edit || !columns || !UIThemeManager::instance()->usesDoseTheme())
         return;
-    edit->setFixedWidth(300);
-    edit->setFixedHeight(30);
-    edit->setPlaceholderText(QToolBar::tr("Filter torrents  (Ctrl+F)"));
+    QWidget *window = edit->window();
     columns->hide();
     if (QWidget *row = columns->parentWidget())
     {
@@ -191,12 +214,37 @@ void DoseToolbar::polishFilter(QLineEdit *edit, QComboBox *columns)
             label->hide();
     }
 
-    // The search icon at the start of the field opens "Filter by".
-    const QList<QAction *> actions = edit->actions();
-    QAction *icon = actions.isEmpty() ? nullptr : actions.first();
-    if (!icon)
-        return;
-    auto *menu = new QMenu(edit);
+    // The field: a rounded well holding a search button and the text box.
+    auto *field = new QFrame;
+    field->setObjectName(QStringLiteral("doseSearchField"));
+    field->setFixedSize(380, 30);
+    auto *row = new QHBoxLayout(field);
+    row->setContentsMargins(4, 0, 6, 0);
+    row->setSpacing(2);
+    auto *icon = new QToolButton;
+    icon->setObjectName(QStringLiteral("doseSearchIcon"));
+    icon->setIcon(UIThemeManager::instance()->getIcon(QStringLiteral("edit-find")));
+    icon->setIconSize({16, 16});
+    icon->setFixedSize(26, 24);
+    icon->setCursor(Qt::PointingHandCursor);
+    QObject::connect(UIThemeManager::instance(), &UIThemeManager::themeChanged, icon, [icon]
+    {
+        icon->setIcon(UIThemeManager::instance()->getIcon(QStringLiteral("edit-find")));
+    });
+    // The text box's own search icon is replaced by the button.
+    const QList<QAction *> own = edit->actions();
+    if (!own.isEmpty())
+        edit->removeAction(own.first());
+    edit->setMinimumWidth(0);
+    edit->setMaximumWidth(QWIDGETSIZE_MAX);
+    edit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    edit->setFixedHeight(28);
+    edit->setPlaceholderText(QToolBar::tr("Filter torrents  (Ctrl+F)"));
+    row->addWidget(icon);
+    row->addWidget(edit, 1);
+    edit->show(); // moved from the toolbar: a reparented widget starts hidden
+
+    auto *menu = new QMenu(field);
     const auto fill = [menu, columns]
     {
         menu->clear();
@@ -211,17 +259,21 @@ void DoseToolbar::polishFilter(QLineEdit *edit, QComboBox *columns)
             QObject::connect(choice, &QAction::triggered, columns, [columns, i] { columns->setCurrentIndex(i); });
         }
     };
-    icon->setToolTip(QToolBar::tr("Filter by: %1").arg(columns->currentText()));
-    QObject::connect(columns, &QComboBox::currentIndexChanged, icon, [icon, columns, edit]
+    const auto describe = [icon, edit, columns]
     {
         icon->setToolTip(QToolBar::tr("Filter by: %1").arg(columns->currentText()));
-        edit->setPlaceholderText(QToolBar::tr("Filter by %1  (Ctrl+F)").arg(columns->currentText().toLower()));
-    });
-    QObject::connect(icon, &QAction::triggered, edit, [edit, menu, fill]
+        edit->setPlaceholderText((columns->currentIndex() == 0) ? QToolBar::tr("Filter torrents  (Ctrl+F)")
+            : QToolBar::tr("Filter by %1  (Ctrl+F)").arg(columns->currentText().toLower()));
+    };
+    describe();
+    QObject::connect(columns, &QComboBox::currentIndexChanged, icon, describe);
+    QObject::connect(icon, &QToolButton::clicked, field, [field, menu, fill]
     {
         fill();
-        menu->popup(edit->mapToGlobal(QPoint(0, edit->height() + 4)));
+        menu->popup(field->mapToGlobal(QPoint(0, field->height() + 4)));
     });
+
+    DoseTitleBar::embedInTitle(qobject_cast<QMainWindow *>(window), field);
 }
 
 int DoseToolbar::iconSize()

@@ -23,9 +23,11 @@ param(
     [string]$TtExe = '',
     [int]$StartupRuns = 3,
     [int]$StartupSeconds = 120,
-    [int]$SoakMinutes = 60
+    [int]$SoakMinutes = 60,
+    [ValidateSet('both', 'qb', 'tt')][string]$Apps = 'both'
 )
 $ErrorActionPreference = 'Stop'
+Remove-Item Env:TTORRENT_UISHOT_DIR -ErrorAction SilentlyContinue
 if (-not $TtExe) { $TtExe = Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Path) '..\..\build\Release\ttorrent.exe' }
 New-Item -ItemType Directory -Force $Out | Out-Null
 $cores = [Environment]::ProcessorCount
@@ -117,11 +119,11 @@ $machine = "{0}, {1:N0} GB, {2}" -f (Get-CimInstance Win32_Processor).Name.Trim(
 "# {0} · {1} · qBittorrent {2} vs tTorrent build {3}" -f (Get-Date -Format 'yyyy-MM-dd HH:mm'), $machine, (Get-Item $QbExe).VersionInfo.ProductVersion, (Get-Item $TtExe).LastWriteTime.ToString('yyyy-MM-dd HH:mm') | Add-Content (Join-Path $Out 'summary.jsonl')
 
 for ($i = 1; $i -le $StartupRuns; $i++) {
-    Invoke-Run "startup-qb-$i" 'qBittorrent' $QbExe $StartupSeconds 1
-    Invoke-Run "startup-tt-$i" 'tTorrent' $TtExe $StartupSeconds 1
+    if ($Apps -ne 'tt') { Invoke-Run "startup-qb-$i" 'qBittorrent' $QbExe $StartupSeconds 1 }
+    if ($Apps -ne 'qb') { Invoke-Run "startup-tt-$i" 'tTorrent' $TtExe $StartupSeconds 1 }
 }
 if ($SoakMinutes -gt 0) {
-    Invoke-Run 'soak-qb' 'qBittorrent' $QbExe ($SoakMinutes * 60) 15
-    Invoke-Run 'soak-tt' 'tTorrent' $TtExe ($SoakMinutes * 60) 15
+    if ($Apps -ne 'tt') { Invoke-Run 'soak-qb' 'qBittorrent' $QbExe ($SoakMinutes * 60) 15 }
+    if ($Apps -ne 'qb') { Invoke-Run 'soak-tt' 'tTorrent' $TtExe ($SoakMinutes * 60) 15 }
 }
 Write-Host "done: $Out"

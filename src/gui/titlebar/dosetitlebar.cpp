@@ -19,6 +19,7 @@
 #include <QDialog>
 #include <QEvent>
 #include <QFile>
+#include <QHBoxLayout>
 #include <QIcon>
 #include <QLabel>
 #include <QLayout>
@@ -45,6 +46,9 @@ QWK--WindowBar {
 QWK--WindowBar QLabel#win-title-label {
     color: palette(dark);
     padding: 0 8px;
+}
+QWK--WindowBar QLabel#win-title-label[doseHosting="true"] {
+    color: transparent;
 }
 QWK--WindowBar#dose-dialog-bar QLabel#win-title-label {
     color: palette(window-text);
@@ -300,5 +304,27 @@ void DoseTitleBar::installDialog(QDialog *dialog)
 
     // QLayout keeps its "menu bar" above everything else, edge to edge.
     layout->setMenuBar(bar);
+#endif
+}
+
+void DoseTitleBar::embedInTitle(QMainWindow *window, QWidget *widget)
+{
+#ifdef Q_OS_MACOS
+    Q_UNUSED(window);
+    Q_UNUSED(widget);
+#else
+    auto *bar = window ? qobject_cast<QWK::WindowBar *>(window->menuWidget()) : nullptr;
+    QLabel *label = bar ? bar->titleLabel() : nullptr;
+    if (!label)
+        return;
+    // The title's text hides; the label's room hosts the widget, centred.
+    label->setProperty("doseHosting", true); // the title text hides (stylesheet rule), children don't
+    auto *row = new QHBoxLayout(label);
+    row->setContentsMargins(12, 0, 12, 0);
+    row->addStretch();
+    row->addWidget(widget);
+    row->addStretch();
+    if (auto *agent = window->findChild<QWK::WidgetWindowAgent *>())
+        agent->setHitTestVisible(widget, true);
 #endif
 }

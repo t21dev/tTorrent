@@ -29,6 +29,7 @@
 #include <QPainter>
 #include <QPixmap>
 #include <QPushButton>
+#include <QTabWidget>
 #include <QTimer>
 #include <QTreeView>
 
@@ -122,7 +123,7 @@ void DoseDev::scheduleShots(QMainWindow *window)
             }
         }
     };
-    for (const QString &tab : {u"General"_s, u"Trackers"_s, u"Peers"_s, u"Content"_s, u"Speed"_s})
+    for (const QString &tab : {u"General"_s, u"Trackers"_s, u"Peers"_s, u"HTTP"_s, u"Content"_s, u"Speed"_s})
     {
         steps << [window, dir, clickTab, tab]
         {
@@ -172,6 +173,40 @@ void DoseDev::scheduleShots(QMainWindow *window)
         editor.layout()->activate();
         editor.grab().save(dir + u"/theme-editor.png");
     };
+    // Every other dialog the menus open, one at a time.
+    for (const QString &name : {u"actionStatistics"_s, u"actionDownloadFromURL"_s, u"actionCreateTorrent"_s
+            , u"actionSetGlobalSpeedLimits"_s, u"actionManageCookies"_s})
+    {
+        steps << [window, name]
+        {
+            if (auto *action = window->findChild<QAction *>(name))
+                action->trigger();
+        };
+        steps << [dir, name]
+        {
+            for (QDialog *dialog : openDialogs())
+            {
+                save(dialog, dir + u"/dialog-" + name.mid(6).toLower() + u".png");
+                dialog->close();
+            }
+        };
+    }
+    // RSS and the log as tabs of the main window.
+    for (const QString &name : {u"actionRSSReader"_s, u"actionExecutionLogs"_s})
+    {
+        steps << [window, dir, name]
+        {
+            if (auto *action = window->findChild<QAction *>(name); action && !action->isChecked())
+                action->trigger();
+            for (QTabWidget *tabs : window->findChildren<QTabWidget *>())
+            {
+                if (tabs->count() > 1)
+                    tabs->setCurrentIndex(tabs->count() - 1);
+            }
+            QApplication::processEvents();
+            save(window, dir + u"/main-" + name.mid(6).toLower() + u".png");
+        };
+    }
     steps << [] { QApplication::quit(); };
     chain(window, steps, 1500);
 }

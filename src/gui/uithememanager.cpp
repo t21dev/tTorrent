@@ -344,6 +344,9 @@ QIcon UIThemeManager::getSystrayIcon() const
 
     case TrayIconStyle::Monochrome:
         return getIcon(u"qbittorrent-tray-mono"_s, fallback, colorMode);
+
+    case TrayIconStyle::MonochromeFilled: // tTorrent
+        return getIcon((colorMode == ColorMode::Light) ? u"qbittorrent-tray-filled-light"_s : u"qbittorrent-tray-filled-dark"_s, fallback, colorMode);
     }
 
     Q_UNREACHABLE_RETURN({});

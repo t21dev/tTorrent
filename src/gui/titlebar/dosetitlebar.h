@@ -18,6 +18,7 @@
 class QDialog;
 class QMainWindow;
 class QMenuBar;
+class QWidget;
 
 namespace DoseTitleBar
 {
@@ -32,4 +33,8 @@ namespace DoseTitleBar
     // button, placed above the dialog's own layout. Does nothing on macOS
     // or for a dialog without a layout.
     void installDialog(QDialog *dialog);
+
+    // Puts a widget (the filter field) in the middle of the main window's
+    // title bar, clickable rather than a drag area. Does nothing on macOS.
+    void embedInTitle(QMainWindow *window, QWidget *widget);
 }

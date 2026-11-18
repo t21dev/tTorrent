@@ -16,6 +16,7 @@
 #include "dosetrim.h"
 
 #include <QAction>
+#include <QComboBox>
 #include <QDialog>
 #include <QLabel>
 #include <QListWidget>
@@ -28,6 +29,7 @@
 #include "base/bittorrent/session.h"
 #include "base/global.h"
 #include "base/preferences.h"
+#include "gui/uithememanager.h"
 
 namespace
 {
@@ -70,6 +72,14 @@ void DoseTrim::applyToOptions(QDialog *dialog)
 {
     for (const char *name : {"checkProgramUpdates", "groupMailNotification", "groupI2P", "groupAltWebUI"})
         hideWidget(dialog, name);
+
+    // Tray icon: outline or filled monochrome, besides the colour tile.
+    if (auto *tray = dialog->findChild<QComboBox *>(u"comboTrayIcon"_s); tray && (tray->count() == 2))
+    {
+        tray->setItemText(1, QDialog::tr("Monochrome (outline)"));
+        tray->addItem(QDialog::tr("Monochrome (filled)"));
+        tray->setCurrentIndex(static_cast<int>(UIThemeManager::instance()->trayIconStyle()));
+    }
 
     // The Search page and its entry in the sections list.
     auto *pages = dialog->findChild<QStackedWidget *>(QStringLiteral("tabOption"));

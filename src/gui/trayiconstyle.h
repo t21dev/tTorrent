@@ -37,7 +37,8 @@ inline namespace TrayIconStyleNS
     enum class TrayIconStyle
     {
         Normal,
-        Monochrome
+        Monochrome,
+        MonochromeFilled // tTorrent: a solid monochrome mark
     };
 
     Q_ENUM_NS(TrayIconStyle)
