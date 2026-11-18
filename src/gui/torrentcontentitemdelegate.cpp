@@ -34,6 +34,7 @@
 #include <QPainter>
 #include <QProgressBar>
 
+#include "dose/dosepaint.h"
 #include "base/bittorrent/downloadpriority.h"
 #include "base/bittorrent/torrent.h"
 #include "gui/torrentcontentmodel.h"
@@ -144,6 +145,14 @@ void TorrentContentItemDelegate::paint(QPainter *painter, const QStyleOptionView
             QStyleOptionViewItem customOption {option};
             customOption.state.setFlag(QStyle::State_Enabled, isEnabled);
 
+            if (DosePaint::active()) // tTorrent: the thin progress line; skipped files fade
+            {
+                const qreal percent = index.data(TorrentContentModel::UnderlyingDataRole).toReal();
+                const QColor fill = !isEnabled ? DosePaint::token(u"ring"_s)
+                    : ((percent >= 100) ? DosePaint::token(u"ok"_s) : DosePaint::token(u"accent"_s));
+                DosePaint::progress(painter, customOption, percent, index.data().toString(), fill);
+                break;
+            }
             m_progressBarPainter.paint(painter, customOption, index.data().toString(), progress);
         }
         break;
