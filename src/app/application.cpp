@@ -66,6 +66,7 @@
 #endif // Q_OS_MACOS
 #endif
 
+#include "base/ttorrentversion.h"
 #include "base/addtorrentmanager.h"
 #include "base/bittorrent/addtorrentparams.h"
 #include "base/bittorrent/infohash.h"
@@ -368,7 +369,7 @@ Application::Application(int &argc, char **argv)
 #endif
 
     LogMsg(tr("qBittorrent %1 started. Process ID: %2", "qBittorrent v3.2.0alpha started")
-        .arg(QStringLiteral(QBT_VERSION), QString::number(QCoreApplication::applicationPid())));
+        .arg(QStringLiteral(TTORRENT_VERSION), QString::number(QCoreApplication::applicationPid()))); // tTorrent: our version // tTorrent: our version
     if (portableModeEnabled)
     {
         LogMsg(tr("Running in portable mode. Auto detected profile folder at: %1").arg(profileDir.toString()));

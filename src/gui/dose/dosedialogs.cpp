@@ -54,6 +54,7 @@
 #include "gui/uithememanager.h"
 #include "doseimport.h"
 #include "doseautomation.h"
+#include "dosemcp.h"
 #include "dosepaint.h"
 #include "dosetheme.h"
 #include "dosethemeeditor.h"
@@ -445,29 +446,36 @@ QGroupBox#doseInfoBox { border: none; margin-top: 0; padding: 0 0 0 22px; }
 
     // Downloads › "When something happens": disk guard, unpacking, cards,
     // webhooks (DoseAutomation), after the page's own groups.
-    void addAutomationGroup(QWidget *downloadsPage)
+    void addGroupToPage(QWidget *page, QWidget *group, void (*save)(QWidget *), const bool atTop)
     {
-        QGroupBox *first = downloadsPage ? downloadsPage->findChild<QGroupBox *>() : nullptr;
+        QGroupBox *first = page ? page->findChild<QGroupBox *>() : nullptr;
         auto *pageLayout = first ? qobject_cast<QBoxLayout *>(first->parentWidget()->layout()) : nullptr;
         if (!pageLayout)
+        {
+            delete group;
             return;
-        int at = 0;
-        for (int i = 0; i < pageLayout->count(); ++i)
+        }
+        int at = atTop ? pageLayout->indexOf(first) : 0;
+        for (int i = 0; !atTop && (i < pageLayout->count()); ++i)
         {
             if (qobject_cast<QGroupBox *>(pageLayout->itemAt(i)->widget()))
                 at = i + 1;
         }
-        QWidget *group = DoseAutomation::settingsGroup();
         pageLayout->insertWidget(at, group);
-        if (auto *box = downloadsPage->window()->findChild<QDialogButtonBox *>())
+        if (auto *box = page->window()->findChild<QDialogButtonBox *>())
         {
-            QObject::connect(box, &QDialogButtonBox::clicked, group, [box, group](QAbstractButton *button)
+            QObject::connect(box, &QDialogButtonBox::clicked, group, [box, group, save](QAbstractButton *button)
             {
                 const QDialogButtonBox::ButtonRole role = box->buttonRole(button);
                 if ((role == QDialogButtonBox::AcceptRole) || (role == QDialogButtonBox::ApplyRole))
-                    DoseAutomation::saveSettings(group);
+                    save(group);
             });
         }
+    }
+
+    void addAutomationGroup(QWidget *downloadsPage)
+    {
+        addGroupToPage(downloadsPage, DoseAutomation::settingsGroup(), &DoseAutomation::saveSettings, false);
     }
 
     // Moves a widget into a new layout (Qt takes it out of its old one).
@@ -606,6 +614,7 @@ void DoseDialogs::decorateOptions(QDialog *dialog, QSplitter *splitter, QListWid
 
     addLookGroup(pages->widget(0));
     addAutomationGroup(pages->widget(1));
+    addGroupToPage(pages->findChild<QWidget *>(QStringLiteral("tabWebUIPage")), DoseMcp::settingsGroup(), &DoseMcp::saveSettings, true);
     // Long help texts (the run-program parameters) wrap instead of making
     // the page wider than the dialog.
     for (QLabel *label : pages->findChildren<QLabel *>())

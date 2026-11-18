@@ -17,9 +17,7 @@
 
 class QDialog;
 
-// tTorrent's version, separate from the qBittorrent release it is built on.
-#define TTORRENT_VERSION "0.1.0"
-#define TTORRENT_VERSION_LABEL "preview"
+#include "base/ttorrentversion.h"
 
 namespace DoseAbout
 {

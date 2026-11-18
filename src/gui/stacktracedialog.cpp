@@ -31,6 +31,7 @@
 
 #include <QString>
 
+#include "base/ttorrentversion.h"
 #include "base/utils/misc.h"
 #include "base/version.h"
 #include "ui_stacktracedialog.h"
@@ -62,7 +63,7 @@ void StacktraceDialog::setText(const QString &signalName, const QString &stacktr
         "</p></font>"
         "<br/><hr><br/>"
         "<p align=center><font size=4>"
-        "qBittorrent version: " QBT_VERSION " (%1-bit)<br/>"
+        "tTorrent version: " TTORRENT_VERSION " (qBittorrent " QBT_VERSION ", %1-bit)<br/>"
         "Libtorrent version: %2<br/>"
         "Qt version: " QT_VERSION_STR "<br/>"
         "Boost version: %3<br/>"

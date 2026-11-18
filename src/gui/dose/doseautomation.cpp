@@ -14,6 +14,7 @@
  */
 
 #include "doseautomation.h"
+#include "dosemcp.h"
 #include "dosepair.h"
 
 #include <functional>
@@ -412,6 +413,7 @@ void DoseAutomation::install(QMainWindow *window)
     BitTorrent::Session *session = BitTorrent::Session::instance();
     new DiskGuard(window);
     DosePair::install(window);
+    DoseMcp::apply();
 
     QObject::connect(session, &BitTorrent::Session::torrentAdded, window, [](BitTorrent::Torrent *torrent)
     {

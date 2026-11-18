@@ -110,6 +110,7 @@ add_library(qbt_base STATIC
     tagset.h
     torrentfileguard.h
     torrentfileswatcher.h
+    ttorrentversion.h
     torrentfilter.h
     types.h
     unicodestrings.h
