@@ -35,4 +35,7 @@ namespace DoseDialogs
     // options on the left, the files on the right with "Torrent information"
     // folded under them; "Never show again" and the buttons on one footer row.
     void decorateAddTorrent(QDialog *dialog);
+    // RSS Downloader: the "disabled" note as a warning banner, room for the
+    // rule editor on first open, and no sideways scrolling.
+    void decorateRssDownloader(QDialog *dialog);
 }

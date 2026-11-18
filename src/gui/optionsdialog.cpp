@@ -2185,7 +2185,7 @@ void OptionsDialog::webUIHttpsCertChanged(const Path &path)
 
     m_ui->textWebUIHttpsCert->setSelectedPath(path);
     m_ui->lblSslCertStatus->setPixmap(UIThemeManager::instance()->getScaledPixmap(
-        (isCertValid ? u"security-high"_s : u"security-low"_s), 24));
+        (isCertValid ? u"security-high"_s : u"security-low"_s), 16)); // tTorrent: inline icon size
 }
 
 void OptionsDialog::webUIHttpsKeyChanged(const Path &path)
@@ -2195,7 +2195,7 @@ void OptionsDialog::webUIHttpsKeyChanged(const Path &path)
 
     m_ui->textWebUIHttpsKey->setSelectedPath(path);
     m_ui->lblSslKeyStatus->setPixmap(UIThemeManager::instance()->getScaledPixmap(
-        (isKeyValid ? u"security-high"_s : u"security-low"_s), 24));
+        (isKeyValid ? u"security-high"_s : u"security-low"_s), 16)); // tTorrent: inline icon size
 }
 
 bool OptionsDialog::isWebUIEnabled() const

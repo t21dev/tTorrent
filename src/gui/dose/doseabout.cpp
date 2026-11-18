@@ -201,7 +201,7 @@ void DoseAbout::build(QDialog *dialog)
         "<b>Boost</b>, <b>OpenSSL</b>, <b>zlib</b> · <b>Instrument Sans</b> and <b>DM Mono</b> (fonts, OFL) · <b>Lucide</b> (icon shapes, ISC) · "
         "theme colours from <b>Nord</b>, <b>Dracula</b>, <b>Catppuccin</b>, <b>Tokyo Night</b>, <b>Rosé Pine</b>, <b>Gruvbox</b> and <b>Solarized</b> (MIT).</p>"
         "<p>Peer countries use the free IP to Country Lite database by <a href=\"https://db-ip.com/\">DB-IP</a>, "
-        "licensed under Creative Commons Attribution 4.0.</p>")),
+        "licensed under Creative Commons Attribution 4.0.</p>", "keep-name")),
         QDialog::tr("Credits"));
     auto *licence = new QTextBrowser;
     licence->setOpenExternalLinks(true);

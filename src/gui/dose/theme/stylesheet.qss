@@ -175,7 +175,7 @@ QPushButton:disabled { color: @ring@; }
 
 QCheckBox, QRadioButton { spacing: 8px; }
 QCheckBox::indicator, QGroupBox::indicator, QTreeView::indicator, QListView::indicator {
-    width: 14px; height: 14px; border: 1.5px solid @ring@; border-radius: 4px; background: @bg@;
+    width: 12px; height: 12px; border: 1px solid @ring@; border-radius: 3px; background: @bg@; /* 14 px in all, near the text's cap height */
 }
 QCheckBox::indicator:hover, QGroupBox::indicator:hover { border-color: @muted@; }
 QCheckBox::indicator:checked, QGroupBox::indicator:checked, QTreeView::indicator:checked, QListView::indicator:checked {
@@ -221,9 +221,9 @@ QProgressBar {
 }
 QProgressBar::chunk { background: @accent@; border-radius: 6px; }
 
-QScrollBar:vertical { background: transparent; width: 9px; margin: 0; border: none; }
-QScrollBar:horizontal { background: transparent; height: 9px; margin: 0; border: none; }
-QScrollBar::handle { background: @line@; border-radius: 3px; margin: 2px; }
+QScrollBar:vertical { background: transparent; width: 10px; margin: 0; border: none; }
+QScrollBar:horizontal { background: transparent; height: 10px; margin: 0; border: none; }
+QScrollBar::handle { background: @line@; border: none; border-radius: 3px; margin: 2px; } /* a 6 px pill */
 QScrollBar::handle:vertical { min-height: 28px; }
 QScrollBar::handle:horizontal { min-width: 28px; }
 QScrollBar::handle:hover { background: @ring@; }

@@ -19,6 +19,11 @@
 #include <functional>
 
 #include <QAction>
+#include <QTimer>
+#include <QTextDocumentFragment>
+#include <QStackedWidget>
+#include <QSet>
+#include <QAbstractButton>
 #include <QApplication>
 #include <QDialog>
 #include <QDialogButtonBox>
@@ -42,6 +47,8 @@
 #include <QVBoxLayout>
 
 #include "base/global.h"
+#include "gui/optionsdialog.h"
+#include "gui/mainwindow.h"
 #include "base/settingsstorage.h"
 #include "dosepaint.h"
 #include "gui/uithememanager.h"
@@ -370,6 +377,85 @@ namespace
         QLabel *m_empty = nullptr;
     };
 
+    // Every setting's text with the section it is in, read once from a
+    // hidden Settings dialog the first time the search field is used.
+    struct SettingEntry
+    {
+        QString text;
+        QString section;
+    };
+
+    const QList<SettingEntry> &settingsIndex(QMainWindow *window)
+    {
+        static QList<SettingEntry> index;
+        static bool built = false;
+        auto *main = qobject_cast<MainWindow *>(window);
+        if (built || !main)
+            return index;
+        built = true;
+        // The dialog saves its size, splitter and page when deleted; a hidden
+        // one would overwrite the user's, so put them back afterwards.
+        SettingsStorage *store = SettingsStorage::instance();
+        const QStringList keys {u"OptionsDialog/Size"_s, u"OptionsDialog/HorizontalSplitterSizes"_s, u"OptionsDialog/LastViewedPage"_s};
+        QList<QVariant> kept;
+        for (const QString &key : keys)
+            kept.append(store->loadValue<QVariant>(key));
+        auto *dialog = new OptionsDialog(main->app(), window);
+        auto *sections = dialog->findChild<QListWidget *>(u"tabSelection"_s);
+        auto *pages = dialog->findChild<QStackedWidget *>(u"tabOption"_s);
+        QSet<QString> seen;
+        for (int i = 0; sections && pages && (i < pages->count()); ++i)
+        {
+            if (!sections->item(i) || sections->item(i)->isHidden())
+                continue;
+            const QString section = sections->item(i)->text();
+            for (QWidget *w : pages->widget(i)->findChildren<QWidget *>())
+            {
+                QString text;
+                if (const auto *label = qobject_cast<QLabel *>(w))
+                    text = QTextDocumentFragment::fromHtml(label->text()).toPlainText();
+                else if (const auto *button = qobject_cast<QAbstractButton *>(w))
+                    text = button->text();
+                else if (const auto *group = qobject_cast<QGroupBox *>(w))
+                    text = group->title();
+                text = plain(text).simplified();
+                if (text.endsWith(u':'))
+                    text.chop(1);
+                // Settings names, not paragraphs of help.
+                if ((text.size() < 3) || (text.size() > 70) || !w->isVisibleTo(pages->widget(i)) || seen.contains(text))
+                    continue;
+                seen.insert(text);
+                index.append({text, section});
+            }
+        }
+        // Not shown, so nothing to save: closing it unsaved keeps every setting.
+        dialog->setAttribute(Qt::WA_DeleteOnClose, false);
+        delete dialog;
+        for (int i = 0; i < keys.size(); ++i)
+        {
+            if (kept[i].isValid())
+                store->storeValue(keys[i], kept[i]);
+            else
+                store->removeValue(keys[i]);
+        }
+        return index;
+    }
+
+    // Opens Settings and lets its own search jump to the setting.
+    void openSetting(QMainWindow *window, const QString &text)
+    {
+        if (auto *options = window->findChild<QAction *>(u"actionOptions"_s))
+            options->trigger();
+        for (QWidget *top : QApplication::topLevelWidgets())
+        {
+            if (auto *search = top->isVisible() ? top->findChild<QLineEdit *>(u"doseSearch"_s) : nullptr)
+            {
+                search->setText(text);
+                return;
+            }
+        }
+    }
+
     // The command list under the title bar's search field. It never takes
     // focus: typing stays in the field, which filters the torrent list.
     class SearchDrop final : public QFrame
@@ -406,9 +492,9 @@ namespace
             m_list->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
             column->addWidget(m_list);
 
-            auto *hint = new QLabel(QDialog::tr("Typing filters the torrent list  ·  Enter runs a command  ·  Esc closes"));
-            hint->setObjectName(u"dosePaletteHint"_s);
-            column->addWidget(hint);
+            m_hint = new QLabel(QDialog::tr("Also filters the torrent list  ·  Enter to open  ·  Esc to close"));
+            m_hint->setObjectName(u"dosePaletteHint"_s);
+            column->addWidget(m_hint);
 
             connect(m_list, &QListWidget::itemClicked, this, &SearchDrop::run);
             connect(edit, &QLineEdit::textChanged, this, [this] { refresh(false); });
@@ -443,7 +529,12 @@ namespace
                 }
                 return QFrame::eventFilter(watched, event);
             }
-            if (event->type() == QEvent::FocusOut)
+            if (event->type() == QEvent::FocusIn)
+            {
+                QMainWindow *window = m_window;
+                QTimer::singleShot(0, window, [window] { settingsIndex(window); });
+            }
+            else if (event->type() == QEvent::FocusOut)
             {
                 hide();
             }
@@ -479,7 +570,7 @@ namespace
         {
             const QString text = m_edit->text().trimmed();
             // Ctrl+K lists everything; typing only while the field has focus.
-            if (!all && (!m_edit->hasFocus() || text.isEmpty()))
+            if (!all && (text.isEmpty() || (!m_edit->hasFocus() && !isVisible())))
             {
                 hide();
                 return;
@@ -503,12 +594,29 @@ namespace
                 item->setData(Qt::UserRole + 1, c.action->shortcut().toString(QKeySequence::NativeText));
                 item->setData(Qt::UserRole + 2, c.section);
             }
+            // Settings that match, after the commands (not when listing everything).
+            int settings = 0;
+            for (const SettingEntry &entry : (all ? QList<SettingEntry>() : settingsIndex(m_window)))
+            {
+                const QString haystack = entry.text + u' ' + entry.section;
+                const bool match = std::all_of(words.cbegin(), words.cend(), [&haystack](const QString &w)
+                {
+                    return haystack.contains(w, Qt::CaseInsensitive);
+                });
+                if (!match)
+                    continue;
+                auto *item = new QListWidgetItem(UIThemeManager::instance()->getIcon(u"configure"_s), entry.text, m_list);
+                item->setData(Qt::UserRole + 2, QDialog::tr("Settings › %1").arg(entry.section));
+                item->setData(Qt::UserRole + 3, entry.text);
+                if (++settings == 6)
+                    break;
+            }
             if (m_list->count() == 0)
             {
                 hide();
                 return;
             }
-            m_title->setText(all ? QDialog::tr("Commands") : QDialog::tr("Commands matching \"%1\"").arg(text));
+            m_title->setText(all ? QDialog::tr("Commands") : QDialog::tr("Commands and settings matching \"%1\"").arg(text));
             m_list->setCurrentRow(all ? -1 : 0);
             place();
             if (!isVisible())
@@ -521,8 +629,13 @@ namespace
             const int rowHeight = std::max(1, m_list->sizeHintForRow(0));
             m_list->setFixedHeight((rows * rowHeight) + 4);
             const int width = std::max(m_edit->width(), 460);
-            adjustSize();
-            resize(width, sizeHint().height());
+            // Height from its parts, so a shorter list shrinks the card at once:
+            // card margins and border, title, list, hint and the gaps between.
+            const auto *column = m_list->parentWidget()->layout();
+            const QMargins m = column->contentsMargins();
+            const int height = m.top() + m.bottom() + 2 + m_title->sizeHint().height() + m_list->maximumHeight()
+                + m_hint->sizeHint().height() + (2 * column->spacing());
+            setFixedSize(width, height);
             move(m_edit->mapToGlobal(QPoint((m_edit->width() - width) / 2, m_edit->height() + 6)));
         }
 
@@ -540,9 +653,16 @@ namespace
             if (!item)
                 return;
             QPointer<QAction> action = qobject_cast<QAction *>(item->data(Qt::UserRole).value<QObject *>());
+            const QString setting = item->data(Qt::UserRole + 3).toString();
             hide();
-            // The text was a command name, not a torrent filter.
+            // The text was a command or setting name, not a torrent filter.
             m_edit->clear();
+            if (!setting.isEmpty())
+            {
+                QMainWindow *window = m_window;
+                QTimer::singleShot(0, window, [window, setting] { openSetting(window, setting); });
+                return;
+            }
             if (action && action->isEnabled())
                 QMetaObject::invokeMethod(action, &QAction::trigger, Qt::QueuedConnection);
         }
@@ -550,6 +670,7 @@ namespace
         QMainWindow *m_window = nullptr;
         QLineEdit *m_edit = nullptr;
         QLabel *m_title = nullptr;
+        QLabel *m_hint = nullptr;
         QListWidget *m_list = nullptr;
     };
 

@@ -37,6 +37,9 @@ namespace
         {
             if (!sourceText || !std::strstr(sourceText, "qBittorrent"))
                 return {};
+            // Text that names qBittorrent on purpose (credits, the import).
+            if (disambiguation && (std::strcmp(disambiguation, "keep-name") == 0))
+                return {};
             QString text = m_inner ? m_inner->translate(context, sourceText, disambiguation, n) : QString();
             if (text.isEmpty())
                 text = QString::fromUtf8(sourceText);

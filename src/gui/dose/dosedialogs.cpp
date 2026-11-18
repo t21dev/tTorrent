@@ -37,7 +37,11 @@
 #include <QPushButton>
 #include <QRegularExpression>
 #include <QRegularExpressionValidator>
+#include <QGraphicsOpacityEffect>
+#include <QPropertyAnimation>
+#include <climits>
 #include <QScrollArea>
+#include <QScrollBar>
 #include <QSplitter>
 #include <QStackedWidget>
 #include <QDialogButtonBox>
@@ -163,6 +167,8 @@ QGroupBox#doseInfoBox { border: none; margin-top: 0; padding: 0 0 0 22px; }
             {QStringLiteral("tabSearchPage"), QStringLiteral("<circle cx='11' cy='11' r='7'/><path d='m21 21-4.3-4.3'/>")},
             {QStringLiteral("tabRSSPage"), QStringLiteral("<path d='M4 11a9 9 0 0 1 9 9'/><path d='M4 4a16 16 0 0 1 16 16'/><circle cx='5' cy='19' r='1'/>")},
             {QStringLiteral("tabWebUIPage"), QStringLiteral("<rect x='2' y='3' width='20' height='14' rx='2'/><path d='M8 21h8M12 17v4'/>")},
+            {QStringLiteral("doseBackupPage"), QStringLiteral("<rect x='2' y='3' width='20' height='5' rx='1'/><path d='M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8'/><path d='M10 12h4'/>")},
+            {QStringLiteral("doseAiPage"), QStringLiteral("<path d='M9.94 15.5A2 2 0 0 0 8.5 14.06l-6.14-1.58a.5.5 0 0 1 0-.96L8.5 9.94A2 2 0 0 0 9.94 8.5l1.58-6.14a.5.5 0 0 1 .96 0L14.06 8.5a2 2 0 0 0 1.44 1.44l6.14 1.58a.5.5 0 0 1 0 .96L15.5 14.06a2 2 0 0 0-1.44 1.44l-1.58 6.14a.5.5 0 0 1-.96 0z'/><path d='M20 3v4M22 5h-4'/>")},
             {QStringLiteral("tabAdvancedPage"), QStringLiteral("<rect x='5' y='5' width='14' height='14' rx='2'/><rect x='9' y='9' width='6' height='6' rx='1'/><path d='M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3'/>")},
         };
         const QString body = paths.value(page);
@@ -452,15 +458,16 @@ QGroupBox#doseInfoBox { border: none; margin-top: 0; padding: 0 0 0 22px; }
         pageLayout->insertWidget(pageLayout->indexOf(first), group);
 
         // Moving from qBittorrent: one button, explained in a line.
-        auto *move = new QGroupBox(QDialog::tr("Move from qBittorrent"));
+        auto *move = new QGroupBox(QDialog::tr("Move from qBittorrent", "keep-name"));
+        move->setObjectName(QStringLiteral("doseMoveGroup")); // shown in Backup and import
         auto *moveRow = new QHBoxLayout(move);
         moveRow->setSpacing(12);
         const int count = DoseImport::qbittorrentTorrentCount();
         auto *moveText = new QLabel((count >= 0)
             ? QDialog::tr("Bring over %1 torrents with their progress, plus categories, tags, RSS and settings.").arg(count)
-            : QDialog::tr("No qBittorrent profile found on this computer."));
+            : QDialog::tr("No qBittorrent profile found on this computer.", "keep-name"));
         moveText->setWordWrap(true);
-        auto *moveButton = new QPushButton(QDialog::tr("Import from qBittorrent…"));
+        auto *moveButton = new QPushButton(QDialog::tr("Import from qBittorrent…", "keep-name"));
         moveButton->setAutoDefault(false);
         moveButton->setEnabled(count >= 0);
         QObject::connect(moveButton, &QPushButton::clicked, move, [move] { DoseImport::askAndRestart(move->window()); });
@@ -468,6 +475,66 @@ QGroupBox#doseInfoBox { border: none; margin-top: 0; padding: 0 0 0 22px; }
         moveRow->addWidget(moveButton);
         pageLayout->insertWidget(pageLayout->indexOf(first), move);
     }
+
+
+    // Settings search: scrolls the page to the first setting whose text
+    // matches (top to bottom) and outlines it for a moment.
+    void revealMatch(QWidget *page, const QString &query)
+    {
+        if (!page || query.isEmpty())
+            return;
+        QWidget *best = nullptr;
+        int bestY = INT_MAX;
+        for (QWidget *w : page->findChildren<QWidget *>())
+        {
+            QString text;
+            if (const auto *label = qobject_cast<QLabel *>(w))
+                text = label->text();
+            else if (const auto *button = qobject_cast<QAbstractButton *>(w))
+                text = button->text();
+            else if (const auto *group = qobject_cast<QGroupBox *>(w))
+                text = group->title();
+            if (text.isEmpty() || !w->isVisibleTo(page) || !QTextDocumentFragment::fromHtml(text).toPlainText().toLower().contains(query))
+                continue;
+            const int y = w->mapTo(page, QPoint(0, 0)).y();
+            if (y < bestY)
+            {
+                bestY = y;
+                best = w;
+            }
+        }
+        if (!best)
+            return;
+        QScrollArea *area = nullptr;
+        for (QWidget *p = best->parentWidget(); p && !area; p = p->parentWidget())
+            area = qobject_cast<QScrollArea *>(p);
+        if (!area)
+            return;
+        area->ensureWidgetVisible(best, 40, 60);
+        // The outline: the row the setting sits in, in the accent colour.
+        QWidget *row = best;
+        for (QFrame *old : area->viewport()->findChildren<QFrame *>(QStringLiteral("doseFoundMark")))
+            old->deleteLater();
+        auto *mark = new QFrame(area->viewport());
+        mark->setObjectName(QStringLiteral("doseFoundMark"));
+        mark->setAttribute(Qt::WA_TransparentForMouseEvents);
+        const QColor accent = UIThemeManager::instance()->doseToken(QStringLiteral("accent"));
+        mark->setStyleSheet(QStringLiteral("QFrame#doseFoundMark { border: 2px solid %1; border-radius: 6px; background: transparent; }").arg(accent.name()));
+        const QRect r = QRect(row->mapTo(area->viewport(), QPoint(0, 0)), row->size()).adjusted(-6, -3, 6, 3);
+        mark->setGeometry(r);
+        mark->show();
+        auto *effect = new QGraphicsOpacityEffect(mark);
+        mark->setGraphicsEffect(effect);
+        auto *fade = new QPropertyAnimation(effect, "opacity", mark);
+        fade->setDuration(1600);
+        fade->setKeyValueAt(0.0, 1.0);
+        fade->setKeyValueAt(0.6, 1.0);
+        fade->setKeyValueAt(1.0, 0.0);
+        QObject::connect(fade, &QAbstractAnimation::finished, mark, &QObject::deleteLater);
+        fade->start();
+    }
+
+    void connectSave(QWidget *page, QWidget *group, void (*save)(QWidget *));
 
     // Downloads › "When something happens": disk guard, unpacking, cards,
     // webhooks (DoseAutomation), after the page's own groups.
@@ -487,6 +554,42 @@ QGroupBox#doseInfoBox { border: none; margin-top: 0; padding: 0 0 0 22px; }
                 at = i + 1;
         }
         pageLayout->insertWidget(at, group);
+        connectSave(page, group, save);
+    }
+
+    // A section of our own at the end of the sidebar (after Advanced, which
+    // OptionsDialog finds by its row): a scrolling page whose groups stack
+    // from the top. Returns the layout to add groups to.
+    QBoxLayout *addSection(QListWidget *sections, QStackedWidget *pages, const QString &name, const QString &id)
+    {
+        auto *area = new QScrollArea;
+        area->setObjectName(id);
+        area->setWidgetResizable(true);
+        area->setFrameShape(QFrame::NoFrame);
+        area->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        auto *inner = new QWidget;
+        auto *column = new QVBoxLayout(inner);
+        column->addStretch(1);
+        area->setWidget(inner);
+        pages->addWidget(area);
+        auto *item = new QListWidgetItem(name, sections);
+        item->setTextAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+        item->setSizeHint({0, 30});
+        if (UIThemeManager::instance()->usesDoseTheme())
+            item->setIcon(sectionIcon(id));
+        return column;
+    }
+
+    // Adds a group above the section's closing stretch.
+    void addToSection(QBoxLayout *column, QWidget *group, void (*save)(QWidget *))
+    {
+        column->insertWidget(column->count() - 1, group);
+        if (save)
+            connectSave(column->parentWidget(), group, save);
+    }
+
+    void connectSave(QWidget *page, QWidget *group, void (*save)(QWidget *))
+    {
         if (auto *box = page->window()->findChild<QDialogButtonBox *>())
         {
             QObject::connect(box, &QDialogButtonBox::clicked, group, [box, group, save](QAbstractButton *button)
@@ -604,6 +707,9 @@ void DoseDialogs::decorateOptions(QDialog *dialog, QSplitter *splitter, QListWid
 
     // Search, indexed on first use so opening the dialog costs nothing.
     auto index = std::make_shared<QHash<int, QString>>();
+    auto *jump = new QTimer(search);
+    jump->setSingleShot(true);
+    jump->setInterval(250);
     QObject::connect(search, &QLineEdit::textChanged, sections, [=](const QString &text)
     {
         const QString q = text.trimmed().toLower();
@@ -630,7 +736,11 @@ void DoseDialogs::decorateOptions(QDialog *dialog, QSplitter *splitter, QListWid
         const QListWidgetItem *current = sections->currentItem();
         if ((first >= 0) && (!current || current->isHidden()))
             sections->setCurrentRow(first);
+        // Then show the setting itself, once typing pauses.
+        if (!q.isEmpty() && (first >= 0))
+            jump->start();
     });
+    QObject::connect(jump, &QTimer::timeout, pages, [pages, search] { revealMatch(pages->currentWidget(), search->text().trimmed().toLower()); });
     for (int i = 0; i < sections->count(); ++i)
     {
         if (sections->item(i)->isHidden())
@@ -639,9 +749,14 @@ void DoseDialogs::decorateOptions(QDialog *dialog, QSplitter *splitter, QListWid
 
     addLookGroup(pages->widget(0));
     addAutomationGroup(pages->widget(1));
-    addGroupToPage(pages->findChild<QWidget *>(QStringLiteral("tabWebUIPage")), DoseMcp::settingsGroup(), &DoseMcp::saveSettings, true);
     addGroupToPage(pages->widget(0), DoseUpdate::settingsGroup(), &DoseUpdate::saveSettings, false);
-    addGroupToPage(pages->widget(0), DoseBackup::settingsGroup(), &DoseBackup::saveSettings, false);
+    // Sections of our own: moving in and backups; AI agents (MCP).
+    QBoxLayout *backup = addSection(sections, pages, QDialog::tr("Backup and import"), QStringLiteral("doseBackupPage"));
+    if (auto *move = pages->findChild<QGroupBox *>(QStringLiteral("doseMoveGroup")))
+        addToSection(backup, move, nullptr);
+    addToSection(backup, DoseBackup::settingsGroup(), &DoseBackup::saveSettings);
+    QBoxLayout *ai = addSection(sections, pages, QDialog::tr("AI"), QStringLiteral("doseAiPage"));
+    addToSection(ai, DoseMcp::settingsGroup(), &DoseMcp::saveSettings);
     // Long help texts (the run-program parameters) wrap instead of making
     // the page wider than the dialog.
     for (QLabel *label : pages->findChildren<QLabel *>())
@@ -777,4 +892,58 @@ void DoseDialogs::decorateAddTorrent(QDialog *dialog)
     if (dialog->size().width() < 900)
         dialog->resize(960, 680);
     dialog->setStyleSheet(dialog->styleSheet() + QString::fromLatin1(ADD_STYLE));
+}
+
+void DoseDialogs::decorateRssDownloader(QDialog *dialog)
+{
+    if (!dialog || !UIThemeManager::instance()->usesDoseTheme())
+        return;
+    // The warning: the theme's banner (DESIGN.md › Components), not red italics.
+    if (auto *warn = dialog->findChild<QLabel *>(QStringLiteral("labelWarn")))
+    {
+        const QColor tone = UIThemeManager::instance()->doseToken(QStringLiteral("warn"));
+        QColor wash = tone;
+        wash.setAlphaF(0.12);
+        QColor edge = tone;
+        edge.setAlphaF(0.35);
+        QFont font = warn->font();
+        font.setItalic(false);
+        warn->setFont(font);
+        warn->setStyleSheet(QStringLiteral("QLabel { color: %1; background: rgba(%2,%3,%4,%5); border: 1px solid rgba(%2,%3,%4,%6); border-radius: 8px; padding: 6px 10px; }")
+            .arg(tone.name()).arg(tone.red()).arg(tone.green()).arg(tone.blue()).arg(wash.alphaF()).arg(edge.alphaF()));
+    }
+    // The rule editor scrolls up and down only and fills its pane.
+    if (auto *area = dialog->findChild<QScrollArea *>(QStringLiteral("ruleScrollArea")))
+    {
+        area->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        area->setWidgetResizable(true);
+        area->setFrameShape(QFrame::NoFrame);
+        // Never narrower than the editor itself, so no field is cut off.
+        if (area->widget())
+            area->setMinimumWidth(area->widget()->minimumSizeHint().width() + area->verticalScrollBar()->sizeHint().width() + 4);
+    }
+    // Close is the main button; Import and Export are ordinary ones.
+    for (QPushButton *button : dialog->findChildren<QPushButton *>())
+    {
+        button->setAutoDefault(false);
+        button->setDefault(false);
+    }
+    // First open: big enough, and the editor gets the most room (rules,
+    // editor, matching articles).
+    const bool firstOpen = SettingsStorage::instance()->loadValue<QByteArray>(QStringLiteral("GUI/Qt6/RSSFeedDownloader/HSplitterSizes")).isEmpty();
+    if (firstOpen)
+    {
+        dialog->resize(std::max(dialog->width(), 1180), std::max(dialog->height(), 680));
+        if (auto *split = dialog->findChild<QSplitter *>(QStringLiteral("mainSplitter")))
+        {
+            const int w = dialog->width();
+            split->setSizes({w * 22 / 100, w * 50 / 100, w * 28 / 100});
+        }
+        // The rule's settings above, the feeds it applies to below.
+        if (auto *split = dialog->findChild<QSplitter *>(QStringLiteral("ruleDefSplitter")))
+        {
+            const int h = dialog->height();
+            split->setSizes({h * 78 / 100, h * 22 / 100});
+        }
+    }
 }

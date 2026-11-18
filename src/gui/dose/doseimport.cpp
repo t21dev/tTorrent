@@ -111,8 +111,8 @@ void DoseImport::askAndRestart(QWidget *parent)
     const int count = qbittorrentTorrentCount();
     if (count < 0)
     {
-        QMessageBox::information(parent, QApplication::translate("DoseImport", "Import from qBittorrent")
-            , QApplication::translate("DoseImport", "No qBittorrent profile was found on this computer."));
+        QMessageBox::information(parent, QApplication::translate("DoseImport", "Import from qBittorrent", "keep-name")
+            , QApplication::translate("DoseImport", "No qBittorrent profile was found on this computer.", "keep-name"));
         return;
     }
     const QString text = QApplication::translate("DoseImport",
@@ -120,8 +120,8 @@ void DoseImport::askAndRestart(QWidget *parent)
         "tTorrent will bring over the torrents with their progress (nothing is rechecked), categories, tags, "
         "RSS feeds and rules, watched folders and settings. Your tTorrent look stays as it is. "
         "qBittorrent's own files are only read.\n\n"
-        "Close qBittorrent first. tTorrent restarts to finish the import.").arg(count);
-    if (QMessageBox::question(parent, QApplication::translate("DoseImport", "Import from qBittorrent"), text
+        "Close qBittorrent first. tTorrent restarts to finish the import.", "keep-name").arg(count);
+    if (QMessageBox::question(parent, QApplication::translate("DoseImport", "Import from qBittorrent", "keep-name"), text
             , (QMessageBox::Yes | QMessageBox::Cancel), QMessageBox::Yes) != QMessageBox::Yes)
     {
         return;
@@ -198,7 +198,7 @@ void DoseImport::runPending()
     }
     ours.sync();
 
-    LogMsg(QApplication::translate("DoseImport", "Imported %1 torrents and settings from qBittorrent.").arg(torrents));
+    LogMsg(QApplication::translate("DoseImport", "Imported %1 torrents and settings from qBittorrent.", "keep-name").arg(torrents));
 }
 
 void DoseImport::waitForPreviousInstance()

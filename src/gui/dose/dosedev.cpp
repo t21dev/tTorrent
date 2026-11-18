@@ -28,6 +28,8 @@
 #include <QFile>
 #include <QLayout>
 #include <QLabel>
+#include <QLineEdit>
+#include <QElapsedTimer>
 #include <QListWidget>
 #include <QMouseEvent>
 #include <QMainWindow>
@@ -37,6 +39,7 @@
 #include <QPixmap>
 #include <QPushButton>
 #include <QScrollArea>
+#include <QStackedWidget>
 #include <QTabWidget>
 #include <QTimer>
 #include <QTreeView>
@@ -45,6 +48,7 @@
 #include "base/bittorrent/torrent.h"
 #include "base/global.h"
 #include "gui/deletionconfirmationdialog.h"
+#include "gui/rss/automatedrssdownloader.h"
 #include "base/path.h"
 #include "base/tag.h"
 #include "dosebackup.h"
@@ -340,6 +344,15 @@ void DoseDev::scheduleShots(QMainWindow *window)
             if (top->isVisible() && ((top->objectName() == u"dosePalette") || (top->objectName() == u"doseSearchDrop")))
             {
                 save(top, dir + u"/palette.png");
+                // Typing in the open search: commands and settings that match.
+                QWidget *field = top->parentWidget() ? top->parentWidget()->findChild<QWidget *>(u"doseSearchField"_s) : nullptr;
+                if (auto *edit = field ? field->findChild<QLineEdit *>() : nullptr)
+                {
+                    edit->setText(u"tray"_s);
+                    QApplication::processEvents();
+                    save(top, dir + u"/palette-settings.png");
+                    edit->clear();
+                }
                 top->close();
             }
         }
@@ -377,9 +390,43 @@ void DoseDev::scheduleShots(QMainWindow *window)
             // The last section (Advanced) too.
             if (auto *sections = dialog->findChild<QListWidget *>(u"tabSelection"_s))
             {
+                // Our own sections come last: AI, then Backup and import; Advanced before them.
                 sections->setCurrentRow(sections->count() - 1);
                 QApplication::processEvents();
+                save(dialog, dir + u"/options-ai.png");
+                sections->setCurrentRow(sections->count() - 2);
+                QApplication::processEvents();
+                save(dialog, dir + u"/options-backup-page.png");
+                sections->setCurrentRow(sections->count() - 3);
+                QApplication::processEvents();
                 save(dialog, dir + u"/options-advanced.png");
+                if (auto *pages = dialog->findChild<QStackedWidget *>(u"tabOption"_s))
+                {
+                    if (QWidget *rss = pages->findChild<QWidget *>(u"tabRSSPage"_s))
+                    {
+                        sections->setCurrentRow(pages->indexOf(rss));
+                        QApplication::processEvents();
+                        save(dialog, dir + u"/options-rss.png");
+                    }
+                    // Settings search: jumps to the setting and outlines it.
+                    if (auto *search = dialog->findChild<QLineEdit *>(u"doseSearch"_s))
+                    {
+                        search->setText(u"log files"_s);
+                        QElapsedTimer wait;
+                        wait.start();
+                        while (wait.elapsed() < 500)
+                            QApplication::processEvents();
+                        save(dialog, dir + u"/options-search.png");
+                        search->clear();
+                        QApplication::processEvents();
+                    }
+                    if (QWidget *web = pages->findChild<QWidget *>(u"tabWebUIPage"_s))
+                    {
+                        sections->setCurrentRow(pages->indexOf(web));
+                        QApplication::processEvents();
+                        save(dialog, dir + u"/options-webui.png");
+                    }
+                }
                 sections->setCurrentRow(1);
                 QApplication::processEvents();
                 save(dialog, dir + u"/options-downloads.png");
@@ -501,6 +548,21 @@ void DoseDev::scheduleShots(QMainWindow *window)
         for (QDialog *dialog : openDialogs())
         {
             save(dialog, dir + u"/update-message.png");
+            dialog->close();
+        }
+    };
+    // RSS Downloader (rules editor).
+    steps << [window]
+    {
+        auto *dialog = new AutomatedRssDownloader(window);
+        dialog->setAttribute(Qt::WA_DeleteOnClose);
+        dialog->show();
+    };
+    steps << [dir]
+    {
+        for (QDialog *dialog : openDialogs())
+        {
+            save(dialog, dir + u"/rss-downloader.png");
             dialog->close();
         }
     };

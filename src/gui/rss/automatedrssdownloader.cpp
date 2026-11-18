@@ -54,6 +54,7 @@
 #include "gui/autoexpandabledialog.h"
 #include "gui/torrentcategorydialog.h"
 #include "gui/uithememanager.h"
+#include "gui/dose/dosedialogs.h"
 #include "gui/utils.h"
 #include "gui/utils/keysequence.h"
 #include "ui_automatedrssdownloader.h"
@@ -176,6 +177,7 @@ AutomatedRssDownloader::AutomatedRssDownloader(QWidget *parent)
 
     connect(RSS::AutoDownloader::instance(), &RSS::AutoDownloader::processingStateChanged
             , this, &AutomatedRssDownloader::handleProcessingStateChanged);
+    DoseDialogs::decorateRssDownloader(this); // tTorrent: banner, pane widths, no sideways scroll
 }
 
 AutomatedRssDownloader::~AutomatedRssDownloader()
