@@ -29,6 +29,7 @@
 #include <QPainter>
 #include <QPixmap>
 #include <QPushButton>
+#include <QScrollArea>
 #include <QTabWidget>
 #include <QTimer>
 #include <QTreeView>
@@ -178,6 +179,19 @@ void DoseDev::scheduleShots(QMainWindow *window)
                 sections->setCurrentRow(1);
                 QApplication::processEvents();
                 save(dialog, dir + u"/options-downloads.png");
+                if (auto *group = dialog->findChild<QWidget *>(u"doseAutomation"_s))
+                {
+                    for (QWidget *p = group->parentWidget(); p; p = p->parentWidget())
+                    {
+                        if (auto *area = qobject_cast<QScrollArea *>(p))
+                        {
+                            area->ensureWidgetVisible(group, 0, 0);
+                            break;
+                        }
+                    }
+                    QApplication::processEvents();
+                    save(dialog, dir + u"/options-automation.png");
+                }
             }
             dialog->close();
         }
@@ -234,6 +248,19 @@ void DoseDev::scheduleShots(QMainWindow *window)
             save(window, dir + u"/main-" + name.mid(6).toLower() + u".png");
         };
     }
+    steps << [window]
+    {
+        if (auto *pair = window->findChild<QAction *>(u"doseActionPair"_s))
+            pair->trigger();
+    };
+    steps << [dir]
+    {
+        for (QDialog *dialog : openDialogs())
+        {
+            save(dialog, dir + u"/pair.png");
+            dialog->close();
+        }
+    };
     steps << [] { QApplication::quit(); };
     chain(window, steps, 1500);
 }

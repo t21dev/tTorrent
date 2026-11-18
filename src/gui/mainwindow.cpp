@@ -101,6 +101,7 @@
 #include "transferlistmodel.h"
 #include "transferlistwidget.h"
 #include "dose/doseabout.h"
+#include "dose/doseautomation.h"
 #include "dose/dosedev.h"
 #include "dose/doseshortcuts.h"
 #include "dose/dosetrim.h"
@@ -403,6 +404,7 @@ MainWindow::MainWindow(IGUIApplication *app, const WindowState initialState, con
 
     createKeyboardShortcuts();
     DoseShortcuts::install(this); // tTorrent: shortcut sheet, command palette, custom keys
+    DoseAutomation::install(this); // tTorrent: disk guard, webhooks, unpack, notification cards
 
 #ifdef Q_OS_MACOS
     setUnifiedTitleAndToolBarOnMac(true);

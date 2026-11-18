@@ -247,6 +247,8 @@ add_library(qbt_gui STATIC
     dose/dosedialogs.cpp
     dose/doseabout.cpp
     dose/doseabout.h
+    dose/doseautomation.cpp
+    dose/doseautomation.h
     dose/dosebrand.cpp
     dose/dosebrand.h
     dose/dosedev.cpp
@@ -255,7 +257,11 @@ add_library(qbt_gui STATIC
     dose/doseidle.h
     dose/doseimport.cpp
     dose/doseimport.h
+    dose/dosepair.cpp
+    dose/dosepair.h
     dose/dosepaint.cpp
+    dose/thirdparty/qrcodegen.cpp
+    dose/thirdparty/qrcodegen.hpp
     dose/dosepaint.h
     dose/dosepiecemap.cpp
     dose/doseshortcuts.cpp
@@ -273,6 +279,8 @@ add_library(qbt_gui STATIC
     dose/dosetorrentmenu.h
     dose/dosetoolbar.h
     dose/dosetrim.cpp
+    dose/doseviews.cpp
+    dose/doseviews.h
     dose/dosetrim.h
     dose/dosetheme.h
     dose/dosedialogs.h

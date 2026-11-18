@@ -360,6 +360,8 @@ namespace BitTorrent
         void setSocketReceiveBufferSize(int value) override;
         int socketBacklogSize() const override;
         void setSocketBacklogSize(int value) override;
+        int peerListSize() const override; // tTorrent
+        void setPeerListSize(int value) override; // tTorrent
         bool isAnonymousModeEnabled() const override;
         void setAnonymousModeEnabled(bool enabled) override;
         bool isQueueingSystemEnabled() const override;
@@ -707,6 +709,7 @@ namespace BitTorrent
         CachedSettingValue<int> m_socketSendBufferSize;
         CachedSettingValue<int> m_socketReceiveBufferSize;
         CachedSettingValue<int> m_socketBacklogSize;
+        CachedSettingValue<int> m_peerListSize; // tTorrent
         CachedSettingValue<bool> m_isAnonymousModeEnabled;
         CachedSettingValue<bool> m_isQueueingEnabled;
         CachedSettingValue<int> m_maxActiveDownloads;

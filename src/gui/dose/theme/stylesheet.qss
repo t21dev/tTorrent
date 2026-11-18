@@ -170,6 +170,7 @@ QPushButton:default {
 }
 QPushButton:default:hover { background: @accentHover@; border-color: @accentHover@; }
 QPushButton:default:pressed { background: @accentBottom@; }
+QPushButton:disabled, QPushButton:default:disabled { background: @panel@; color: @faint@; border-color: @line@; }
 QPushButton:disabled { color: @ring@; }
 
 QCheckBox, QRadioButton { spacing: 8px; }
@@ -388,3 +389,12 @@ QListWidget#dosePaletteList::item:hover { background: @hover@; }
 QListWidget#dosePaletteList::item:selected { background: @select@; color: @text@; }
 QLabel#dosePaletteEmpty { color: @faint@; padding: 24px; }
 QLabel#dosePaletteHint { color: @faint@; font-size: @fontSmall@px; padding: 2px 4px 0 4px; }
+
+/* Notification card: bottom-right of the main window. */
+QFrame#doseCard { background: @raised@; border: 1px solid @line@; border-top-color: @edgeHi@; border-radius: 12px; min-width: 300px; }
+QLabel#doseCardTitle { font-weight: 600; color: @text@; }
+QLabel#doseCardText { color: @muted@; }
+QPushButton#doseCardButton { padding: 2px 10px; min-width: 0; }
+QToolButton#doseCardClose { border: none; border-radius: 6px; }
+QToolButton#doseCardClose:hover { background: @hover@; }
+QLabel#dosePairLink { font-family: "DM Mono"; color: @text@; }

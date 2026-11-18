@@ -109,6 +109,8 @@ function Invoke-Run([string]$Label, [string]$App, [string]$Exe, [int]$Seconds, [
         written_mb = if ($io) { [math]::Round($io.WriteTransferCount / 1MB, 1) } else { $null }
     }
     if (-not $p.HasExited) { Stop-Process -Id $p.Id -Force; Start-Sleep 3 }
+    # Keep the app's own log (why it stopped, if it stopped early).
+    Get-ChildItem -Recurse -Path $dir -Filter '*.log' -ErrorAction SilentlyContinue | ForEach-Object { Copy-Item $_.FullName (Join-Path $Out "$Label-$($_.Name)") }
     Remove-Item -Recurse -Force $dir -ErrorAction SilentlyContinue
     $result | ConvertTo-Json -Compress | Add-Content (Join-Path $Out 'summary.jsonl')
     Write-Host ($result | ConvertTo-Json -Compress)

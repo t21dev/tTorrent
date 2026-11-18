@@ -43,7 +43,8 @@ QColor DosePaint::token(const QString &name)
 QFont DosePaint::numberFont(const QFont &base)
 {
     QFont font {u"DM Mono"_s};
-    font.setStyleHint(QFont::Monospace);
+    font.setStyleHint(QFont::Monospace, QFont::PreferAntialias);
+    font.setHintingPreference(QFont::PreferNoHinting);
     const int px = (base.pixelSize() > 0) ? base.pixelSize() : qRound(base.pointSizeF() * 96.0 / 72.0);
     font.setPixelSize(std::max(9, px - 1));
     return font;

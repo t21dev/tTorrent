@@ -36,6 +36,7 @@
 #include <QUrl>
 #include <QVBoxLayout>
 
+#include "dose/doseviews.h"
 #include "base/bittorrent/session.h"
 #include "base/global.h"
 #include "base/preferences.h"
@@ -73,6 +74,7 @@ TransferListFiltersWidget::TransferListFiltersWidget(QWidget *parent, TransferLi
         statusFilterWidget->toggleFilter(item->isChecked());
         mainWidgetLayout->addWidget(item);
     }
+    DoseViews::install(mainWidgetLayout, this, transferList); // tTorrent: saved views
 
     {
         auto *categoryFilterWidget = new CategoryFilterWidget(this);

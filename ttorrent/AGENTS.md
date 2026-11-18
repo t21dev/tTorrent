@@ -4,7 +4,7 @@ tTorrent is a torrent client (C++, Qt 6, libtorrent), GPL. It began as a fork of
 
 ## Rules that are easy to break
 
-- **Stay mergeable.** Read `../UPSTREAM.md`. New code goes in new files (`src/gui/dose/`, `src/gui/titlebar/`); upstream files get one-line hooks marked `// tTorrent:`. Features we drop are switched off at build time (CMake option plus `#ifdef`), never deleted.
+- **Stay mergeable.** Read `../UPSTREAM.md`. New code goes in new files (`src/gui/dose/`, `src/gui/titlebar/`); upstream files get one-line hooks marked `// tTorrent:`. Features we drop are switched off in `src/gui/dose/dosetrim.cpp`, never deleted (see `../UPSTREAM.md` for when a build-time switch is worth it).
 - **The look comes from tokens.** Colours come from `src/gui/dose/theme/themes/*.json` through `DoseThemeSource`; sizes from its density table. `stylesheet.qss` is a template with `@token@` placeholders, so it has no colour literals. Themes and accent maths follow Kitab (`../../kitab/DESIGN.md` (a sibling checkout)), so the two apps match.
 - **Measure, never guess.** Every memory, CPU or startup figure in docs, the README or the site comes from a run you can repeat, with the machine, date and method next to it. Compare Task Manager's private working set, the working set and private bytes. If you couldn't measure it, say so.
 - **Never touch the owner's own qBittorrent** (its process, profile or settings). Test with `ttorrent.exe --profile=<scratch dir>`.

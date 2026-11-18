@@ -383,6 +383,9 @@ namespace BitTorrent
         virtual void setSocketReceiveBufferSize(int value) = 0;
         virtual int socketBacklogSize() const = 0;
         virtual void setSocketBacklogSize(int value) = 0;
+        // tTorrent: known peers kept per torrent (libtorrent max_peerlist_size)
+        virtual int peerListSize() const = 0;
+        virtual void setPeerListSize(int value) = 0;
         virtual bool isAnonymousModeEnabled() const = 0;
         virtual void setAnonymousModeEnabled(bool enabled) = 0;
         virtual bool isQueueingSystemEnabled() const = 0;

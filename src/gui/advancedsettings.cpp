@@ -149,6 +149,7 @@ namespace
         SOCKET_SEND_BUFFER_SIZE,
         SOCKET_RECEIVE_BUFFER_SIZE,
         SOCKET_BACKLOG_SIZE,
+        PEER_LIST_SIZE, // tTorrent
         OUTGOING_PORT_MIN,
         OUTGOING_PORT_MAX,
         UPNP_LEASE_DURATION,
@@ -288,6 +289,7 @@ void AdvancedSettings::saveAdvancedSettings() const
     session->setSocketReceiveBufferSize(m_spinBoxSocketReceiveBufferSize.value() * 1024);
     // Socket listen backlog size
     session->setSocketBacklogSize(m_spinBoxSocketBacklogSize.value());
+    session->setPeerListSize(m_spinBoxPeerListSize.value()); // tTorrent
     // Save resume data interval
     session->setSaveResumeDataInterval(m_spinBoxSaveResumeDataInterval.value());
     // Save statistics interval
@@ -723,6 +725,14 @@ void AdvancedSettings::loadAdvancedSettings()
     m_spinBoxSocketBacklogSize.setValue(session->socketBacklogSize());
     addRow(SOCKET_BACKLOG_SIZE, (tr("Socket backlog size") + u' ' + makeLink(u"https://www.libtorrent.org/reference-Settings.html#listen_queue_size", u"(?)"))
             , &m_spinBoxSocketBacklogSize);
+    // tTorrent: known peers kept per torrent
+    m_spinBoxPeerListSize.setMinimum(100);
+    m_spinBoxPeerListSize.setMaximum(3000);
+    m_spinBoxPeerListSize.setSingleStep(100);
+    m_spinBoxPeerListSize.setValue(session->peerListSize());
+    m_spinBoxPeerListSize.setToolTip(tr("Peers remembered per torrent, connected or not. Fewer uses less memory with many torrents."));
+    addRow(PEER_LIST_SIZE, (tr("Known peers per torrent") + u' ' + makeLink(u"https://www.libtorrent.org/reference-Settings.html#max_peerlist_size", u"(?)"))
+            , &m_spinBoxPeerListSize);
     // Save resume data interval
     m_spinBoxSaveResumeDataInterval.setMinimum(0);
     m_spinBoxSaveResumeDataInterval.setMaximum(std::numeric_limits<int>::max());

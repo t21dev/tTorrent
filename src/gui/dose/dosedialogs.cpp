@@ -40,6 +40,8 @@
 #include <QScrollArea>
 #include <QSplitter>
 #include <QStackedWidget>
+#include <QDialogButtonBox>
+#include <QTextDocumentFragment>
 #include <QTimer>
 #include <QToolButton>
 #include <QTreeWidget>
@@ -51,6 +53,7 @@
 #include "base/settingsstorage.h"
 #include "gui/uithememanager.h"
 #include "doseimport.h"
+#include "doseautomation.h"
 #include "dosepaint.h"
 #include "dosetheme.h"
 #include "dosethemeeditor.h"
@@ -440,6 +443,33 @@ QGroupBox#doseInfoBox { border: none; margin-top: 0; padding: 0 0 0 22px; }
         pageLayout->insertWidget(pageLayout->indexOf(first), move);
     }
 
+    // Downloads › "When something happens": disk guard, unpacking, cards,
+    // webhooks (DoseAutomation), after the page's own groups.
+    void addAutomationGroup(QWidget *downloadsPage)
+    {
+        QGroupBox *first = downloadsPage ? downloadsPage->findChild<QGroupBox *>() : nullptr;
+        auto *pageLayout = first ? qobject_cast<QBoxLayout *>(first->parentWidget()->layout()) : nullptr;
+        if (!pageLayout)
+            return;
+        int at = 0;
+        for (int i = 0; i < pageLayout->count(); ++i)
+        {
+            if (qobject_cast<QGroupBox *>(pageLayout->itemAt(i)->widget()))
+                at = i + 1;
+        }
+        QWidget *group = DoseAutomation::settingsGroup();
+        pageLayout->insertWidget(at, group);
+        if (auto *box = downloadsPage->window()->findChild<QDialogButtonBox *>())
+        {
+            QObject::connect(box, &QDialogButtonBox::clicked, group, [box, group](QAbstractButton *button)
+            {
+                const QDialogButtonBox::ButtonRole role = box->buttonRole(button);
+                if ((role == QDialogButtonBox::AcceptRole) || (role == QDialogButtonBox::ApplyRole))
+                    DoseAutomation::saveSettings(group);
+            });
+        }
+    }
+
     // Moves a widget into a new layout (Qt takes it out of its old one).
     void move(QWidget *w, QBoxLayout *to, const int index = -1)
     {
@@ -575,6 +605,14 @@ void DoseDialogs::decorateOptions(QDialog *dialog, QSplitter *splitter, QListWid
     }
 
     addLookGroup(pages->widget(0));
+    addAutomationGroup(pages->widget(1));
+    // Long help texts (the run-program parameters) wrap instead of making
+    // the page wider than the dialog.
+    for (QLabel *label : pages->findChildren<QLabel *>())
+    {
+        if (!label->wordWrap() && (QTextDocumentFragment::fromHtml(label->text()).toPlainText().size() > 90))
+            label->setWordWrap(true);
+    }
     dialog->setStyleSheet(dialog->styleSheet() + QString::fromLatin1(OPTIONS_STYLE));
 }
 

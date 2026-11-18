@@ -521,6 +521,7 @@ SessionImpl::SessionImpl(QObject *parent)
     , m_socketSendBufferSize(BITTORRENT_SESSION_KEY(u"SocketSendBufferSize"_s), 0)
     , m_socketReceiveBufferSize(BITTORRENT_SESSION_KEY(u"SocketReceiveBufferSize"_s), 0)
     , m_socketBacklogSize(BITTORRENT_SESSION_KEY(u"SocketBacklogSize"_s), 30)
+    , m_peerListSize(BITTORRENT_SESSION_KEY(u"PeerListSize"_s), 1500, [](const int v) { return std::clamp(v, 100, 3000); }) // tTorrent: libtorrent's 3000 halved
     , m_isAnonymousModeEnabled(BITTORRENT_SESSION_KEY(u"AnonymousModeEnabled"_s), false)
     , m_isQueueingEnabled(BITTORRENT_SESSION_KEY(u"QueueingSystemEnabled"_s), false)
     , m_maxActiveDownloads(BITTORRENT_SESSION_KEY(u"MaxActiveDownloads"_s), 3, lowerLimited(-1))
@@ -1989,6 +1990,7 @@ lt::settings_pack SessionImpl::loadLTSettings() const
     settingsPack.set_int(lt::settings_pack::send_socket_buffer_size, socketSendBufferSize());
     settingsPack.set_int(lt::settings_pack::recv_socket_buffer_size, socketReceiveBufferSize());
     settingsPack.set_int(lt::settings_pack::listen_queue_size, socketBacklogSize());
+    settingsPack.set_int(lt::settings_pack::max_peerlist_size, peerListSize()); // tTorrent
 
     applyNetworkInterfacesSettings(settingsPack);
 
@@ -4930,6 +4932,19 @@ void SessionImpl::setSocketBacklogSize(const int value)
     if (value == m_socketBacklogSize) return;
 
     m_socketBacklogSize = value;
+    configureDeferred();
+}
+
+int SessionImpl::peerListSize() const
+{
+    return m_peerListSize;
+}
+
+void SessionImpl::setPeerListSize(const int value)
+{
+    if (value == m_peerListSize) return;
+
+    m_peerListSize = value;
     configureDeferred();
 }
 

@@ -138,6 +138,12 @@ UIThemeManager::UIThemeManager()
         {
             QFontDatabase::addApplicationFont(font);
         }
+        // tTorrent: smooth text. Full hinting snaps Instrument Sans's thin
+        // strokes to whole pixels, which looks choppy on Windows.
+        QFont appFont = QApplication::font();
+        appFont.setHintingPreference(QFont::PreferNoHinting);
+        appFont.setStyleStrategy(QFont::PreferAntialias);
+        QApplication::setFont(appFont);
         m_doseTheme = true;
         DoseThemeSource::clearIconCache();
         applyDose();

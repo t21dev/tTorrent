@@ -90,6 +90,49 @@ namespace
         return list;
     }
 
+    // Commands without an icon of their own get one from tTorrent's set,
+    // so every row in the palette and the shortcuts sheet has one.
+    QIcon iconFor(const QAction *action)
+    {
+        if (!action->icon().isNull())
+            return action->icon();
+        static const QHash<QString, QString> icons {
+            {u"actionTopToolBar"_s, u"preferences-desktop"_s},
+            {u"actionShowStatusbar"_s, u"speedometer"_s},
+            {u"actionShowFiltersSidebar"_s, u"view-categories"_s},
+            {u"actionSpeedInTitleBar"_s, u"chart-line"_s},
+            {u"actionRSSReader"_s, u"application-rss"_s},
+            {u"actionExecutionLogs"_s, u"folder-documents"_s},
+            {u"actionNormalMessages"_s, u"help-about"_s},
+            {u"actionInformationMessages"_s, u"help-about"_s},
+            {u"actionWarningMessages"_s, u"dialog-warning"_s},
+            {u"actionCriticalMessages"_s, u"error"_s},
+            {u"actionAutoShutdownDisabled"_s, u"task-reject"_s},
+            {u"actionAutoExit"_s, u"application-exit"_s},
+            {u"actionAutoSuspend"_s, u"pause-session"_s},
+            {u"actionAutoHibernate"_s, u"paused"_s},
+            {u"actionAutoReboot"_s, u"view-refresh"_s},
+            {u"actionAutoShutdown"_s, u"torrent-stop"_s},
+            {u"actionToggleVisibility"_s, u"view-preview"_s},
+            {u"actionMinimize"_s, u"go-down"_s},
+            {u"actionUseAlternativeSpeedLimits"_s, u"slow_off"_s},
+            {u"actionSetGlobalSpeedLimits"_s, u"speedometer"_s},
+            {u"actionLock"_s, u"object-locked"_s},
+            {u"actionStatistics"_s, u"view-statistics"_s},
+            {u"actionOpenDestinationFolder"_s, u"directory"_s},
+            {u"actionResumeSession"_s, u"torrent-start"_s},
+            {u"actionPauseSession"_s, u"pause-session"_s},
+            {u"actionTopQueuePos"_s, u"go-top"_s},
+            {u"actionIncreaseQueuePos"_s, u"go-up"_s},
+            {u"actionDecreaseQueuePos"_s, u"go-down"_s},
+            {u"actionBottomQueuePos"_s, u"go-bottom"_s},
+            {u"actionDocumentation"_s, u"help-contents"_s},
+            {u"actionAbout"_s, u"help-about"_s},
+            {u"actionCloseWindow"_s, u"application-exit"_s},
+        };
+        return UIThemeManager::instance()->getIcon(icons.value(action->objectName(), u"configure"_s));
+    }
+
     QHash<QString, QString> savedKeys()
     {
         QHash<QString, QString> keys;
@@ -231,7 +274,7 @@ namespace
 
             for (const Command &c : commands(window))
             {
-                auto *item = new QListWidgetItem(c.action->icon(), plain(c.action->text()), m_list);
+                auto *item = new QListWidgetItem(iconFor(c.action), plain(c.action->text()), m_list);
                 item->setData(Qt::UserRole, QVariant::fromValue(static_cast<QObject *>(c.action)));
                 item->setData(Qt::UserRole + 1, c.action->shortcut().toString(QKeySequence::NativeText));
                 item->setData(Qt::UserRole + 2, c.section);
@@ -423,7 +466,7 @@ namespace
                 row.card = card;
                 row.text = plain(action->text());
                 auto *icon = new QLabel;
-                icon->setPixmap(action->icon().pixmap(16, 16));
+                icon->setPixmap(iconFor(action).pixmap(16, 16));
                 icon->setFixedWidth(18);
                 auto *name = new QLabel(row.text);
                 row.label = name;
