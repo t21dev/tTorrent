@@ -15,6 +15,8 @@
 
 #pragma once
 
+class QComboBox;
+class QLineEdit;
 class QMenu;
 class QToolBar;
 
@@ -26,4 +28,8 @@ namespace DoseToolbar
     // Appearance/ToolbarHidden. Call once the .ui toolbar actions exist;
     // widgets added to the toolbar later (the search field) stay after them.
     void install(QToolBar *toolBar, QMenu *contextMenu);
+
+    // The filter field: wider, its "Filter by" choice moved into a menu on
+    // the field's search icon (the combo box stays, hidden, as the model).
+    void polishFilter(QLineEdit *edit, QComboBox *columns);
 }

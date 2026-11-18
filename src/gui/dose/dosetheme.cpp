@@ -223,6 +223,7 @@ DoseThemeSource::DoseThemeSource(const QString &themeId, const QString &accent, 
     m_tokens[u"accentLine"_s] = mix(accentColor, bg, 0.5);
     m_tokens[u"track"_s] = mix(text, bg, m_dark ? 0.14 : 0.09);
     m_tokens[u"rowRule"_s] = mix(token(u"line"_s), bg, 0.6);
+    m_tokens[u"accentHover"_s] = mix(m_dark ? QColor(Qt::white) : QColor(Qt::black), accentColor, 0.08);
 
     const QColor muted = token(u"muted"_s), faint = token(u"faint"_s), ring = token(u"ring"_s);
     const QColor ok = token(u"ok"_s), warn = token(u"warn"_s), bad = token(u"bad"_s);
@@ -314,6 +315,7 @@ QByteArray DoseThemeSource::readStyleSheet()
     for (auto it = m_tokens.cbegin(); it != m_tokens.cend(); ++it)
         qss.replace(u'@' + it.key() + u'@', it.value().name());
     const Density &d = densityFor(m_density);
+    qss.replace(u"@fontSmall@"_s, QString::number(d.font - 1));
     qss.replace(u"@font@"_s, QString::number(d.font));
     qss.replace(u"@padV@"_s, QString::number(d.padV));
     qss.replace(u"@padH@"_s, QString::number(d.padH));

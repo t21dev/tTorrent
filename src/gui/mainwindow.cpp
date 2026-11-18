@@ -100,7 +100,9 @@
 #include "transferlistfilterswidget.h"
 #include "transferlistmodel.h"
 #include "transferlistwidget.h"
+#include "dose/doseabout.h"
 #include "dose/dosedev.h"
+#include "dose/dosetrim.h"
 #include "dose/dosetoolbar.h"
 #include "titlebar/dosetitlebar.h"
 #include "ui_mainwindow.h"
@@ -266,6 +268,7 @@ MainWindow::MainWindow(IGUIApplication *app, const WindowState initialState, con
     m_columnFilterWidget = new QWidget(this);
     m_columnFilterWidget->setLayout(columnFilterLayout);
     m_columnFilterAction = m_ui->toolBar->insertWidget(m_ui->actionLock, m_columnFilterWidget);
+    DoseToolbar::polishFilter(m_columnFilterEdit, m_columnFilterComboBox); // tTorrent: one field, column in its menu
 
     auto *spacer = new QWidget(this);
     spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -349,6 +352,8 @@ MainWindow::MainWindow(IGUIApplication *app, const WindowState initialState, con
     connect(m_ui->actionBottomQueuePos, &QAction::triggered, m_transferListWidget, &TransferListWidget::bottomQueuePosSelectedTorrents);
     connect(m_ui->actionMinimize, &QAction::triggered, this, &MainWindow::minimizeWindow);
     connect(m_ui->actionUseAlternativeSpeedLimits, &QAction::triggered, this, &MainWindow::toggleAlternativeSpeeds);
+
+    DoseTrim::applyToMainWindow(this); // tTorrent: features left out (ttorrent/ROADMAP.md)
 
 #if defined(Q_OS_WIN) || defined(Q_OS_MACOS)
     connect(m_ui->actionCheckForUpdates, &QAction::triggered, this, [this]() { checkProgramUpdate(true); });
@@ -600,7 +605,7 @@ void MainWindow::setTitleSuffix(const QString &suffix)
 {
     const auto emDash = QChar(0x2014);
     const QString separator = u' ' + emDash + u' ';
-    m_windowTitle = QStringLiteral("tTorrent " QBT_VERSION)
+    m_windowTitle = u"tTorrent"_s // tTorrent: the version lives in About
         + (!suffix.isEmpty() ? (separator + suffix) : QString());
 
     refreshWindowTitle();
@@ -843,7 +848,7 @@ void MainWindow::updateNbTorrents()
 
 void MainWindow::on_actionDocumentation_triggered() const
 {
-    QDesktopServices::openUrl(QUrl(u"https://wiki.qbittorrent.org"_s));
+    QDesktopServices::openUrl(QUrl(QString::fromLatin1(DoseTrim::DOCS))); // tTorrent: our docs
 }
 
 void MainWindow::tabChanged([[maybe_unused]] const int newTab)

@@ -41,6 +41,7 @@
 #include "base/bittorrent/sessionstatus.h"
 #include "base/preferences.h"
 #include "base/settingsstorage.h"
+#include "dose/dosepaint.h"
 #include "base/utils/misc.h"
 #include "speedlimitdialog.h"
 #include "uithememanager.h"
@@ -166,14 +167,15 @@ StatusBar::StatusBar(QWidget *parent)
     m_altSpeedsSeparator = createSeparator(this);
     m_dlSpeedSeparator = createSeparator(this);
 
-    addPermanentWidget(m_freeDiskSpaceLbl);
-    addPermanentWidget(m_freeDiskSpaceSeparator);
-    addPermanentWidget(m_lastExternalIPsLbl);
-    addPermanentWidget(m_lastExternalIPsSeparator);
-    addPermanentWidget(m_DHTLbl);
-    addPermanentWidget(m_DHTSeparator);
-    addPermanentWidget(m_memoryLbl);
-    addPermanentWidget(m_memorySeparator);
+    // tTorrent: information on the left, connection and speeds on the right.
+    addWidget(m_freeDiskSpaceLbl);
+    addWidget(m_freeDiskSpaceSeparator);
+    addWidget(m_lastExternalIPsLbl);
+    addWidget(m_lastExternalIPsSeparator);
+    addWidget(m_DHTLbl);
+    addWidget(m_DHTSeparator);
+    addWidget(m_memoryLbl);
+    addWidget(m_memorySeparator);
     addPermanentWidget(m_connecStatusLblIcon);
     addPermanentWidget(m_connectionSeparator);
     addPermanentWidget(m_altSpeedsBtn);
@@ -218,6 +220,7 @@ void StatusBar::updateConnectionStatus()
     if (!BitTorrent::Session::instance()->isListening())
     {
         m_connecStatusLblIcon->setIcon(UIThemeManager::instance()->getIcon(u"disconnected"_s));
+        m_connecStatusLblIcon->setText(tr("Offline")); // tTorrent: a word beside the icon
         const QString tooltip = u"<b>%1</b><br>%2"_s.arg(tr("Connection Status:"), tr("Offline. This usually means that qBittorrent failed to listen on the selected port for incoming connections."));
         m_connecStatusLblIcon->setToolTip(tooltip);
     }
@@ -227,12 +230,14 @@ void StatusBar::updateConnectionStatus()
         {
             // Connection OK
             m_connecStatusLblIcon->setIcon(UIThemeManager::instance()->getIcon(u"connected"_s));
+            m_connecStatusLblIcon->setText(tr("Online"));
             const QString tooltip = u"<b>%1</b><br>%2"_s.arg(tr("Connection Status:"), tr("Online"));
             m_connecStatusLblIcon->setToolTip(tooltip);
         }
         else
         {
             m_connecStatusLblIcon->setIcon(UIThemeManager::instance()->getIcon(u"firewalled"_s));
+            m_connecStatusLblIcon->setText(tr("Firewalled"));
             const QString tooltip = u"<b>%1</b><br><i>%2</i>"_s.arg(tr("Connection Status:"), tr("No direct connections. This may indicate network configuration problems."));
             m_connecStatusLblIcon->setToolTip(tooltip);
         }
@@ -365,6 +370,14 @@ void StatusBar::setWanted(const QString &item, const bool on)
 
 void StatusBar::applyItemVisibility()
 {
+    if (DosePaint::active())
+    {
+        // Speeds and memory in the number font; down in the accent, up in `ok`.
+        for (QWidget *w : {static_cast<QWidget *>(m_dlSpeedLbl), static_cast<QWidget *>(m_upSpeedLbl), static_cast<QWidget *>(m_memoryLbl), static_cast<QWidget *>(m_DHTLbl), static_cast<QWidget *>(m_freeDiskSpaceLbl)})
+            w->setProperty("doseNumber", true); // DM Mono via the stylesheet
+        m_dlSpeedLbl->setObjectName(u"doseDown"_s);
+        m_upSpeedLbl->setObjectName(u"doseUp"_s);
+    }
     const bool memory = wants(u"memory"_s) && (processMemory() >= 0);
     m_memoryLbl->setVisible(memory);
     m_memorySeparator->setVisible(memory);

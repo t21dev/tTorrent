@@ -51,6 +51,7 @@
 #include "base/unicodestrings.h"
 #include "base/utils/misc.h"
 #include "base/utils/string.h"
+#include "gui/dose/dosepaint.h"
 #include "gui/autoexpandabledialog.h"
 #include "gui/filterpatternformatmenu.h"
 #include "gui/lineedit.h"
@@ -130,7 +131,11 @@ PropertiesWidget::PropertiesWidget(QWidget *parent)
     // Tab bar
     m_tabBar = new PropTabBar(nullptr);
     m_tabBar->setContentsMargins(0, 5, 0, 5);
-    m_ui->verticalLayout->addLayout(m_tabBar);
+    // tTorrent: tabs above the pane (DESIGN.md › Details tabs).
+    if (DosePaint::active())
+        m_ui->verticalLayout->insertLayout(0, m_tabBar);
+    else
+        m_ui->verticalLayout->addLayout(m_tabBar);
     connect(m_tabBar, &PropTabBar::tabChanged, m_ui->stackedProperties, &QStackedWidget::setCurrentIndex);
     connect(m_tabBar, &PropTabBar::tabChanged, this, &PropertiesWidget::saveSettings);
     connect(m_tabBar, &PropTabBar::visibilityToggled, this, &PropertiesWidget::setVisibility);

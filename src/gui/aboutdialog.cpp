@@ -39,6 +39,7 @@
 #include "ui_aboutdialog.h"
 #include "uithememanager.h"
 #include "utils.h"
+#include "dose/doseabout.h"
 
 #ifdef ENABLE_PLUGINS
 #include "base/plugins/pluginsengine.h"
@@ -148,6 +149,8 @@ AboutDialog::AboutDialog(QWidget *parent)
         resize(dialogSize);
     else
         adjustSize();
+
+    DoseAbout::build(this); // tTorrent: our About (logo, version, credits)
 }
 
 AboutDialog::~AboutDialog()

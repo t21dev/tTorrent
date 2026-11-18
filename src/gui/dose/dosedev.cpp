@@ -71,17 +71,27 @@ void DoseDev::scheduleShots(QMainWindow *window)
         }
         if (auto *options = window->findChild<QAction *>(u"actionOptions"_s))
             options->trigger();
-        QTimer::singleShot(1500, window, [dir]
+        const auto shootDialogs = [](const QString &path)
         {
             for (QWidget *top : QApplication::topLevelWidgets())
             {
                 if (auto *dialog = qobject_cast<QDialog *>(top); dialog && dialog->isVisible())
                 {
-                    save(dialog, dir + u"/options.png");
+                    save(dialog, path);
                     dialog->close();
                 }
             }
-            QTimer::singleShot(300, qApp, &QApplication::quit);
+        };
+        QTimer::singleShot(1500, window, [window, dir, shootDialogs]
+        {
+            shootDialogs(dir + u"/options.png");
+            if (auto *about = window->findChild<QAction *>(u"actionAbout"_s))
+                about->trigger();
+            QTimer::singleShot(1200, window, [dir, shootDialogs]
+            {
+                shootDialogs(dir + u"/about.png");
+                QTimer::singleShot(300, qApp, &QApplication::quit);
+            });
         });
     });
 }

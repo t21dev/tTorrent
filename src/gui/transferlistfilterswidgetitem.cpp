@@ -26,6 +26,7 @@
  * exception statement from your version.
  */
 
+#include "dose/dosesidebar.h"
 #include "transferlistfilterswidgetitem.h"
 
 #include <QCheckBox>
@@ -71,6 +72,7 @@ TransferListFiltersWidgetItem::TransferListFiltersWidgetItem(const QString &capt
     font.setBold(true);
     font.setCapitalization(QFont::AllUppercase);
     m_caption->setFont(font);
+    DoseSidebar::polishSection(m_caption, m_filterWidget); // tTorrent: sentence-case heading, counts on the right
 
     auto *layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 2, 0, 0);

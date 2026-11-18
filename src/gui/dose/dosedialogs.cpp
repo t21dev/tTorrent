@@ -42,6 +42,7 @@
 #include "base/settingsstorage.h"
 #include "gui/uithememanager.h"
 #include "dosetheme.h"
+#include "dosetrim.h"
 
 namespace
 {
@@ -337,6 +338,7 @@ void DoseDialogs::decorateOptions(QDialog *dialog, QSplitter *splitter, QListWid
     // platform style picker would only fight it.
     for (QScrollArea *area : pages->findChildren<QScrollArea *>())
         area->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    DoseTrim::applyToOptions(dialog);
     if (UIThemeManager::instance()->usesDoseTheme())
     {
         for (const char *name : {"labelStyle", "comboStyle", "labelStyleHint"})
