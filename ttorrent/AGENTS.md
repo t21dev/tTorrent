@@ -29,7 +29,7 @@ Also: [ROADMAP.md](ROADMAP.md) (what's planned and done), [../UPSTREAM.md](../UP
 2. Make the change: a new file plus a `// tTorrent:` hook where you can.
 3. Build: no errors and **no new warnings**.
 4. Check it the way [VERIFY.md](VERIFY.md) says for that kind of change: screenshots for UI, a real run for features, a benchmark for anything said to save memory or time.
-5. Commit only after a clean build and a check, with a conventional message (`feat(ui): …`, `fix(theme): …`, `perf(ui): …`, `chore(release): 0.2.0`). No attribution lines.
+5. Look at `git status --short` before every commit: only source, docs and scripts belong in it (build folders `build*/` are ignored; a commit of build output was pushed and had to be replaced on 2026-11-18). Commit only after a clean build and a check, with a conventional message (`feat(ui): …`, `fix(theme): …`, `perf(ui): …`, `chore(release): 0.2.0`). No attribution lines.
 6. Push to `main` and install locally (`ttorrent\scripts\install-local.ps1`): the owner asked for this after every verified change, so they can try it. Tags and GitHub releases only when the owner asks.
 
 A change isn't done until the app starts in a scratch profile with it.
