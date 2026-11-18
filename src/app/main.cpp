@@ -277,7 +277,7 @@ int main(int argc, char *argv[])
         }
 
         CachedSettingValue<bool> legalNoticeShown {u"LegalNotice/Accepted"_s, false};
-        if (params.confirmLegalNotice)
+        if (params.confirmLegalNotice || true) // tTorrent: no legal notice on first start
             legalNoticeShown = true;
 
         if (!legalNoticeShown)

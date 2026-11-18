@@ -695,6 +695,18 @@ void DoseDialogs::decorateAddTorrent(QDialog *dialog)
         pair->addWidget(v);
         summary->addLayout(pair);
     }
+    // Health: filled in by DoseHealth::check once the torrent is known.
+    {
+        auto *k = new QLabel(QDialog::tr("Health:"));
+        k->setProperty("doseRole", QStringLiteral("key"));
+        auto *v = new QLabel(QStringLiteral("—"));
+        v->setObjectName(QStringLiteral("doseHealthData"));
+        auto *pair = new QVBoxLayout;
+        pair->setSpacing(2);
+        pair->addWidget(k);
+        pair->addWidget(v);
+        summary->addLayout(pair);
+    }
     summary->addStretch();
     head->addLayout(summary);
     root->insertWidget(0, header);

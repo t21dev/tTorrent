@@ -72,6 +72,7 @@
 #include "torrenttagsdialog.h"
 
 #include "dose/dosedialogs.h"
+#include "dose/dosehealth.h"
 #include "ui_addnewtorrentdialog.h"
 
 namespace
@@ -318,6 +319,7 @@ void AddNewTorrentDialog::setCurrentContext(const std::shared_ptr<Context> conte
         return;
 
     m_currentContext = context;
+    DoseHealth::check(this, context->torrentDescr); // tTorrent: seeds and peers before adding
 
     const QSignalBlocker comboTMMSignalBlocker {m_ui->comboTMM};
     const QSignalBlocker startTorrentCheckBoxSignalBlocker {m_ui->startTorrentCheckBox};

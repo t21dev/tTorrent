@@ -97,6 +97,8 @@ void DoseDev::scheduleShots(QMainWindow *window)
     };
 
     QList<std::function<void ()>> steps;
+    // Give the Add dialog's health check a few seconds to hear from trackers.
+    steps << [] {} << [] {} << [] {};
     // An Add torrent dialog opened from the command line: shoot it, then add.
     steps << [dir]
     {
