@@ -34,6 +34,7 @@
 #include <QPainter>
 #include <QProgressBar>
 
+#include "base/global.h"
 #include "dose/dosepaint.h"
 #include "base/bittorrent/downloadpriority.h"
 #include "base/bittorrent/torrent.h"
