@@ -247,6 +247,8 @@ add_library(qbt_gui STATIC
     dose/dosedialogs.cpp
     dose/doseabout.cpp
     dose/doseabout.h
+    dose/dosebrand.cpp
+    dose/dosebrand.h
     dose/dosedev.cpp
     dose/dosedev.h
     dose/dosepaint.cpp

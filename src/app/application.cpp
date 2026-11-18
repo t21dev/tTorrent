@@ -96,6 +96,7 @@
 #include "upgrade.h"
 
 #ifndef DISABLE_GUI
+#include "gui/dose/dosebrand.h"
 #include "gui/desktopintegration.h"
 #include "gui/mainwindow.h"
 #include "gui/shutdownconfirmdialog.h"
@@ -1205,6 +1206,9 @@ void Application::initializeTranslation()
 {
     QCoreApplication::installTranslator(&m_qtTranslator);
     QCoreApplication::installTranslator(&m_translator);
+#ifndef DISABLE_GUI
+    DoseBrand::install(&m_translator); // tTorrent: "tTorrent" wherever the text names the app
+#endif
 
     const auto *pref = Preferences::instance();
     const QString localeStr = pref->getLocale();
