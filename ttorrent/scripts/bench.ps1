@@ -59,6 +59,9 @@ function New-Profile([string]$App, [string]$Dir) {
     Set-IniValue $ini 'Preferences' 'WebUI\Enabled' 'false'
     Set-IniValue $ini 'Preferences' 'General\PreventFromSuspendWhenDownloading' 'false'
     Set-IniValue $ini 'Application' 'GUI\Notifications\Enabled' 'false'
+    Set-IniValue $ini 'Preferences' 'General\StartMinimized' 'true'
+    Set-IniValue $ini 'Preferences' 'General\SystrayEnabled' 'true'
+    Set-IniValue $ini 'Preferences' 'General\MinimizeToTray' 'true'
     Set-IniValue $ini 'BitTorrent' 'Session\GlobalDLSpeedLimit' '1'
     Set-IniValue $ini 'BitTorrent' 'Session\AlternativeGlobalDLSpeedLimit' '1'
 }
@@ -69,9 +72,11 @@ function Invoke-Run([string]$Label, [string]$App, [string]$Exe, [int]$Seconds, [
     $csv = Join-Path $Out "$Label.csv"
     'seconds,private_ws_mb,working_set_mb,private_bytes_mb,cpu_pct' | Set-Content $csv
     $t0 = [Diagnostics.Stopwatch]::StartNew()
-    $p = Start-Process -FilePath $Exe -ArgumentList "--profile=$dir" -PassThru
+    $p = Start-Process -FilePath $Exe -ArgumentList "--profile=$dir" -PassThru -WindowStyle Minimized
     $name = $p.ProcessName
-    $counter = New-Object Diagnostics.PerformanceCounter('Process', 'Working Set - Private', $name, $true)
+    # "Process V2" names instances name:pid, so other copies of the app can run.
+    try { $counter = New-Object Diagnostics.PerformanceCounter('Process V2', 'Working Set - Private', "${name}:$($p.Id)", $true); [void]$counter.NextValue() }
+    catch { $counter = New-Object Diagnostics.PerformanceCounter('Process', 'Working Set - Private', $name, $true) }
     $window = $null; $settled = $null; $quiet = 0; $lastCpu = $p.TotalProcessorTime; $lastT = $t0.Elapsed
     $next = $Interval
     while ($t0.Elapsed.TotalSeconds -lt $Seconds -and -not $p.HasExited) {
@@ -81,7 +86,7 @@ function Invoke-Run([string]$Label, [string]$App, [string]$Exe, [int]$Seconds, [
         if ($t0.Elapsed.TotalSeconds -ge $next) {
             $now = $t0.Elapsed; $cpu = ($p.TotalProcessorTime - $lastCpu).TotalSeconds / ($now - $lastT).TotalSeconds / $cores * 100
             $lastCpu = $p.TotalProcessorTime; $lastT = $now
-            $pws = $counter.NextValue() / 1MB
+            try { $pws = $counter.NextValue() / 1MB } catch { $pws = [double]::NaN }
             '{0:F0},{1:F1},{2:F1},{3:F1},{4:F2}' -f $now.TotalSeconds, $pws, ($p.WorkingSet64 / 1MB), ($p.PrivateMemorySize64 / 1MB), $cpu | Add-Content $csv
             if ($window -and -not $settled) { if ($cpu -lt 2) { $quiet += $Interval; if ($quiet -ge 5) { $settled = [math]::Round($now.TotalSeconds - $quiet, 0) } } else { $quiet = 0 } }
             $next += $Interval
@@ -89,10 +94,15 @@ function Invoke-Run([string]$Label, [string]$App, [string]$Exe, [int]$Seconds, [
     }
     $io = Get-CimInstance Win32_Process -Filter "ProcessId=$($p.Id)" -ErrorAction SilentlyContinue
     $p.Refresh()
+    $exitedEarly = $p.HasExited
+    $endPws = $null
+    if (-not $exitedEarly) { try { $endPws = [math]::Round($counter.NextValue() / 1MB, 1) } catch { $endPws = $null } }
     $result = [ordered]@{
         label = $Label; app = $App; seconds = $Seconds; window_s = $window; settled_s = $settled
-        private_ws_mb = [math]::Round($counter.NextValue() / 1MB, 1); working_set_mb = [math]::Round($p.WorkingSet64 / 1MB, 1)
-        private_bytes_mb = [math]::Round($p.PrivateMemorySize64 / 1MB, 1)
+        exited_early_at_s = if ($exitedEarly) { [math]::Round($t0.Elapsed.TotalSeconds, 0) } else { $null }
+        exit_code = if ($exitedEarly) { $p.ExitCode } else { $null }
+        private_ws_mb = $endPws; working_set_mb = if ($exitedEarly) { $null } else { [math]::Round($p.WorkingSet64 / 1MB, 1) }
+        private_bytes_mb = if ($exitedEarly) { $null } else { [math]::Round($p.PrivateMemorySize64 / 1MB, 1) }
         read_mb = if ($io) { [math]::Round($io.ReadTransferCount / 1MB, 1) } else { $null }
         written_mb = if ($io) { [math]::Round($io.WriteTransferCount / 1MB, 1) } else { $null }
     }
@@ -102,7 +112,7 @@ function Invoke-Run([string]$Label, [string]$App, [string]$Exe, [int]$Seconds, [
     Write-Host ($result | ConvertTo-Json -Compress)
 }
 
-if (Get-Process qbittorrent, ttorrent -ErrorAction SilentlyContinue) { throw 'qBittorrent or tTorrent is running; close it first.' }
+if (Get-Process qbittorrent -ErrorAction SilentlyContinue) { throw 'qBittorrent is running; close it first (it would share the same files).' }
 $machine = "{0}, {1:N0} GB, {2}" -f (Get-CimInstance Win32_Processor).Name.Trim(), ((Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory / 1GB), (Get-CimInstance Win32_OperatingSystem).Caption
 "# {0} · {1} · qBittorrent {2} vs tTorrent build {3}" -f (Get-Date -Format 'yyyy-MM-dd HH:mm'), $machine, (Get-Item $QbExe).VersionInfo.ProductVersion, (Get-Item $TtExe).LastWriteTime.ToString('yyyy-MM-dd HH:mm') | Add-Content (Join-Path $Out 'summary.jsonl')
 
