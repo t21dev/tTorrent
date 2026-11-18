@@ -2,8 +2,9 @@
 # to %LOCALAPPDATA%\Programs\tTorrent and keeps a "tTorrent" Start Menu
 # shortcut pointing there. Run tTorrent from the Start Menu; builds then never
 # collide with a running copy, and a restart picks up the newest version.
-# If tTorrent is running, its exe is renamed aside (Windows allows that) and
-# the new one copied in; the old copy is removed on the next install.
+# If tTorrent is running, every file it holds open (the exe and its DLLs) is
+# renamed aside, which Windows allows, and the new one copied in, so a new Qt
+# or OpenSSL never ends up mixed with the old. Leftovers go on the next install.
 # Usage: powershell -ExecutionPolicy Bypass -File ttorrent\scripts\install-local.ps1 [-Build]
 
 param([switch]$Build)
@@ -19,16 +20,29 @@ if ($Build) {
 if (-not (Test-Path (Join-Path $release 'ttorrent.exe'))) { throw "no build at $release" }
 
 New-Item -ItemType Directory -Force $target | Out-Null
-Get-ChildItem $target -Filter 'ttorrent-old*.exe' -ErrorAction SilentlyContinue | ForEach-Object { try { Remove-Item $_.FullName -Force -ErrorAction Stop } catch {} }
-$exe = Join-Path $target 'ttorrent.exe'
-if ((Test-Path $exe) -and (Get-Process ttorrent -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq $exe })) {
-    Rename-Item $exe ('ttorrent-old-{0}.exe' -f (Get-Date -Format 'yyyyMMdd-HHmmss'))
-    Write-Host 'tTorrent is running: restart it to use the new version.'
-}
-# Copy everything except stale exes; unchanged DLLs in use are skipped.
-robocopy $release $target /E /XF 'ttorrent-old*.exe' '*.pdb' '*.ilk' /R:1 /W:1 /NFL /NDL /NJH /NJS /NP | Out-Null
-if ($LASTEXITCODE -ge 8) { throw "copy failed (robocopy $LASTEXITCODE)" }
+# Files renamed aside by an earlier install, once nothing holds them any more.
+Get-ChildItem $target -Recurse -File | Where-Object { $_.Name -match '\.old-\d{8}-\d{6}$' -or $_.Name -like 'ttorrent-old*.exe' } |
+    ForEach-Object { try { Remove-Item $_.FullName -Force -ErrorAction Stop } catch {} }
 
+$stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
+$running = [bool](Get-Process ttorrent -ErrorAction SilentlyContinue | Where-Object { $_.Path -like "$target\*" })
+$copied = 0
+Get-ChildItem $release -Recurse -File | Where-Object { $_.Extension -notin '.pdb', '.ilk' -and $_.Name -notlike 'ttorrent-old*' } | ForEach-Object {
+    $src = $_
+    $dest = Join-Path $target $src.FullName.Substring($release.Length + 1)
+    if ((Test-Path $dest) -and ((Get-Item $dest).Length -eq $src.Length) -and ((Get-Item $dest).LastWriteTimeUtc -eq $src.LastWriteTimeUtc)) { return }
+    New-Item -ItemType Directory -Force (Split-Path $dest) | Out-Null
+    try { Copy-Item $src.FullName $dest -Force -ErrorAction Stop }
+    catch {
+        # In use: move the old file aside and put the new one in its place.
+        if (Test-Path $dest) { Rename-Item $dest ((Split-Path $dest -Leaf) + ".old-$stamp") }
+        Copy-Item $src.FullName $dest -Force
+    }
+    $copied++
+}
+if ($running) { Write-Host 'tTorrent is running: restart it to use the new version.' }
+
+$exe = Join-Path $target 'ttorrent.exe'
 $shortcut = Join-Path ([Environment]::GetFolderPath('Programs')) 'tTorrent.lnk'
 $shell = New-Object -ComObject WScript.Shell
 $link = $shell.CreateShortcut($shortcut)
@@ -37,4 +51,4 @@ $link.WorkingDirectory = $target
 $link.IconLocation = "$exe,0"
 $link.Description = 'tTorrent (local build)'
 $link.Save()
-Write-Host ("installed {0} ({1})" -f $exe, (Get-Item $exe).LastWriteTime.ToString('yyyy-MM-dd HH:mm'))
+Write-Host ("installed {0} ({1}, {2} files updated)" -f $exe, (Get-Item $exe).LastWriteTime.ToString('yyyy-MM-dd HH:mm'), $copied)
