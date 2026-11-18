@@ -19,8 +19,45 @@
 #include <QDialog>
 #include <QFileDialog>
 #include <QMenu>
+#include <QPropertyAnimation>
 
 #include "gui/titlebar/dosetitlebar.h"
+
+namespace
+{
+    // Fades a window in when it shows: 120 ms for menus, lists and tooltips,
+    // 180 ms for dialogs (DESIGN.md › Motion). Skipped when the system turns
+    // animations off (Qt reads that into UI_AnimateMenu on Windows).
+    class FadeIn final : public QObject
+    {
+    public:
+        using QObject::QObject;
+
+        static FadeIn *instance()
+        {
+            static auto *filter = new FadeIn(qApp);
+            return filter;
+        }
+
+    protected:
+        bool eventFilter(QObject *watched, QEvent *event) override
+        {
+            if ((event->type() == QEvent::Show) && QApplication::isEffectEnabled(Qt::UI_AnimateMenu))
+            {
+                auto *window = static_cast<QWidget *>(watched);
+                const bool dialog = qobject_cast<QDialog *>(window);
+                auto *animation = new QPropertyAnimation(window, "windowOpacity", window);
+                animation->setStartValue(0.0);
+                animation->setEndValue(1.0);
+                animation->setDuration(dialog ? 180 : 120);
+                animation->setEasingCurve(QEasingCurve::OutCubic);
+                window->setWindowOpacity(0.0);
+                animation->start(QAbstractAnimation::DeleteWhenStopped);
+            }
+            return QObject::eventFilter(watched, event);
+        }
+    };
+}
 
 DoseStyle::DoseStyle(const QString &baseStyle)
     : QProxyStyle(baseStyle)
@@ -47,6 +84,12 @@ void DoseStyle::polish(QWidget *widget)
         widget->setAttribute(Qt::WA_TranslucentBackground);
         widget->setWindowFlag(Qt::FramelessWindowHint);
         widget->setWindowFlag(Qt::NoDropShadowWindowHint);
+        widget->installEventFilter(FadeIn::instance());
+        return;
+    }
+    if (widget->windowType() == Qt::ToolTip)
+    {
+        widget->installEventFilter(FadeIn::instance());
         return;
     }
 
@@ -56,6 +99,7 @@ void DoseStyle::polish(QWidget *widget)
         {
             dialog->setProperty("doseFramed", true);
             DoseTitleBar::installDialog(dialog);
+            dialog->installEventFilter(FadeIn::instance());
         }
     }
 }

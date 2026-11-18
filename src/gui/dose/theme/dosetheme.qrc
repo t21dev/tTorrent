@@ -137,12 +137,8 @@
         <file>icons/qbittorrent-tray-light.svg</file>
         <file>themes/light.json</file>
         <file>themes/paper.json</file>
-        <file>themes/sand.json</file>
-        <file>themes/linen.json</file>
         <file>themes/dark.json</file>
-        <file>themes/gray.json</file>
         <file>themes/nord.json</file>
-        <file>themes/noctua.json</file>
         <file>themes/vampire.json</file>
         <file>themes/ink.json</file>
         <file>fonts/DMMono-Regular.ttf</file>
@@ -189,5 +185,16 @@
         <file>icons/dark/view-preview.svg</file>
         <file>icons/wallet-open.svg</file>
         <file>icons/dark/wallet-open.svg</file>
+        <file>themes/dracula.json</file>
+        <file>themes/mocha.json</file>
+        <file>themes/latte.json</file>
+        <file>themes/tokyo.json</file>
+        <file>themes/rosepine.json</file>
+        <file>themes/gruvbox.json</file>
+        <file>themes/solarized.json</file>
+        <file>themes/charcoal.json</file>
+        <file>themes/aurora.json</file>
+        <file>themes/ember.json</file>
+        <file>themes/blossom.json</file>
     </qresource>
 </RCC>

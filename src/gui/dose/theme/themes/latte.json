@@ -1,0 +1,20 @@
+{
+  "id": "latte",
+  "name": "Catppuccin Latte",
+  "appearance": "light",
+  "colors": {
+    "bg": "#EFF1F5",
+    "panel": "#E6E9EF",
+    "raised": "#F8F9FB",
+    "hover": "#E6E9EF",
+    "line": "#CCD0DA",
+    "text": "#4C4F69",
+    "muted": "#5C5F77",
+    "faint": "#5F6278",
+    "ring": "#9CA0B0",
+    "accent": "#8839EF",
+    "ok": "#40A02B",
+    "warn": "#DF8E1D",
+    "bad": "#D20F39"
+  }
+}

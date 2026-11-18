@@ -113,8 +113,10 @@ namespace
 
     // ---- Themes, accents and densities ----
 
-    const QStringList THEME_ORDER {u"light"_s, u"paper"_s, u"sand"_s, u"linen"_s
-        , u"dark"_s, u"gray"_s, u"nord"_s, u"noctua"_s, u"vampire"_s, u"ink"_s};
+    // Light themes, then dark ones ("dark" starts the second group in pickers).
+    const QStringList THEME_ORDER {u"light"_s, u"paper"_s, u"latte"_s, u"solarized"_s, u"blossom"_s
+        , u"dark"_s, u"ink"_s, u"charcoal"_s, u"nord"_s, u"dracula"_s, u"mocha"_s, u"tokyo"_s
+        , u"rosepine"_s, u"gruvbox"_s, u"vampire"_s, u"aurora"_s, u"ember"_s};
 
     QJsonObject loadTheme(const QString &id)
     {
@@ -158,9 +160,9 @@ namespace
         // From Kitab's DESIGN.md › Density: control height 26 / 30 / 36,
         // UI text 12.5 (rounded to 12) / 13 / 14 px, radius 7 / 8 / 9.
         static const QList<Density> list {
-            {u"dense"_s, QT_TRANSLATE_NOOP("DoseTheme", "Dense"), 12, 3, 7, 3, 7, 3},
-            {u"compact"_s, QT_TRANSLATE_NOOP("DoseTheme", "Compact"), 13, 5, 9, 5, 8, 5},
-            {u"standard"_s, QT_TRANSLATE_NOOP("DoseTheme", "Standard"), 14, 8, 12, 8, 9, 7},
+            {u"dense"_s, QT_TRANSLATE_NOOP("DoseTheme", "Dense"), 12, 4, 10, 4, 9, 4},
+            {u"compact"_s, QT_TRANSLATE_NOOP("DoseTheme", "Compact"), 13, 6, 12, 6, 10, 6},
+            {u"standard"_s, QT_TRANSLATE_NOOP("DoseTheme", "Standard"), 14, 9, 14, 9, 11, 8},
         };
         return list;
     }
@@ -336,6 +338,7 @@ QByteArray DoseThemeSource::readStyleSheet()
     const QString muted = token(u"muted"_s).name();
     const QString onAccent = token(u"onAccent"_s).name();
     qss.replace(u"@chevronDown@"_s, asset(u"qss-chevron-down"_s, stroke.arg(muted, u"<path d='m6 9 6 6 6-6'/>"_s)));
+    qss.replace(u"@chevronRight@"_s, asset(u"qss-chevron-right"_s, stroke.arg(muted, u"<path d='m9 18 6-6-6-6'/>"_s)));
     qss.replace(u"@chevronUp@"_s, asset(u"qss-chevron-up"_s, stroke.arg(muted, u"<path d='m18 15-6-6-6 6'/>"_s)));
     qss.replace(u"@check@"_s, asset(u"qss-check"_s, stroke.arg(onAccent, u"<path d='M20 6 9 17l-5-5'/>"_s).replace(u"stroke-width='2'"_s, u"stroke-width='3'"_s)));
     qss.replace(u"@partial@"_s, asset(u"qss-partial"_s, stroke.arg(onAccent, u"<path d='M6 12h12'/>"_s).replace(u"stroke-width='2'"_s, u"stroke-width='3'"_s)));

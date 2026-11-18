@@ -1,0 +1,20 @@
+{
+  "id": "charcoal",
+  "name": "Charcoal",
+  "appearance": "dark",
+  "colors": {
+    "bg": "#1C1D1F",
+    "panel": "#18191B",
+    "raised": "#26282B",
+    "hover": "#222326",
+    "line": "#2E3033",
+    "text": "#E8E9EA",
+    "muted": "#ACAFB3",
+    "faint": "#959A9F",
+    "ring": "#55595E",
+    "accent": "#7DD3C0",
+    "ok": "#6CCB8E",
+    "warn": "#E5B567",
+    "bad": "#EF7470"
+  }
+}

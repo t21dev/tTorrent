@@ -1,0 +1,20 @@
+{
+  "id": "aurora",
+  "name": "Aurora",
+  "appearance": "dark",
+  "colors": {
+    "bg": "#0F1420",
+    "panel": "#0C101A",
+    "raised": "#1A2133",
+    "hover": "#151B2A",
+    "line": "#222B40",
+    "text": "#E8F0FF",
+    "muted": "#A8B6D6",
+    "faint": "#8E9CBE",
+    "ring": "#364262",
+    "accent": "#5EEAD4",
+    "ok": "#86EFAC",
+    "warn": "#FCD34D",
+    "bad": "#FB7185"
+  }
+}

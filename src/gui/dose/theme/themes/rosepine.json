@@ -1,0 +1,20 @@
+{
+  "id": "rosepine",
+  "name": "Rosé Pine",
+  "appearance": "dark",
+  "colors": {
+    "bg": "#191724",
+    "panel": "#16141F",
+    "raised": "#26233A",
+    "hover": "#1F1D2E",
+    "line": "#2A273F",
+    "text": "#E0DEF4",
+    "muted": "#C3C0DA",
+    "faint": "#A9A5C4",
+    "ring": "#524F67",
+    "accent": "#C4A7E7",
+    "ok": "#9CCFD8",
+    "warn": "#F6C177",
+    "bad": "#EB6F92"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "id": "ember",
+  "name": "Ember",
+  "appearance": "dark",
+  "colors": {
+    "bg": "#1A1412",
+    "panel": "#15100E",
+    "raised": "#261D1A",
+    "hover": "#201816",
+    "line": "#33282A",
+    "text": "#F5E9E2",
+    "muted": "#C7B2A6",
+    "faint": "#AD978D",
+    "ring": "#5A4740",
+    "accent": "#FF7A45",
+    "ok": "#8BD17C",
+    "warn": "#F2C14E",
+    "bad": "#FF6B6B"
+  }
+}

@@ -15,10 +15,10 @@ QToolBar {
     background: @bg@;
     border: none;
     border-bottom: 1px solid @line@;
-    padding: @toolPad@px 8px;
-    spacing: 4px;
+    padding: @toolPad@px 12px;
+    spacing: 6px;
 }
-QToolBar::separator { width: 1px; background: @line@; margin: 6px 6px; }
+QToolBar::separator { width: 1px; background: @line@; margin: 8px 8px; }
 QToolButton {
     border: 1px solid transparent;
     border-radius: @radius@px;
@@ -29,21 +29,31 @@ QToolButton:hover { background: @hover@; }
 QToolButton:pressed { background: @panel@; }
 QToolButton:checked { background: @select@; }
 
-QMenuBar { background: transparent; padding: 2px 4px; }
-QMenuBar::item { padding: @padV@px 10px; border-radius: 6px; background: transparent; color: @muted@; }
+QMenuBar { background: transparent; padding: 2px 4px; spacing: 2px; }
+QMenuBar::item { padding: @padV@px 11px; border-radius: 8px; background: transparent; color: @muted@; }
 QMenuBar::item:selected { background: @hover@; color: @text@; }
+QMenuBar::item:pressed { background: @select@; color: @text@; }
+/* Menus: room for icons on the left and shortcuts on the right, so nothing
+   is clipped; rounded 14 px with 10 px items. */
 QMenu {
     background: @raised@;
     border: 1px solid @line@;
-    border-radius: 12px;
+    border-radius: 14px;
     padding: 6px;
+    min-width: 220px;
 }
-QMenu::item { padding: @padV@px 28px @padV@px 10px; border-radius: 6px; }
+QMenu::item {
+    padding: @padV@px 40px @padV@px 12px;
+    margin: 1px 0;
+    border-radius: 9px;
+    min-height: 20px;
+}
 QMenu::item:selected { background: @hover@; color: @text@; }
 QMenu::item:disabled { color: @ring@; }
-QMenu::separator { height: 1px; background: @line@; margin: 6px 4px; }
-QMenu::icon { padding-left: 6px; }
-QMenu::indicator { width: 14px; height: 14px; }
+QMenu::separator { height: 1px; background: @line@; margin: 6px 10px; }
+QMenu::icon { padding-left: 10px; }
+QMenu::indicator { width: 14px; height: 14px; left: 10px; }
+QMenu::right-arrow { image: url(@chevronRight@); width: 12px; height: 12px; right: 12px; }
 
 QTreeView, QTableView, QListView, QTreeWidget, QListWidget {
     background: @bg@;
@@ -66,11 +76,11 @@ QTreeView::item:selected, QTableView::item:selected, QListView::item:selected {
 QHeaderView { background: @bg@; border: none; }
 QHeaderView::section {
     background: @bg@;
-    color: @muted@;
+    color: @faint@;
     border: none;
     border-bottom: 1px solid @line@;
-    border-right: 1px solid @line@;
-    padding: @padV@px 8px;
+    border-right: 1px solid @rowRule@;
+    padding: @padV@px 10px;
     font-weight: 500;
 }
 QHeaderView::section:hover { color: @text@; }
@@ -99,7 +109,7 @@ QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QDoubleSpinBox:focus, QPlainTe
     border: 1px solid @accent@;
 }
 QLineEdit:disabled, QComboBox:disabled, QSpinBox:disabled { color: @ring@; }
-QComboBox { padding-right: 28px; min-width: 60px; }
+QComboBox { padding-right: 30px; min-width: 70px; combobox-popup: 0; }
 QComboBox:hover, QSpinBox:hover, QDoubleSpinBox:hover, QLineEdit:hover { border-color: @ring@; }
 QComboBox::drop-down { subcontrol-origin: padding; subcontrol-position: center right; border: none; width: 26px; }
 QComboBox::down-arrow { image: url(@chevronDown@); width: 14px; height: 14px; }
@@ -107,13 +117,13 @@ QComboBox::down-arrow:on { image: url(@chevronUp@); }
 QComboBox QAbstractItemView {
     background: @raised@;
     border: 1px solid @line@;
-    border-radius: 10px;
+    border-radius: 12px;
     selection-background-color: @select@;
     selection-color: @text@;
     padding: 4px;
     outline: 0;
 }
-QComboBox QAbstractItemView::item { min-height: 26px; padding: 0 8px; border-radius: 6px; border: none; }
+QComboBox QAbstractItemView::item { min-height: 30px; padding: 0 10px; margin: 1px 0; border-radius: 8px; border: none; }
 QComboBox QAbstractItemView::item:hover { background: @hover@; }
 QComboBoxPrivateContainer { background: transparent; border: none; }
 
@@ -132,7 +142,8 @@ QPushButton {
     background: @raised@;
     border: 1px solid @line@;
     border-radius: @radius@px;
-    padding: @padV@px 14px;
+    padding: @padV@px 16px;
+    min-width: 64px;
     color: @text@;
 }
 QPushButton:hover { background: @hover@; }
@@ -164,9 +175,9 @@ QRadioButton::indicator:checked { background: @accent@; border-color: @accent@; 
 /* Group title above a rounded box, not on its border (DESIGN.md › Settings). */
 QGroupBox {
     border: 1px solid @line@;
-    border-radius: 12px;
-    margin-top: 30px;
-    padding: 12px 12px 10px 12px;
+    border-radius: 14px;
+    margin-top: 32px;
+    padding: 14px 14px 12px 14px;
     background: transparent;
 }
 QGroupBox::title {
@@ -225,7 +236,7 @@ QPushButton:flat, QPushButton[flat="true"] { background: transparent; border: no
 QPushButton:flat:hover { background: @hover@; color: @text@; }
 QPushButton:flat:checked, QPushButton:flat:pressed { background: @select@; color: @text@; }
 
-QToolTip { background: @raised@; color: @text@; border: 1px solid @line@; padding: 4px 8px; border-radius: 6px; }
+QToolTip { background: @raised@; color: @text@; border: 1px solid @line@; padding: 6px 10px; border-radius: 9px; }
 
 /* Details tabs (General … Speed): an accent underline under the current one. */
 QPushButton[doseTab="true"], QPushButton[doseTab="true"]:flat {
