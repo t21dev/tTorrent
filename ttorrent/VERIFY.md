@@ -110,10 +110,14 @@ Only when the owner asks.
 
 1. Bump `TTORRENT_VERSION` in `src/base/ttorrentversion.h` (and `TTORRENT_VERSION_LABEL` if it's no longer a preview).
 2. Build, then run the screenshot pass and check the About dialog shows the new version.
-3. Stage `build\Release` without `ttorrent-old*.exe`, add `COPYING` as `COPYING.txt`, and zip it as `tTorrent-<version>-windows-x64.zip`. Write `sha256.txt`.
-4. Unzip into an empty folder and start it with a scratch profile: it must start and listen.
+3. Stage `build\Release` without `ttorrent-old*.exe`, add `COPYING` as `COPYING.txt`, and zip it as `tTorrent-<version>-windows-x64.zip`. Build the installer from the same folder with `ttorrent\scripts\make-installer.ps1 -Dist <staged folder> -Out tTorrent-<version>-windows-x64-setup.exe` (needs NSIS 3). Write `sha256.txt` with both files.
+4. Unzip into an empty folder and start it with a scratch profile: it must start and listen. Then test the installer:
+   - First back up the Start Menu `tTorrent.lnk` and `HKCU\Software\RegisteredApplications`; the test replaces and removes them.
+   - Run `setup.exe /S /D=<scratch folder>` and start the installed exe with a scratch profile.
+   - Uninstall with `uninstall.exe /S _?=<scratch folder>`: the folder, the `tTorrent` keys and the shortcuts must be gone.
+   - Restore the backups.
 5. Commit `chore(release): <version>`, tag `v<version>`, push both.
-6. `gh release create v<version> -R t21dev/tTorrent --prerelease --title "tTorrent <version> (preview)" --notes-file <notes> <zip> <sha256.txt>`.
+6. `gh release create v<version> -R t21dev/tTorrent --prerelease --title "tTorrent <version> (preview)" --notes-file <notes> <setup.exe> <zip> <sha256.txt>`.
    - The notes list what's new and what's left out.
    - Any figures come from a benchmark, with how they were measured and which build they came from.
 7. Install locally with `ttorrent\scripts\install-local.ps1`.
