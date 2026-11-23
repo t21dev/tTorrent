@@ -29,6 +29,9 @@ RequestExecutionLevel user
 !include "MUI2.nsh"
 !include "x64.nsh"
 !include "FileFunc.nsh"
+!include "WordFunc.nsh"
+!include "LogicLib.nsh"
+!include "nsDialogs.nsh"
 
 !define APP "tTorrent"
 !define UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\tTorrent"
@@ -58,6 +61,7 @@ VIAddVersionKey "LegalCopyright" "© 2026 t21 dev. GPL."
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_LICENSE "${TT_DIST}\COPYING.txt"
 !insertmacro MUI_PAGE_COMPONENTS
+Page custom AssocPage AssocPageLeave
 !define MUI_PAGE_CUSTOMFUNCTION_LEAVE CheckRunning
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
@@ -85,11 +89,48 @@ FunctionEnd
 !insertmacro CHECK_RUNNING ""
 !insertmacro CHECK_RUNNING "un."
 
+; The "Open with tTorrent" page: both choices start ticked. /ASSOC=0 on the
+; command line unticks both (silent test installs, see VERIFY.md › Releases).
+Var AssocMagnet
+Var AssocTorrent
+Var CheckMagnet
+Var CheckTorrent
+
 Function .onInit
   ${IfNot} ${RunningX64}
     MessageBox MB_OK|MB_ICONSTOP "tTorrent needs 64-bit Windows."
     Abort
   ${EndIf}
+  StrCpy $AssocMagnet ${BST_CHECKED}
+  StrCpy $AssocTorrent ${BST_CHECKED}
+  ${GetParameters} $0
+  ClearErrors
+  ${GetOptions} $0 "/ASSOC=" $1
+  ${IfNot} ${Errors}
+  ${AndIf} $1 == "0"
+    StrCpy $AssocMagnet ${BST_UNCHECKED}
+    StrCpy $AssocTorrent ${BST_UNCHECKED}
+  ${EndIf}
+FunctionEnd
+
+Function AssocPage
+  !insertmacro MUI_HEADER_TEXT "Open with tTorrent" "Choose what tTorrent opens for you."
+  nsDialogs::Create 1018
+  Pop $0
+  ${NSD_CreateCheckbox} 0 0 100% 12u "Open &magnet links with tTorrent"
+  Pop $CheckMagnet
+  ${NSD_SetState} $CheckMagnet $AssocMagnet
+  ${NSD_CreateCheckbox} 0 18u 100% 12u "Open &.torrent files with tTorrent"
+  Pop $CheckTorrent
+  ${NSD_SetState} $CheckTorrent $AssocTorrent
+  ${NSD_CreateLabel} 0 42u 100% 40u "If you already chose another app for these in Windows Settings, Windows asks you to confirm the change. Default apps then opens after installing, on tTorrent's page."
+  Pop $0
+  nsDialogs::Show
+FunctionEnd
+
+Function AssocPageLeave
+  ${NSD_GetState} $CheckMagnet $AssocMagnet
+  ${NSD_GetState} $CheckTorrent $AssocTorrent
 FunctionEnd
 
 Section "tTorrent (required)" SecApp
@@ -121,24 +162,56 @@ Section "Desktop shortcut" SecDesktop
   CreateShortCut "$DESKTOP\tTorrent.lnk" "$INSTDIR\ttorrent.exe"
 SectionEnd
 
-; Lists tTorrent in Windows' Default apps for .torrent files and magnet links.
-; Windows still asks the person before it becomes the default.
-Section "Offer tTorrent for .torrent files and magnet links" SecAssoc
-  WriteRegStr HKCU "Software\Classes\tTorrent.torrent" "" "Torrent file"
-  WriteRegStr HKCU "Software\Classes\tTorrent.torrent\DefaultIcon" "" '"$INSTDIR\ttorrent.exe",1'
-  WriteRegStr HKCU "Software\Classes\tTorrent.torrent\shell\open\command" "" '"$INSTDIR\ttorrent.exe" "%1"'
-  WriteRegStr HKCU "Software\Classes\.torrent\OpenWithProgids" "tTorrent.torrent" ""
-  WriteRegStr HKCU "Software\Classes\tTorrent.magnet" "" "Magnet link"
-  WriteRegStr HKCU "Software\Classes\tTorrent.magnet" "URL Protocol" ""
-  WriteRegStr HKCU "Software\Classes\tTorrent.magnet\DefaultIcon" "" '"$INSTDIR\ttorrent.exe",0'
-  WriteRegStr HKCU "Software\Classes\tTorrent.magnet\shell\open\command" "" '"$INSTDIR\ttorrent.exe" "%1"'
-  WriteRegStr HKCU "Software\tTorrent\Capabilities" "ApplicationName" "tTorrent"
-  WriteRegStr HKCU "Software\tTorrent\Capabilities" "ApplicationDescription" "A fast, modern torrent client"
-  WriteRegStr HKCU "Software\tTorrent\Capabilities" "ApplicationIcon" '"$INSTDIR\ttorrent.exe",0'
-  WriteRegStr HKCU "Software\tTorrent\Capabilities\FileAssociations" ".torrent" "tTorrent.torrent"
-  WriteRegStr HKCU "Software\tTorrent\Capabilities\URLAssociations" "magnet" "tTorrent.magnet"
-  WriteRegStr HKCU "Software\RegisteredApplications" "tTorrent" "Software\tTorrent\Capabilities"
-  System::Call 'shell32::SHChangeNotify(i 0x8000000, i 0, p 0, p 0)'
+; Makes tTorrent the handler for what the person ticked, for this user only
+; (HKCU; qBittorrent's keys under HKLM are never touched). Windows keeps a
+; default the person chose in Settings (UserChoice) and won't let an
+; installer change it, so then Default apps opens on tTorrent's page.
+Section "-Open with tTorrent" SecAssoc
+  StrCpy $R9 0 ; 1 when Windows has to confirm a change in Default apps
+  ${If} $AssocTorrent == ${BST_CHECKED}
+    WriteRegStr HKCU "Software\Classes\tTorrent.torrent" "" "Torrent file"
+    WriteRegStr HKCU "Software\Classes\tTorrent.torrent\DefaultIcon" "" '"$INSTDIR\ttorrent.exe",1'
+    WriteRegStr HKCU "Software\Classes\tTorrent.torrent\shell\open\command" "" '"$INSTDIR\ttorrent.exe" "%1"'
+    WriteRegStr HKCU "Software\Classes\.torrent\OpenWithProgids" "tTorrent.torrent" ""
+    WriteRegStr HKCU "Software\Classes\.torrent" "" "tTorrent.torrent"
+    WriteRegStr HKCU "Software\tTorrent\Capabilities\FileAssociations" ".torrent" "tTorrent.torrent"
+    ReadRegStr $0 HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.torrent\UserChoice" "ProgId"
+    ${If} $0 != ""
+    ${AndIf} $0 != "tTorrent.torrent"
+      StrCpy $R9 1
+    ${EndIf}
+  ${EndIf}
+  ${If} $AssocMagnet == ${BST_CHECKED}
+    WriteRegStr HKCU "Software\Classes\tTorrent.magnet" "" "Magnet link"
+    WriteRegStr HKCU "Software\Classes\tTorrent.magnet" "URL Protocol" ""
+    WriteRegStr HKCU "Software\Classes\tTorrent.magnet\DefaultIcon" "" '"$INSTDIR\ttorrent.exe",0'
+    WriteRegStr HKCU "Software\Classes\tTorrent.magnet\shell\open\command" "" '"$INSTDIR\ttorrent.exe" "%1"'
+    ; Browsers only open magnet: links when a "magnet" key exists.
+    WriteRegStr HKCU "Software\Classes\magnet" "" "URL:Magnet link"
+    WriteRegStr HKCU "Software\Classes\magnet" "URL Protocol" ""
+    WriteRegStr HKCU "Software\Classes\magnet\DefaultIcon" "" '"$INSTDIR\ttorrent.exe",0'
+    WriteRegStr HKCU "Software\Classes\magnet\shell\open\command" "" '"$INSTDIR\ttorrent.exe" "%1"'
+    WriteRegStr HKCU "Software\tTorrent\Capabilities\URLAssociations" "magnet" "tTorrent.magnet"
+    ; "magnet" itself now resolves to the key above, so it counts as ours.
+    ReadRegStr $0 HKCU "Software\Microsoft\Windows\Shell\Associations\UrlAssociations\magnet\UserChoice" "ProgId"
+    ${If} $0 != ""
+    ${AndIf} $0 != "tTorrent.magnet"
+    ${AndIf} $0 != "magnet"
+      StrCpy $R9 1
+    ${EndIf}
+  ${EndIf}
+  ${If} $AssocTorrent == ${BST_CHECKED}
+  ${OrIf} $AssocMagnet == ${BST_CHECKED}
+    WriteRegStr HKCU "Software\tTorrent\Capabilities" "ApplicationName" "tTorrent"
+    WriteRegStr HKCU "Software\tTorrent\Capabilities" "ApplicationDescription" "A fast, modern torrent client"
+    WriteRegStr HKCU "Software\tTorrent\Capabilities" "ApplicationIcon" '"$INSTDIR\ttorrent.exe",0'
+    WriteRegStr HKCU "Software\RegisteredApplications" "tTorrent" "Software\tTorrent\Capabilities"
+    System::Call 'shell32::SHChangeNotify(i 0x8000000, i 0, p 0, p 0)'
+    ${If} $R9 == 1
+    ${AndIfNot} ${Silent}
+      ExecShell "open" "ms-settings:defaultapps?registeredAppUser=tTorrent"
+    ${EndIf}
+  ${EndIf}
 SectionEnd
 
 ; Removes only what the installer put there. Torrents, settings and downloads
@@ -154,7 +227,16 @@ Section "Uninstall"
 
   DeleteRegKey HKCU "Software\Classes\tTorrent.torrent"
   DeleteRegKey HKCU "Software\Classes\tTorrent.magnet"
+  ; The magnet scheme key only if it still points at tTorrent.
+  ClearErrors
+  ReadRegStr $0 HKCU "Software\Classes\magnet\shell\open\command" ""
+  ${un.WordFind} "$0" "ttorrent.exe" "E#" $1
+  IfErrors +2
+    DeleteRegKey HKCU "Software\Classes\magnet"
   DeleteRegValue HKCU "Software\Classes\.torrent\OpenWithProgids" "tTorrent.torrent"
+  ReadRegStr $0 HKCU "Software\Classes\.torrent" ""
+  StrCmp $0 "tTorrent.torrent" 0 +2
+    DeleteRegValue HKCU "Software\Classes\.torrent" ""
   DeleteRegKey HKCU "Software\tTorrent\Capabilities"
   DeleteRegKey /ifempty HKCU "Software\tTorrent"
   DeleteRegValue HKCU "Software\RegisteredApplications" "tTorrent"

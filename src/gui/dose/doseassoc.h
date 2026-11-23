@@ -24,6 +24,9 @@ namespace DoseAssoc
     // Writes tTorrent's file type, magnet handler and capabilities under
     // HKEY_CURRENT_USER, pointing at this exe.
     void registerForUser();
+    // Adds the magnet scheme key if this exe is registered but the key is
+    // missing (installs made before it existed). Cheap: a few registry reads.
+    void repairMagnetScheme();
     // registerForUser(), then opens tTorrent's page in Default apps.
     void registerAndOpenSettings();
 }
