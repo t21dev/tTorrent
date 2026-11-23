@@ -174,14 +174,15 @@ QFont DosePaint::numberFont(const QFont &base)
     return font;
 }
 
-void DosePaint::styleCell(QStyleOptionViewItem *option, const QModelIndex &index, const bool keepStateColour, const bool isZero)
+void DosePaint::styleCell(QStyleOptionViewItem *option, const QModelIndex &index, const bool keepStateColour, const bool isZero
+    , const QString &role)
 {
     if (!active())
         return;
     Q_UNUSED(index);
     if (option->displayAlignment.testFlag(Qt::AlignRight))
         option->font = numberFont(option->font);
-    QColor colour = keepStateColour ? QColor() : token(u"text"_s);
+    QColor colour = keepStateColour ? QColor() : token(role.isEmpty() ? u"text"_s : role);
     if (isZero)
         colour = token(u"faint"_s);
     if (colour.isValid())
@@ -442,4 +443,15 @@ void DosePaint::setAccentHover(const bool on)
 {
     cachedLook(u"Appearance/ButtonHover"_s, u"grey"_s) = on ? u"accent"_s : u"grey"_s;
     SettingsStorage::instance()->storeValue(u"Appearance/ButtonHover"_s, on ? u"accent"_s : u"grey"_s);
+}
+
+bool DosePaint::speedColours()
+{
+    return active() && (cachedLook(u"Appearance/SpeedColours"_s, u"on"_s) == u"on");
+}
+
+void DosePaint::setSpeedColours(const bool on)
+{
+    cachedLook(u"Appearance/SpeedColours"_s, u"on"_s) = on ? u"on"_s : u"off"_s;
+    SettingsStorage::instance()->storeValue(u"Appearance/SpeedColours"_s, on ? u"on"_s : u"off"_s);
 }

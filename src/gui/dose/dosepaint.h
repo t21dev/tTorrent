@@ -37,7 +37,9 @@ namespace DosePaint
 
     // Right-aligned cells use the number font; zero values fade to `faint`.
     // Only the status column keeps its state colour; others use `text`.
-    void styleCell(QStyleOptionViewItem *option, const QModelIndex &index, bool keepStateColour, bool isZero);
+    // A non-empty `role` (a theme token) colours the text instead of `text`.
+    void styleCell(QStyleOptionViewItem *option, const QModelIndex &index, bool keepStateColour, bool isZero
+        , const QString &role = {});
 
     // Progress bar style for the transfer list (Appearance/ProgressStyle):
     // "line" (4 px, the default), "bar" (8 px) or "filled" (the whole cell,
@@ -78,6 +80,10 @@ namespace DosePaint
     // (Appearance/ButtonHover).
     bool accentHover();
     void setAccentHover(bool on);
+    // Settings › Look › Speeds: coloured (default; download `accent`, upload
+    // `ok`, as in the status bar and speed graph) or plain (Appearance/SpeedColours).
+    bool speedColours();
+    void setSpeedColours(bool on);
     bool paintsOwnRows(const QWidget *view);
     // Their padding (the density's row padding) and background: hover,
     // selection and the hairline under each row, as the stylesheet draws them.

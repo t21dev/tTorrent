@@ -376,6 +376,22 @@ QGroupBox#doseInfoBox { border: none; margin-top: 0; padding: 0 0 0 22px; }
             }
         });
 
+        auto *speeds = new QComboBox;
+        speeds->addItem(QDialog::tr("Coloured, as in the status bar"), true);
+        speeds->addItem(QDialog::tr("Plain"), false);
+        speeds->setCurrentIndex(DosePaint::speedColours() ? 0 : 1);
+        form->addWidget(new QLabel(QDialog::tr("Speeds in the list:")), row, 0);
+        form->addWidget(speeds, row++, 1, Qt::AlignLeft);
+        QObject::connect(speeds, &QComboBox::activated, group, [speeds](int)
+        {
+            DosePaint::setSpeedColours(speeds->currentData().toBool());
+            for (QWidget *w : QApplication::allWidgets())
+            {
+                if (w->inherits("TransferListWidget"))
+                    static_cast<QAbstractScrollArea *>(w)->viewport()->update();
+            }
+        });
+
         auto *fills = new QComboBox;
         fills->addItem(QDialog::tr("Flat"), false);
         fills->addItem(QDialog::tr("Gradient, deep to bright"), true);

@@ -169,12 +169,15 @@ void TransferListDelegate::initStyleOption(QStyleOptionViewItem *option, const Q
     }
 
     bool isZero = false;
+    QString role; // tTorrent: speeds in the status bar's colours (Settings › Look › Speeds)
     const QVariant value = index.data(TransferListModel::UnderlyingDataRole);
     switch (column)
     {
     case TransferListModel::TR_DLSPEED:
     case TransferListModel::TR_UPSPEED:
         isZero = (value.toLongLong() == 0);
+        if (DosePaint::speedColours()) // tTorrent
+            role = (column == TransferListModel::TR_DLSPEED) ? u"accent"_s : u"ok"_s;
         break;
     case TransferListModel::TR_ETA:
         isZero = (value.toLongLong() >= MAX_ETA);
@@ -182,5 +185,5 @@ void TransferListDelegate::initStyleOption(QStyleOptionViewItem *option, const Q
     default:
         break;
     }
-    DosePaint::styleCell(option, index, (column == TransferListModel::TR_STATUS), isZero);
+    DosePaint::styleCell(option, index, (column == TransferListModel::TR_STATUS), isZero, role);
 }
