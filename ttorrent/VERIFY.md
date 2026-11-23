@@ -69,7 +69,7 @@ estore-backup.pending`, start with `TTORRENT_SELFTEST_REPORT=1`: the save path, 
 
 Any claim that something is lighter or faster needs a benchmark, before and after.
 
-**Setup.** `ttorrent\scripts\bench.ps1` runs qBittorrent and/or tTorrent, one at a time, on fresh copies of a profile copy (`-Source`, made once with the owner's permission; currently `T:\dev\ttorrent-bench\qb-profile-2026-11-18`, about 735 torrents). Each copy has:
+**Setup.** `ttorrent\scripts\bench.ps1` runs qBittorrent and/or tTorrent, one at a time, on fresh copies of a profile copy (`-Source`, made once with the owner's permission; kept in `L:\dev\ttorrent-bench`; the 2026-11-18 copy of about 735 torrents was on the old `T:` drive and has to be made again, with permission). Each copy has:
 - the Web UI off;
 - downloads limited to 1 KiB/s;
 - the window minimized to the tray;
@@ -87,10 +87,10 @@ It keeps each app's log next to the results.
 
 ```
 # Snapshot the build first, so later builds don't change what's measured:
-#   copy build\Release\* to T:\dev\ttorrent-bench\tt-build-<HHmm>\
+#   copy build\Release\* to L:\dev\ttorrent-bench\tt-build-<HHmm>\
 powershell -ExecutionPolicy Bypass -File ttorrent\scripts\bench.ps1 `
-  -Source T:\dev\ttorrent-bench\qb-profile-2026-11-18 -Out T:\dev\ttorrent-bench\results-<date><letter> `
-  -TtExe T:\dev\ttorrent-bench\tt-build-<HHmm>\ttorrent.exe -Apps both -StartupRuns 3 -SoakMinutes 30
+  -Source L:\dev\ttorrent-bench\qb-profile-2026-11-18 -Out L:\dev\ttorrent-bench\results-<date><letter> `
+  -TtExe L:\dev\ttorrent-bench\tt-build-<HHmm>\ttorrent.exe -Apps both -StartupRuns 3 -SoakMinutes 30
 ```
 
 - **Comparison with qBittorrent:** `-Apps both`, 30 minutes or more.
@@ -113,7 +113,7 @@ Only when the owner asks.
 3. Stage `build\Release` without `ttorrent-old*.exe`, add `COPYING` as `COPYING.txt`, and zip it as `tTorrent-<version>-windows-x64.zip`. Build the installer from the same folder with `ttorrent\scripts\make-installer.ps1 -Dist <staged folder> -Out tTorrent-<version>-windows-x64-setup.exe` (needs NSIS 3). Write `sha256.txt` with both files.
 4. Unzip into an empty folder and start it with a scratch profile: it must start and listen. Then test the installer:
    - First back up the Start Menu `tTorrent.lnk` and `HKCU\Software\RegisteredApplications`; the test replaces and removes them.
-   - Run `setup.exe /S /D=<scratch folder>` and start the installed exe with a scratch profile.
+   - Run `setup.exe /S /ASSOC=0 /D=<scratch folder>` (`/ASSOC=0` leaves your own magnet and .torrent handlers alone) and start the installed exe with a scratch profile.
    - Uninstall with `uninstall.exe /S _?=<scratch folder>`: the folder, the `tTorrent` keys and the shortcuts must be gone.
    - Restore the backups.
 5. Commit `chore(release): <version>`, tag `v<version>`, push both.

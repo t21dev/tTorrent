@@ -4,7 +4,7 @@
 # Output: <build>\Release\ttorrent.exe with its Qt and library DLLs beside it.
 # Usage: powershell -ExecutionPolicy Bypass -File ttorrent\scripts\build.ps1 [-Clean] [-Build build] [-QtVersion 6.12.1]
 
-param([switch]$Clean, [string]$Dev = 'T:\dev', [string]$Build = 'build', [string]$QtVersion = '6.12.1')
+param([switch]$Clean, [string]$Dev = 'L:\dev', [string]$Build = 'build', [string]$QtVersion = '6.12.1')
 $ErrorActionPreference = 'Stop'
 $src = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $build = Join-Path $src $Build

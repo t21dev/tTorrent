@@ -13,7 +13,7 @@
 #
 # Usage (from the repo root):
 #   powershell -ExecutionPolicy Bypass -File ttorrent\scripts\bench.ps1 `
-#     -Source T:\dev\ttorrent-bench\qb-profile-2026-11-18 -Out T:\dev\ttorrent-bench\results `
+#     -Source L:\dev\ttorrent-bench\qb-profile-2026-11-18 -Out L:\dev\ttorrent-bench\results `
 #     -StartupRuns 3 -StartupSeconds 120 -SoakMinutes 60
 
 param(
