@@ -35,7 +35,7 @@ QToolBar QToolButton:hover, QToolBar QToolButton:pressed, QToolBar QToolButton:c
 
 QMenuBar { background: transparent; padding: 2px 4px; spacing: 2px; }
 QMenuBar::item { padding: @padV@px 11px; border-radius: 8px; background: transparent; color: @muted@; }
-QMenuBar::item:selected { background: @hover@; color: @text@; }
+QMenuBar::item:selected { background: @controlHover@; color: @text@; }
 QMenuBar::item:pressed { background: @select@; color: @text@; }
 /* Menus: room for icons on the left and shortcuts on the right, so nothing
    is clipped; rounded 14 px with 10 px items. */
@@ -259,7 +259,8 @@ QPushButton:flat, QPushButton[flat="true"] { background: transparent; border: no
 QPushButton:flat:hover { color: @text@; }
 QPushButton:flat:checked, QPushButton:flat:pressed { color: @text@; }
 
-QToolTip { background: @raised@; color: @text@; border: 1px solid @line@; padding: 6px 10px; border-radius: 9px; }
+/* Tooltips: inverted and small, so they never read as a menu. */
+QToolTip { background: @text@; color: @bg@; border: 1px solid @text@; padding: 3px 7px; border-radius: 5px; font-size: @fontSmall@px; }
 
 /* Details tabs (General … Speed): an accent underline under the current one. */
 QPushButton[doseTab="true"], QPushButton[doseTab="true"]:flat {
@@ -310,7 +311,7 @@ QCheckBox#doseSideHeading::indicator { width: 10px; height: 10px; border: none; 
 QCheckBox#doseSideHeading::indicator:unchecked { image: url(@chevronRight@); }
 QAbstractItemView#doseSideList { background: @panel@; border: none; outline: 0; }
 QAbstractItemView#doseSideList::item { border: none; border-radius: 9px; padding: @rowPad@px 8px; margin: 0 6px; color: @muted@; }
-QAbstractItemView#doseSideList::item:hover { background: @hover@; color: @text@; }
+QAbstractItemView#doseSideList::item:hover { background: @controlHover@; color: @text@; }
 QAbstractItemView#doseSideList::item:selected { background: @select@; color: @text@; }
 
 QStatusBar QPushButton#doseDown { color: @accent@; }

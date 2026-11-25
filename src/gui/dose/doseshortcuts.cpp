@@ -629,7 +629,11 @@ namespace
             const int rows = std::min(m_list->count(), 8);
             const int rowHeight = std::max(1, m_list->sizeHintForRow(0));
             m_list->setFixedHeight((rows * rowHeight) + 4);
-            const int width = std::max(m_edit->width(), 460);
+            // As wide as the search field it hangs from, edge to edge.
+            QWidget *field = m_edit->parentWidget();
+            if (!field || (field->objectName() != u"doseSearchField"))
+                field = m_edit;
+            const int width = std::max(field->width(), 360);
             // Height from its parts, so a shorter list shrinks the card at once:
             // card margins and border, title, list, hint and the gaps between.
             const auto *column = m_list->parentWidget()->layout();
@@ -637,7 +641,7 @@ namespace
             const int height = m.top() + m.bottom() + 2 + m_title->sizeHint().height() + m_list->maximumHeight()
                 + m_hint->sizeHint().height() + (2 * column->spacing());
             setFixedSize(width, height);
-            move(m_edit->mapToGlobal(QPoint((m_edit->width() - width) / 2, m_edit->height() + 6)));
+            move(field->mapToGlobal(QPoint((field->width() - width) / 2, field->height() + 6)));
         }
 
         void step(const int delta)

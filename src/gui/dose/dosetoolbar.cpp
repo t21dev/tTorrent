@@ -247,7 +247,7 @@ void DoseToolbar::polishFilter(QLineEdit *edit, QComboBox *columns)
     // The field: a rounded well holding a search button and the text box.
     auto *field = new QFrame;
     field->setObjectName(QStringLiteral("doseSearchField"));
-    field->setFixedSize(380, 28);
+    field->setFixedSize(440, 28); // the command list below matches this width
     auto *row = new QHBoxLayout(field);
     row->setContentsMargins(4, 0, 6, 0);
     row->setSpacing(2);

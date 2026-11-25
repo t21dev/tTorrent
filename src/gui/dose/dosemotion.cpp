@@ -18,6 +18,7 @@
 #include <QEvent>
 #include <QPainter>
 #include <QPainterPath>
+#include <QPointer>
 #include <QPushButton>
 #include <QStatusBar>
 #include <QToolBar>
@@ -143,7 +144,7 @@ namespace
         switch (kind)
         {
         case Kind::Raised:
-            fill = !enabled ? token("panel") : (down ? token("well") : mix(token("raised"), token("hover"), hover));
+            fill = !enabled ? token("panel") : (down ? token("well") : mix(token("raised"), token("raisedHover"), hover));
             border = !enabled ? token("line") : mix(token("line"), token("ring"), down ? 0 : hover);
             bottom = !enabled ? token("line") : (down ? token("line") : mix(token("edgeLo"), token("ring"), hover));
             break;
@@ -256,8 +257,34 @@ namespace
         }
 
     private:
+        // Widgets showing any hover. Only the one under the pointer may stay lit:
+        // a Leave can go missing (a popup opened over the button, a fast sweep
+        // across the toolbar), which left two buttons looking hovered at once.
+        QList<QPointer<QWidget>> m_lit;
+
+        void dimOthers(const QWidget *current)
+        {
+            const QList<QPointer<QWidget>> lit = m_lit;
+            for (const QPointer<QWidget> &other : lit)
+            {
+                if (other && (other != current) && !other->underMouse())
+                    fade(other, 0.0);
+            }
+        }
+
         void fade(QWidget *widget, const qreal to)
         {
+            if (to > 0)
+            {
+                dimOthers(widget);
+                if (!m_lit.contains(widget))
+                    m_lit.append(widget);
+            }
+            else
+            {
+                m_lit.removeAll(widget);
+                m_lit.removeAll(nullptr);
+            }
             const qreal from = widget->property(AMOUNT).toReal();
             if (qFuzzyCompare(from + 1, to + 1))
                 return;
@@ -282,8 +309,9 @@ namespace
             animation->stop();
             animation->setStartValue(from);
             animation->setEndValue(to);
-            // Out is a touch slower than in, so leaving doesn't flicker.
-            animation->setDuration((to > from) ? 120 : 180);
+            // Quick in so the hover answers the pointer; out a little longer but
+            // short enough that a sweep never leaves a trail of lit buttons.
+            animation->setDuration((to > from) ? 70 : 110);
             animation->start();
         }
     };

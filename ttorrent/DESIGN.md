@@ -35,6 +35,9 @@ Derived per theme:
 | `well`, `wellEdge` | darker than `bg` | Text fields and other inset surfaces |
 | `card` | between `bg` and `panel` | Settings groups |
 | `menuHover` | `hover` tuned for menus | Menu item hover |
+| `controlHover` | `text` over `bg`: 6 % light, 9 % dark | Menu bar items, sidebar rows |
+| `raisedHover` | `text` over `raised`: 5 % light, 8 % dark | Raised button hover |
+| `accentHover` | accent, 25 % toward white (dark) or black (light) | Default button and Add torrent hover |
 
 Accent presets: Theme (the theme's own), Emerald, Blue, Grape, Amber, Rose, Wine, Mono, or any hex.
 
@@ -88,7 +91,7 @@ Density changes spacing everywhere, through the stylesheet tokens and `DoseStyle
 - **Key caps**: DM Mono on `well`, 1 px `line` with a 2 px bottom edge, 6 px radius.
 - **Check boxes**: 12 px plus a 1 px `ring` border (14 px in all), 3 px radius; checked fills with `accent`.
 - **Scroll bars**: a 6 px `line` pill on a transparent 10 px track, `ring` on hover.
-- **Tooltips**: `raised`, 1 px `line`, 9 px radius.
+- **Tooltips**: inverted (`text` fill, `bg` text), small type, 5 px radius, tight padding, so they never look like a menu.
 - **Menus**: translucent window, `raised`, 10 px radius, compact items with icons and right-aligned shortcuts; menus longer than 16 items get tighter rows.
 - **Warning banners**: text in `warn` on a 12 % `warn` wash with a 35 % `warn` border, 8 px radius.
 
@@ -101,7 +104,7 @@ Density changes spacing everywhere, through the stylesheet tokens and `DoseStyle
 
 ## Motion
 
-- **Hover and press fade** on every button, tool button, flat button, status bar button, icon button and Add torrent: 120 ms in, 180 ms out, ease-out (`dosemotion.cpp`). The stylesheet keeps size, padding and text colour; the background and border are painted underneath from the same tokens. At rest and at full hover the pixels match the stylesheet's old look.
+- **Hover and press fade** on every button, tool button, flat button, status bar button, icon button and Add torrent: 70 ms in, 110 ms out, ease-out (`dosemotion.cpp`). Only the button under the pointer stays lit: hovering one dims any other that missed its leave event. The stylesheet keeps size, padding and text colour; the background and border are painted underneath from the same tokens. At rest and at full hover the pixels match the stylesheet's old look.
 - **Progress glides** to its new value over 400 ms (ease-out cubic) in the transfer list, for rows on screen only; the percentage text always shows the exact value (`dosepaint.cpp`).
 - **Pop-overs fade in** over 120 ms: menus, drop-down lists, tooltips, the command list under the search field and the memory card (`dosestyle.cpp`); notification cards over 160 ms (`doseautomation.cpp`). Dialogs and other windows (Settings, About) get no fade of ours: Windows animates them as they open. Tabs switch at once. Only opacity and colour animate.
 - **Nothing animates while idle.** Animations run only while something changes, and Windows' "Animation effects" setting off makes every change instant.

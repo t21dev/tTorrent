@@ -241,7 +241,7 @@ DoseThemeSource::DoseThemeSource(const QJsonObject &theme, const QString &accent
     m_tokens[u"accentLine"_s] = mix(accentColor, bg, 0.5);
     m_tokens[u"track"_s] = mix(text, bg, m_dark ? 0.14 : 0.09);
     m_tokens[u"rowRule"_s] = mix(token(u"line"_s), bg, 0.6);
-    m_tokens[u"accentHover"_s] = mix(m_dark ? QColor(Qt::white) : QColor(Qt::black), accentColor, 0.08);
+    m_tokens[u"accentHover"_s] = mix(m_dark ? QColor(Qt::white) : QColor(Qt::black), accentColor, 0.25);
 
     // Depth (DESIGN.md › Depth): raised controls are lit from above with a
     // darker bottom edge; fields are recessed wells; group cards sit a step up.
@@ -258,6 +258,11 @@ DoseThemeSource::DoseThemeSource(const QJsonObject &theme, const QString &accent
     m_tokens[u"accentBottom"_s] = mix(black, accentColor, 0.10);
     // Menu hover: a step lighter than the menu in dark themes, darker in light.
     m_tokens[u"menuHover"_s] = mix(text, raisedColour, m_dark ? 0.10 : 0.06);
+    // Control hover (menu bar items, sidebar rows): `hover` sits too close to
+    // `bg` to read on its own, so this is a clear step toward the text.
+    m_tokens[u"controlHover"_s] = mix(text, bg, m_dark ? 0.09 : 0.06);
+    // Raised button hover: a step up from `raised`, the way `hover` steps from `bg`.
+    m_tokens[u"raisedHover"_s] = mix(text, raisedColour, m_dark ? 0.08 : 0.05);
 
     const QColor muted = token(u"muted"_s), faint = token(u"faint"_s), ring = token(u"ring"_s);
     const QColor ok = token(u"ok"_s), warn = token(u"warn"_s), bad = token(u"bad"_s);

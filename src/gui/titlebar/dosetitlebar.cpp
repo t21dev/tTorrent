@@ -34,6 +34,7 @@
 
 #include "windowbar.h"
 #include "windowbutton.h"
+#include "gui/uithememanager.h"
 
 namespace
 {
@@ -70,7 +71,7 @@ QWK--WindowBar QMenuBar#win-menu-bar::item {
     background: transparent;
 }
 QWK--WindowBar QMenuBar#win-menu-bar::item:selected {
-    background: palette(alternate-base);
+    background: @hover@;
 }
 QWK--WindowButton, QWK--WindowButton:default, QWK--WindowButton:flat {
     border: none;
@@ -89,15 +90,34 @@ QWK--WindowButton#icon-button {
 }
 QWK--WindowButton#icon-button:hover { background: transparent; }
 QWK--WindowButton:hover {
-    background: palette(alternate-base);
+    background: @hover@;
 }
 QWK--WindowButton:pressed {
-    background: palette(midlight);
+    background: @pressed@;
 }
 QWK--WindowButton#close-button:hover {
     background: #C42B1C;
 }
 )";
+
+    // STYLE with its hover colours from the theme's tokens: the palette's
+    // alternate-base is the list's row hover, too faint on the title bar.
+    QString barStyle()
+    {
+        const auto *themes = UIThemeManager::instance();
+        const QColor hover = themes->doseToken(QStringLiteral("controlHover"));
+        const QColor pressed = themes->doseToken(QStringLiteral("menuHover"));
+        QString style = QString::fromLatin1(STYLE);
+        style.replace(QStringLiteral("@hover@"), hover.isValid() ? hover.name() : QStringLiteral("palette(alternate-base)"));
+        style.replace(QStringLiteral("@pressed@"), pressed.isValid() ? pressed.name() : QStringLiteral("palette(midlight)"));
+        return style;
+    }
+
+    void styleBar(QWidget *bar)
+    {
+        bar->setStyleSheet(barStyle());
+        QObject::connect(UIThemeManager::instance(), &UIThemeManager::themeChanged, bar, [bar] { bar->setStyleSheet(barStyle()); });
+    }
 
     // An SVG icon drawn in a colour (the files use currentColor).
     QIcon tinted(const QString &name, const QColor &colour)
@@ -202,7 +222,7 @@ void DoseTitleBar::install(QMainWindow *window, QMenuBar *menuBar)
     agent->setup(window);
 
     auto *bar = new QWK::WindowBar;
-    bar->setStyleSheet(QString::fromLatin1(STYLE));
+    styleBar(bar);
 
     auto *title = new QLabel;
     title->setAlignment(Qt::AlignCenter);
@@ -285,7 +305,7 @@ void DoseTitleBar::installDialog(QDialog *dialog)
 
     auto *bar = new QWK::WindowBar;
     bar->setObjectName(QStringLiteral("dose-dialog-bar"));
-    bar->setStyleSheet(QString::fromLatin1(STYLE));
+    styleBar(bar);
     auto *title = new QLabel;
     title->setObjectName(QStringLiteral("win-title-label"));
     title->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
