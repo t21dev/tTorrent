@@ -309,15 +309,22 @@ namespace
                 m_lit.removeAll(nullptr);
             }
             const qreal from = widget->property(AMOUNT).toReal();
-            if (qFuzzyCompare(from + 1, to + 1))
+            auto *animation = widget->findChild<QVariantAnimation *>(u"doseMotion"_s, Qt::FindDirectChildrenOnly);
+            const bool running = animation && (animation->state() == QAbstractAnimation::Running);
+            // Compare with where a running fade is heading, not where it is now:
+            // a button left just after it was entered is still near 0, and
+            // skipping the fade-out there let the fade-in finish and stay lit.
+            const qreal heading = running ? animation->endValue().toReal() : from;
+            if (qFuzzyCompare(heading + 1, to + 1))
                 return;
             if (!DosePaint::animationsEnabled())
             {
+                if (animation)
+                    animation->stop();
                 widget->setProperty(AMOUNT, to);
                 widget->update();
                 return;
             }
-            auto *animation = widget->findChild<QVariantAnimation *>(u"doseMotion"_s, Qt::FindDirectChildrenOnly);
             if (!animation)
             {
                 animation = new QVariantAnimation(widget);

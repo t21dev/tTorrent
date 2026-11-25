@@ -30,7 +30,9 @@
 #include <QImage>
 #include <QLabel>
 #include <QLineEdit>
+#include <QCursor>
 #include <QElapsedTimer>
+#include <QEnterEvent>
 #include <QListWidget>
 #include <QMouseEvent>
 #include <QMainWindow>
@@ -38,12 +40,14 @@
 #include <QMenuBar>
 #include <QPainter>
 #include <QPixmap>
+#include <QPointer>
 #include <QScreen>
 #include <QPushButton>
 #include <QScrollArea>
 #include <QStackedWidget>
 #include <QTabWidget>
 #include <QTimer>
+#include <QToolBar>
 #include <QToolTip>
 #include <QTreeView>
 
@@ -300,6 +304,44 @@ void DoseDev::scheduleShots(QMainWindow *window)
                 }
             }
             QToolTip::hideText();
+        }
+        // Stuck hover: the pointer "enters" every toolbar button and never
+        // leaves (a Leave Qt didn't send). Half a second later none may be lit
+        // unless the real pointer is over it. Result in hover-check.txt.
+        {
+            QList<QPointer<QWidget>> buttons;
+            for (QToolBar *bar : window->findChildren<QToolBar *>())
+            {
+                for (QWidget *w : bar->findChildren<QWidget *>())
+                {
+                    if (w->property("doseMotionKind").isValid())
+                        buttons.append(w);
+                }
+            }
+            for (QWidget *w : std::as_const(buttons))
+            {
+                const QPointF local {1, 1};
+                QEnterEvent enter {local, local, w->mapToGlobal(local)};
+                QCoreApplication::sendEvent(w, &enter);
+            }
+            QTimer::singleShot(500, window, [buttons, dir]
+            {
+                int lit = 0;
+                int count = 0;
+                for (const QPointer<QWidget> &w : buttons)
+                {
+                    if (!w)
+                        continue;
+                    ++count;
+                    const bool pointer = w->rect().contains(w->mapFromGlobal(QCursor::pos()));
+                    if (!pointer && (w->property("doseMotionHover").toReal() > 0))
+                        ++lit;
+                }
+                QFile file {dir + u"/hover-check.txt"_s};
+                if (file.open(QIODevice::WriteOnly))
+                    file.write(u"%1: %2 of %3 toolbar buttons still lit after the pointer left"_s
+                        .arg((lit == 0) ? u"PASS"_s : u"FAIL"_s).arg(lit).arg(count).toUtf8());
+            });
         }
         // The optional looks (Settings › Look): gradient fills, accent hover.
         const bool wasGradient = DosePaint::gradients();
