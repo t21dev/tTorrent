@@ -15,6 +15,7 @@
 
 #include "dosemotion.h"
 
+#include <QCursor>
 #include <QEvent>
 #include <QPainter>
 #include <QPainterPath>
@@ -22,6 +23,7 @@
 #include <QPushButton>
 #include <QStatusBar>
 #include <QToolBar>
+#include <QTimer>
 #include <QToolButton>
 #include <QVariantAnimation>
 
@@ -258,18 +260,37 @@ namespace
 
     private:
         // Widgets showing any hover. Only the one under the pointer may stay lit:
-        // a Leave can go missing (a popup opened over the button, a fast sweep
-        // across the toolbar), which left two buttons looking hovered at once.
+        // a Leave can go missing (a tooltip or popup opened over the button, a
+        // fast sweep across the toolbar, the pointer leaving for another app),
+        // which left several buttons looking hovered at once. underMouse() is
+        // set from the same events, so it goes stale too: ask where the pointer is.
         QList<QPointer<QWidget>> m_lit;
+        // While anything is lit, a cheap check every 100 ms dims what the
+        // pointer has left; it stops once nothing is lit.
+        QTimer m_watch;
+
+        Animator()
+        {
+            m_watch.setInterval(100);
+            connect(&m_watch, &QTimer::timeout, this, [this] { dimOthers(nullptr); });
+        }
+
+        static bool pointerOver(const QWidget *widget)
+        {
+            return widget->isVisible() && widget->rect().contains(widget->mapFromGlobal(QCursor::pos()));
+        }
 
         void dimOthers(const QWidget *current)
         {
             const QList<QPointer<QWidget>> lit = m_lit;
             for (const QPointer<QWidget> &other : lit)
             {
-                if (other && (other != current) && !other->underMouse())
+                if (other && (other != current) && !pointerOver(other))
                     fade(other, 0.0);
             }
+            m_lit.removeAll(nullptr);
+            if (m_lit.isEmpty())
+                m_watch.stop();
         }
 
         void fade(QWidget *widget, const qreal to)
@@ -279,6 +300,8 @@ namespace
                 dimOthers(widget);
                 if (!m_lit.contains(widget))
                     m_lit.append(widget);
+                if (!m_watch.isActive())
+                    m_watch.start();
             }
             else
             {

@@ -91,7 +91,7 @@ Density changes spacing everywhere, through the stylesheet tokens and `DoseStyle
 - **Key caps**: DM Mono on `well`, 1 px `line` with a 2 px bottom edge, 6 px radius.
 - **Check boxes**: 12 px plus a 1 px `ring` border (14 px in all), 3 px radius; checked fills with `accent`.
 - **Scroll bars**: a 6 px `line` pill on a transparent 10 px track, `ring` on hover.
-- **Tooltips**: inverted (`text` fill, `bg` text), small type, 5 px radius, tight padding, so they never look like a menu.
+- **Tooltips**: `raised` fill, `text` type and a `line` border, so they follow the theme (dark in dark themes); small type, 5 px radius, 2 × 6 px padding, so they never look like a menu.
 - **Menus**: translucent window, `raised`, 10 px radius, compact items with icons and right-aligned shortcuts; menus longer than 16 items get tighter rows.
 - **Warning banners**: text in `warn` on a 12 % `warn` wash with a 35 % `warn` border, 8 px radius.
 

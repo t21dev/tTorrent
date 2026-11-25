@@ -38,11 +38,13 @@
 #include <QMenuBar>
 #include <QPainter>
 #include <QPixmap>
+#include <QScreen>
 #include <QPushButton>
 #include <QScrollArea>
 #include <QStackedWidget>
 #include <QTabWidget>
 #include <QTimer>
+#include <QToolTip>
 #include <QTreeView>
 
 #include "base/bittorrent/session.h"
@@ -284,6 +286,21 @@ void DoseDev::scheduleShots(QMainWindow *window)
         }
         save(window, dir + u"/main.png");
         saveHovered(window, dir + u"/main-hover.png");
+        // A tooltip as the toolbar shows one (no widget: the window may be off-screen).
+        {
+            QToolTip::showText(QGuiApplication::primaryScreen()->geometry().center(), u"Options"_s);
+            QApplication::processEvents();
+            QApplication::processEvents();
+            for (QWidget *top : QApplication::topLevelWidgets())
+            {
+                if (top->inherits("QTipLabel"))
+                {
+                    top->setWindowOpacity(1.0);
+                    save(top, dir + u"/tooltip.png");
+                }
+            }
+            QToolTip::hideText();
+        }
         // The optional looks (Settings › Look): gradient fills, accent hover.
         const bool wasGradient = DosePaint::gradients();
         const bool wasAccent = DosePaint::accentHover();

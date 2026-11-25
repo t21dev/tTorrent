@@ -19,6 +19,7 @@
 #include <QAbstractItemView>
 #include <QDialog>
 #include <QFileDialog>
+#include <QLabel>
 #include <QMenu>
 #include <QPropertyAnimation>
 #include <QPushButton>
@@ -69,6 +70,16 @@ namespace
             auto *window = static_cast<QWidget *>(watched);
             const bool popover = (window->windowType() == Qt::Popup) || (window->windowType() == Qt::ToolTip)
                 || (window->windowType() == Qt::Tool);
+            // Qt gives a tooltip a margin as wide as the stylesheet's border and
+            // padding, on top of them, which doubled its size.
+            if ((event->type() == QEvent::Show) && window->inherits("QTipLabel"))
+            {
+                if (auto *label = qobject_cast<QLabel *>(window); label && (label->margin() != 0))
+                {
+                    label->setMargin(0);
+                    label->resize(label->sizeHint() + QSize(1, 0));
+                }
+            }
             if ((event->type() == QEvent::Show) && popover && DosePaint::animationsEnabled())
             {
                 auto *animation = new QPropertyAnimation(window, "windowOpacity", window);
@@ -91,6 +102,10 @@ DoseStyle::DoseStyle(const QString &baseStyle)
     : QProxyStyle(u"Fusion"_s)
 {
     Q_UNUSED(baseStyle);
+    // Tooltips fade through FadeIn. Qt's own Windows tooltip effects show the
+    // tip without a Show event, which FadeIn and the margin fix rely on.
+    QApplication::setEffectEnabled(Qt::UI_FadeTooltip, false);
+    QApplication::setEffectEnabled(Qt::UI_AnimateTooltip, false);
 }
 
 int DoseStyle::styleHint(const StyleHint hint, const QStyleOption *option, const QWidget *widget, QStyleHintReturn *returnData) const
@@ -187,6 +202,12 @@ void DoseStyle::polish(QWidget *widget)
     // too; windows don't, as Windows animates them itself.
     if ((widget->windowType() == Qt::ToolTip) || (widget->windowType() == Qt::Popup) || (widget->windowType() == Qt::Tool))
     {
+        // Tooltips: a clear backing for the round corners, and no square system shadow.
+        if (widget->inherits("QTipLabel"))
+        {
+            widget->setAttribute(Qt::WA_TranslucentBackground);
+            widget->setWindowFlag(Qt::NoDropShadowWindowHint);
+        }
         widget->installEventFilter(FadeIn::instance());
         return;
     }

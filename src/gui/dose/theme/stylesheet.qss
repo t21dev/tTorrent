@@ -259,8 +259,10 @@ QPushButton:flat, QPushButton[flat="true"] { background: transparent; border: no
 QPushButton:flat:hover { color: @text@; }
 QPushButton:flat:checked, QPushButton:flat:pressed { color: @text@; }
 
-/* Tooltips: inverted and small, so they never read as a menu. */
-QToolTip { background: @text@; color: @bg@; border: 1px solid @text@; padding: 3px 7px; border-radius: 5px; font-size: @fontSmall@px; }
+/* Tooltips: the theme's raised surface, small type and tight padding, so
+   they follow dark and light themes and never read as a menu. DoseStyle
+   drops the label margin Qt adds on top of this padding. */
+QToolTip { background: @raised@; color: @text@; border: 1px solid @line@; padding: 2px 6px; border-radius: 5px; font-size: @fontSmall@px; }
 
 /* Details tabs (General … Speed): an accent underline under the current one. */
 QPushButton[doseTab="true"], QPushButton[doseTab="true"]:flat {
