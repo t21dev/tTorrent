@@ -18,5 +18,5 @@
 // tTorrent's version, shown to people (About, log, --version, crash reports).
 // QBT_VERSION stays qBittorrent's: libtorrent's peer ID and tracker user
 // agent are built from it, and private trackers allow clients by it.
-#define TTORRENT_VERSION "0.6.0"
+#define TTORRENT_VERSION "0.6.1"
 #define TTORRENT_VERSION_LABEL "stable"
