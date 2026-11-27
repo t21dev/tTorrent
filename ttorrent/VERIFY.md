@@ -110,7 +110,7 @@ powershell -ExecutionPolicy Bypass -File ttorrent\scripts\bench.ps1 `
 
 Only when the owner asks.
 
-1. Bump `TTORRENT_VERSION` in `src/base/ttorrentversion.h` (and `TTORRENT_VERSION_LABEL` if it's no longer a preview).
+1. Bump `TTORRENT_VERSION` and its `_MAJOR`, `_MINOR` and `_PATCH` numbers in `src/base/ttorrentversion.h` (the build fails if they disagree) (and `TTORRENT_VERSION_LABEL` if it's no longer a preview).
 2. Build, then run the screenshot pass and check the About dialog shows the new version.
 3. Stage `build\Release` without `ttorrent-old*.exe`, add `COPYING` as `COPYING.txt`, and zip it as `tTorrent-<version>-windows-x64.zip`. Build the installer from the same folder with `ttorrent\scripts\make-installer.ps1 -Dist <staged folder> -Out tTorrent-<version>-windows-x64-setup.exe` (needs NSIS 3). Write `sha256.txt` with both files.
 4. Unzip into an empty folder and start it with a scratch profile: it must start and listen. Then test the installer:

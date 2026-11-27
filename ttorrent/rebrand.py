@@ -57,6 +57,10 @@ def main() -> None:
         ('"Copyright ©2006-2026 The qBittorrent Project"', '"Copyright ©2006-2026 The qBittorrent Project, ©2026 t21 dev"'),
         ('"qbittorrent.exe"', '"ttorrent.exe"'),
         ('VALUE "ProductName",      "qBittorrent"', 'VALUE "ProductName",      "tTorrent"'),
+        ('#include "base/version.h"\n', '#include "base/ttorrentversion.h" // tTorrent: the exe\'s details show tTorrent\'s version\n'),
+        ('QBT_VERSION_MAJOR,QBT_VERSION_MINOR,QBT_VERSION_BUGFIX,QBT_VERSION_BUILD', 'TTORRENT_VERSION_MAJOR,TTORRENT_VERSION_MINOR,TTORRENT_VERSION_PATCH,0'),
+        ('_STR         QBT_VERSION', '_STR         TTORRENT_VERSION'),
+        ('_STR      QBT_VERSION', '_STR      TTORRENT_VERSION'),
     ])
     # Message-box titles in the window code (not D-Bus or power-management ids).
     for f in (SRC / "gui").rglob("*.cpp"):
