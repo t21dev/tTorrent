@@ -43,7 +43,7 @@ def main() -> None:
         ('m_nativeSettingsName {u"qBittorrent"_s}', 'm_nativeSettingsName {u"tTorrent"_s}'),
     ])
     edit(SRC / "gui" / "mainwindow.cpp", [
-        ('m_windowTitle = QStringLiteral("qBittorrent " QBT_VERSION)', 'm_windowTitle = QStringLiteral("tTorrent " QBT_VERSION)'),
+        ('m_windowTitle = QStringLiteral("qBittorrent " QBT_VERSION)', 'm_windowTitle = u"tTorrent"_s // tTorrent: the version lives in About'),
     ])
     edit(SRC / "app" / "CMakeLists.txt", [
         ("set_target_properties(qbt_app PROPERTIES OUTPUT_NAME qbittorrent)", "set_target_properties(qbt_app PROPERTIES OUTPUT_NAME ttorrent)"),
@@ -73,9 +73,8 @@ def main() -> None:
     theme = SRC / "gui" / "dose" / "theme" / "icons"
     shutil.copy(BRAND / "ttorrent-256.png", theme / "qbittorrent.png")
     shutil.copy(BRAND / "ttorrent-256.png", theme / "qbittorrent-tray.png")
-    sprout = (BRAND / "sprout.svg").read_text(encoding="utf8")
-    for name, colour in (("qbittorrent-tray-dark", "#1E1F22"), ("qbittorrent-tray-light", "#FFFFFF")):
-        (theme / f"{name}.svg").write_text(re.sub(r'stroke="[^"]*"', f'stroke="{colour}"', sprout), encoding="utf8")
+    # The monochrome tray SVGs are drawn by hand in the theme folder (ours, so
+    # a merge never brings qBittorrent's back) and are not written here.
     qrc = SRC / "gui" / "dose" / "theme" / "dosetheme.qrc"
     q = qrc.read_text(encoding="utf8")
     for f in ("icons/qbittorrent.png", "icons/qbittorrent-tray.png", "icons/qbittorrent-tray-dark.svg", "icons/qbittorrent-tray-light.svg"):
