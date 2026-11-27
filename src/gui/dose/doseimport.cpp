@@ -143,6 +143,23 @@ void DoseImport::restart()
     QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
     env.insert(u"TTORRENT_WAIT_PID"_s, QString::number(QCoreApplication::applicationPid()));
     next.setProcessEnvironment(env);
+#ifdef Q_OS_WIN
+    // Without this the new copy inherits every handle, the listening sockets
+    // too: the port stays taken by the inherited socket, the new copy can't
+    // listen on it, and no tracker or peer is ever contacted. Upstream does
+    // the same for "Run external program" (Application::runExternalProgram).
+    next.setCreateProcessArgumentsModifier([](QProcess::CreateProcessArguments *args)
+    {
+        args->inheritHandles = false;
+        args->startupInfo->dwFlags &= ~STARTF_USESTDHANDLES;
+        ::CloseHandle(args->startupInfo->hStdInput);
+        ::CloseHandle(args->startupInfo->hStdOutput);
+        ::CloseHandle(args->startupInfo->hStdError);
+        args->startupInfo->hStdInput = nullptr;
+        args->startupInfo->hStdOutput = nullptr;
+        args->startupInfo->hStdError = nullptr;
+    });
+#endif
     next.startDetached();
 
     for (QWidget *top : QApplication::topLevelWidgets())
