@@ -32,6 +32,7 @@
 #include "base/bittorrent/torrentdescriptor.h"
 #include "base/bittorrent/trackerentry.h"
 #include "base/global.h"
+#include "base/version.h"
 #include "dosepaint.h"
 
 namespace
@@ -120,7 +121,8 @@ namespace
             const QUrl url = QUrl::fromEncoded(encoded);
             QNetworkRequest request {url};
             request.setTransferTimeout(7000);
-            request.setHeader(QNetworkRequest::UserAgentHeader, u"tTorrent"_s);
+            // Trackers only ever see qBittorrent, as with libtorrent's announces.
+            request.setHeader(QNetworkRequest::UserAgentHeader, QStringLiteral("qBittorrent/" QBT_VERSION_2));
             static auto *network = new QNetworkAccessManager(qApp);
             QNetworkReply *reply = network->get(request);
             connect(reply, &QNetworkReply::finished, this, [this, reply]
@@ -212,6 +214,14 @@ void DoseHealth::check(QDialog *dialog, const BitTorrent::TorrentDescriptor &tor
         return;
     for (QObject *old : label->children())
         delete old;
+    // A private tracker counts every request on the passkey, and some only
+    // allow announces from approved clients, so it is never asked here.
+    if (torrent.info() && torrent.info()->isPrivate())
+    {
+        label->setText(tr("Private tracker: shown after adding"));
+        label->setStyleSheet({});
+        return;
+    }
     QStringList trackers;
     for (const BitTorrent::TrackerEntry &entry : torrent.trackers())
     {
