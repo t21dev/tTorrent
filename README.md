@@ -10,13 +10,28 @@ It stays light with hundreds of torrents, and it handles what usually needs scri
 
 ![tTorrent's main window in the Dark theme, with three open-movie torrents seeding](ttorrent/docs/screenshots/main-dark.png)
 
+## Install
+
+Download the latest version from [Releases](https://github.com/t21dev/tTorrent/releases/latest). It needs 64-bit Windows 10 or 11.
+
+- **Installer** (`tTorrent-<version>-windows-x64-setup.exe`): installs for your user only, in `%LOCALAPPDATA%\Programs\tTorrent`. You choose:
+  - a desktop shortcut and a Start menu shortcut;
+  - starting tTorrent when Windows starts;
+  - opening magnet links and .torrent files with tTorrent;
+  - a Windows Firewall rule and long file paths (over 260 characters). Only these two need admin rights, so Windows asks once, and only if you keep them ticked.
+- **Portable** (`tTorrent-<version>-windows-x64.zip`): unzip anywhere and run `ttorrent.exe`.
+
+The installer isn't code-signed yet, so Windows SmartScreen may say "Windows protected your PC". Click **More info › Run anyway**, and compare the file with the release's `sha256-<version>.txt` if you want to be sure.
+
+Uninstalling keeps your torrents and settings (in `%APPDATA%\tTorrent` and `%LOCALAPPDATA%\tTorrent`). tTorrent never reads or changes qBittorrent's settings, except when you use **Settings › Backup and import › Import from qBittorrent**, which copies them.
+
 ## What's in it
 
 **Everyday**
 - **Command palette** (Ctrl+K): run any command by typing part of its name.
 - **Keyboard shortcuts** (Ctrl+/): every shortcut in one window, and you can change any of them.
 - **Saved views:** save the current filters, search and sort as a sidebar entry.
-- **Health in the Add dialog:** seeds and peers from the trackers before you add a torrent.
+- **Health in the Add dialog:** seeds and peers from the trackers before you add a torrent. Private trackers are never asked: they count every request on your passkey.
 - **Notification cards** with "Open folder" and "Show" when a torrent finishes or fails.
 - **Rename categories and tags**, with subcategories and every torrent following.
 - **Relocate:** files you moved or renamed outside the app? Point the torrent at them and it rechecks instead of downloading again.
@@ -61,7 +76,7 @@ Screenshots use open movies from the Blender Foundation as sample torrents.
 
 ## Compared with qBittorrent
 
-tTorrent began as a fork of qBittorrent 5.3. Here is how the two compare today.
+tTorrent began as a fork of qBittorrent 5.3 and takes in each qBittorrent release; it is now built on 5.3.1. Here is how the two compare today.
 
 ### Performance
 
@@ -117,6 +132,15 @@ Everything under "What's in it" above is new in tTorrent, except the Web UI and 
 | Known peers per torrent | 1,500 by default instead of 3,000 (Settings › Advanced, up to 3,000) |
 
 These features are switched off in one place (`src/gui/dose/dosetrim.cpp`), not deleted, so tTorrent stays easy to merge with new qBittorrent releases.
+
+## Private trackers
+
+Trackers see tTorrent as qBittorrent: the peer ID and user agent are qBittorrent's (5.3.1 today), so a tracker that allows qBittorrent accepts tTorrent too. Only people see tTorrent's own version.
+
+## Troubleshooting
+
+- **Trackers say "Not contacted yet" and nothing downloads or uploads.** tTorrent couldn't open its port. Look in **View › Log › Show** for "Failed to listen". Another program may be using the same port, for example qBittorrent with a profile you imported. Pick another port in **Settings › Connection**, or close the other program. Versions before 0.6.3 also had this problem after **Restart tTorrent**: quit tTorrent and start it again.
+- **The same private torrent in two clients.** Many private trackers refuse a torrent that is active in two clients at once on your account. Pause it in one of them.
 
 ## Build (Windows)
 

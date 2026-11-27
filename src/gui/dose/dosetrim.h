@@ -32,6 +32,7 @@ namespace DoseTrim
 
     // Where Help points instead of qBittorrent's sites.
     const char WEBSITE[] = "https://ttorrent.t21.dev";
-    const char DOCS[] = "https://ttorrent.t21.dev/docs";
+    // Help › Documentation: the README on GitHub, kept up to date with each release.
+    const char DOCS[] = "https://github.com/t21dev/tTorrent#readme";
     const char ISSUES[] = "https://github.com/t21dev/tTorrent/issues";
 }
