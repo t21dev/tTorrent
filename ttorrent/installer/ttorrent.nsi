@@ -18,6 +18,11 @@
 ; Nothing here touches qBittorrent's registry keys, files or settings
 ; (dist\windows\qbittorrent.nsi is upstream's installer and stays as it is).
 ; The registry names match src\gui\dose\doseassoc.cpp.
+;
+; Two choices need admin rights: the firewall rule and long file paths. They
+; run together in one elevated step, so the person sees one UAC prompt, and
+; only when one of them is ticked. A silent install (/S) skips that step,
+; because nobody is there to answer the prompt.
 
 Unicode true
 ManifestDPIAware true
@@ -141,8 +146,6 @@ Section "tTorrent (required)" SecApp
   !include "${TT_FILES}"
   WriteUninstaller "$INSTDIR\uninstall.exe"
 
-  CreateShortCut "$SMPROGRAMS\tTorrent.lnk" "$INSTDIR\ttorrent.exe"
-
   WriteRegStr HKCU "${UNINST_KEY}" "DisplayName" "${APP}"
   WriteRegStr HKCU "${UNINST_KEY}" "DisplayVersion" "${TT_VERSION}"
   WriteRegStr HKCU "${UNINST_KEY}" "DisplayIcon" '"$INSTDIR\ttorrent.exe",0'
@@ -160,6 +163,68 @@ SectionEnd
 
 Section "Desktop shortcut" SecDesktop
   CreateShortCut "$DESKTOP\tTorrent.lnk" "$INSTDIR\ttorrent.exe"
+SectionEnd
+
+Section "Start menu shortcut" SecStartMenu
+  CreateShortCut "$SMPROGRAMS\tTorrent.lnk" "$INSTDIR\ttorrent.exe"
+SectionEnd
+
+; The same Run value the app writes for its default profile (Preferences::
+; setWinStartup), so the setting in Options shows it and can turn it off.
+Section /o "Start tTorrent when Windows starts" SecStartup
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "tTorrent" '"$INSTDIR\ttorrent.exe"'
+SectionEnd
+
+; These two only record the choice; the hidden section below does the work.
+Section "Add a Windows Firewall rule (admin)" SecFirewall
+SectionEnd
+
+Section "Allow long file paths (admin)" SecLongPaths
+SectionEnd
+
+; One elevated cmd for both choices. ExecShellWait can't return the exit code,
+; so each result is checked afterwards and reported if it didn't happen (for
+; example when the person says no to the UAC prompt).
+Section "-Admin settings" SecAdmin
+  StrCpy $0 ""
+  ${If} ${SectionIsSelected} ${SecFirewall}
+    StrCpy $0 'netsh advfirewall firewall delete rule name=tTorrent >nul & netsh advfirewall firewall add rule name=tTorrent dir=in action=allow program="$INSTDIR\ttorrent.exe" enable=yes profile=any >nul'
+  ${EndIf}
+  ${If} ${SectionIsSelected} ${SecLongPaths}
+    ${If} $0 != ""
+      StrCpy $0 "$0 & "
+    ${EndIf}
+    StrCpy $0 '$0reg add HKLM\SYSTEM\CurrentControlSet\Control\FileSystem /v LongPathsEnabled /t REG_DWORD /d 1 /f >nul'
+  ${EndIf}
+  StrCmp $0 "" admin_done
+  ${If} ${Silent}
+    DetailPrint "Skipped the firewall rule and long file paths: they need admin rights, and a silent install can't ask."
+    Goto admin_done
+  ${EndIf}
+  DetailPrint "Asking for admin rights for the firewall rule and long file paths..."
+  ExecShellWait "runas" "$SYSDIR\cmd.exe" '/c "$0"' SW_HIDE
+  StrCpy $1 ""
+  ${If} ${SectionIsSelected} ${SecFirewall}
+    nsExec::ExecToStack 'netsh advfirewall firewall show rule name=tTorrent'
+    Pop $2
+    Pop $3
+    ${If} $2 != "0"
+      StrCpy $1 "$1$\n- the Windows Firewall rule"
+    ${EndIf}
+  ${EndIf}
+  ${If} ${SectionIsSelected} ${SecLongPaths}
+    SetRegView 64
+    ReadRegDWORD $2 HKLM "SYSTEM\CurrentControlSet\Control\FileSystem" "LongPathsEnabled"
+    SetRegView lastused
+    ${If} $2 != "1"
+      StrCpy $1 "$1$\n- long file paths"
+    ${EndIf}
+  ${EndIf}
+  ${If} $1 != ""
+    DetailPrint "Not set up (needs admin rights):$1"
+    MessageBox MB_OK|MB_ICONINFORMATION "These weren't set up, because they need admin rights:$1$\n$\ntTorrent works without them. Windows asks about the firewall the first time tTorrent listens for peers."
+  ${EndIf}
+  admin_done:
 SectionEnd
 
 ; Makes tTorrent the handler for what the person ticked, for this user only
@@ -224,6 +289,21 @@ Section "Uninstall"
 
   Delete "$SMPROGRAMS\tTorrent.lnk"
   Delete "$DESKTOP\tTorrent.lnk"
+
+  ; Start-up entry: the default profile's value, and only if it points here.
+  ClearErrors
+  ReadRegStr $0 HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "tTorrent"
+  ${un.WordFind} "$0" "ttorrent.exe" "E#" $1
+  IfErrors +2
+    DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "tTorrent"
+
+  ; Firewall rule: removing it needs admin rights, so ask only if it exists.
+  ; Long file paths stay on: other apps may rely on that Windows setting.
+  nsExec::ExecToStack 'netsh advfirewall firewall show rule name=tTorrent'
+  Pop $0
+  Pop $1
+  StrCmp $0 "0" 0 +2
+    ExecShellWait "runas" "$SYSDIR\netsh.exe" 'advfirewall firewall delete rule name=tTorrent' SW_HIDE
 
   DeleteRegKey HKCU "Software\Classes\tTorrent.torrent"
   DeleteRegKey HKCU "Software\Classes\tTorrent.magnet"
