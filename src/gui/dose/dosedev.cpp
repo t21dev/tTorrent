@@ -22,8 +22,10 @@
 #include <functional>
 
 #include <QAction>
+#include <QCheckBox>
 #include <QApplication>
 #include <QDialog>
+#include <QDialogButtonBox>
 #include <QDir>
 #include <QFile>
 #include <QLayout>
@@ -61,6 +63,7 @@
 #include "base/path.h"
 #include "base/tag.h"
 #include "dosebackup.h"
+#include "doseimport.h"
 #include "doserelocate.h"
 #include "doserename.h"
 #include "dosethemeeditor.h"
@@ -252,6 +255,14 @@ namespace
 
 void DoseDev::scheduleShots(QMainWindow *window)
 {
+    // TTORRENT_SELFTEST_RESTART: restart once, 5 s after start, as File ›
+    // Restart tTorrent does. The variable is removed first, so the new copy
+    // doesn't restart again. Checks that the new copy can listen on the port.
+    if (qEnvironmentVariableIsSet("TTORRENT_SELFTEST_RESTART"))
+    {
+        qunsetenv("TTORRENT_SELFTEST_RESTART");
+        QTimer::singleShot(5000, window, [] { DoseImport::restart(); });
+    }
     if (const QString test = qEnvironmentVariable("TTORRENT_SELFTEST_DIR"); !test.isEmpty())
         return runSelfTest(window, test);
     const QString dir = qEnvironmentVariable("TTORRENT_UISHOT_DIR");
@@ -677,6 +688,30 @@ void DoseDev::scheduleShots(QMainWindow *window)
         for (QDialog *dialog : openDialogs())
         {
             save(dialog, dir + u"/remove-confirm.png");
+            dialog->close();
+        }
+    };
+    // The label grows after the dialog is shown, when the box is ticked: the
+    // button must widen with it (it used to clip, "Remove torrent and conten").
+    steps << [window]
+    {
+        auto *dialog = new DeletionConfirmationDialog(window, 1, u"Big.Buck.Bunny.2008.1080p.Blender.Open.Movie.Sample-Collection"_s, false);
+        dialog->setAttribute(Qt::WA_DeleteOnClose);
+        dialog->show();
+        QTimer::singleShot(300, dialog, [dialog]
+        {
+            if (auto *box = dialog->findChild<QCheckBox *>(u"checkRemoveContent"_s))
+                box->click();
+            // Focused, it is the default button and its label is semibold.
+            if (auto *buttons = dialog->findChild<QDialogButtonBox *>())
+                buttons->button(QDialogButtonBox::Ok)->setFocus();
+        });
+    };
+    steps << [dir]
+    {
+        for (QDialog *dialog : openDialogs())
+        {
+            save(dialog, dir + u"/remove-confirm-ticked.png");
             dialog->close();
         }
     };

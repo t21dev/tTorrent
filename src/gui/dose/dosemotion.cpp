@@ -197,12 +197,17 @@ namespace
     // The default button's label is semibold (stylesheet), and which button is
     // the default moves with focus, so a button sized for regular text would
     // clip ("Remove torrent and conten"). Every text button is kept wide
-    // enough for its label in semibold.
+    // enough for its label in semibold. A label set after the button is shown
+    // ("Remove torrent" becomes "Remove torrent and content" when the delete
+    // dialog's box is ticked) is caught at the next paint, through FITTED.
+    constexpr char FITTED[] = "doseFittedText";
+
     void fitSemibold(QWidget *widget)
     {
         auto *button = qobject_cast<QPushButton *>(widget);
         if (!button || button->text().isEmpty())
             return;
+        button->setProperty(FITTED, button->text());
         QFont bold = button->font();
         bold.setWeight(QFont::DemiBold);
         const QString text = button->text().remove(u'&');
@@ -247,6 +252,9 @@ namespace
             case QEvent::Paint:
                 if (DosePaint::active())
                 {
+                    if (const auto *button = qobject_cast<QPushButton *>(widget);
+                            button && (button->property(FITTED).toString() != button->text()))
+                        fitSemibold(widget);
                     Kind kind;
                     if (takeOver(widget, &kind))
                         paintBackground(widget, kind, widget->property(AMOUNT).toReal());
