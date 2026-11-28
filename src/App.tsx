@@ -413,10 +413,7 @@ function Downloads() {
             macOS and Linux
             {other && <span className="yours-tag">Your system</span>}
           </h3>
-          <p>
-            There is no tTorrent for macOS or Linux. It is built for Windows only.{" "}
-            <a href={SITE.upstream}>qBittorrent</a>, which tTorrent is built on, runs on both.
-          </p>
+          <p>There is no tTorrent for macOS or Linux. It is built for Windows only.</p>
         </div>
       </div>
       {a.checksums && (
