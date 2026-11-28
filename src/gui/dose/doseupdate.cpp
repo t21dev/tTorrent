@@ -18,7 +18,10 @@
 #include <QAction>
 #include <QCheckBox>
 #include <QDateTime>
+#include <QCoreApplication>
 #include <QDesktopServices>
+#include <QDir>
+#include <QFileInfo>
 #include <QGroupBox>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -89,6 +92,19 @@ namespace
         return !candidate.isEmpty() && (candidate > current);
     }
 
+    // A copy set up by the installer has uninstall.exe beside it and lives in
+    // Program Files, which only the installer can update; a portable copy
+    // (the zip) is updated by unzipping over it.
+    bool installed()
+    {
+        return QFileInfo::exists(QDir(QCoreApplication::applicationDirPath()).filePath(u"uninstall.exe"_s));
+    }
+
+    QString assetSuffix()
+    {
+        return installed() ? u"-windows-x64-setup.exe"_s : u"-windows-x64.zip"_s;
+    }
+
     struct Release
     {
         QString tag;
@@ -152,7 +168,7 @@ namespace
                     bestVersion = version;
                     const QString plain = u"%1.%2.%3"_s.arg(version[0]).arg(version[1]).arg(version[2]);
                     best = {tag, title, QUrl(link)
-                        , QUrl(u"https://github.com/%1/releases/download/%2/tTorrent-%3-windows-x64.zip"_s.arg(repository(), tag, plain))
+                        , QUrl(u"https://github.com/%1/releases/download/%2/tTorrent-%3%4"_s.arg(repository(), tag, plain, assetSuffix()))
                         , QDateTime::fromString(updated, Qt::ISODate)};
                 }
             }
@@ -206,7 +222,7 @@ namespace
                 for (const QJsonValue &asset : r.value(u"assets"_s).toArray())
                 {
                     const QString name = asset.toObject().value(u"name"_s).toString();
-                    if (name.endsWith(u"-windows-x64.zip"))
+                    if (name.endsWith(assetSuffix()))
                         best.download = QUrl(asset.toObject().value(u"browser_download_url"_s).toString());
                 }
             }
@@ -222,7 +238,8 @@ namespace
         const QUrl page = release.page;
         const QString tag = release.tag;
         DoseAutomation::showCard(window, tr("tTorrent %1 is available").arg(version)
-            , tr("You have %1. Download the zip, unzip it over this copy and restart tTorrent.").arg(QStringLiteral(TTORRENT_VERSION)), u"download"_s
+            , (installed() ? tr("You have %1. Download the installer and run it: it keeps your torrents and settings.")
+                : tr("You have %1. Download the zip, unzip it over this copy and restart tTorrent.")).arg(QStringLiteral(TTORRENT_VERSION)), u"download"_s
             , {{tr("What's new"), [page] { QDesktopServices::openUrl(page); }},
                {tr("Download"), [download] { QDesktopServices::openUrl(download); }},
                {tr("Skip this version"), [tag] { settings()->storeValue(KEY_SKIPPED, tag); }}}, true);

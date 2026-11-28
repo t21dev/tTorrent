@@ -14,11 +14,13 @@ It stays light with hundreds of torrents, and it handles what usually needs scri
 
 Download the latest version from [Releases](https://github.com/t21dev/tTorrent/releases/latest). It needs 64-bit Windows 10 or 11.
 
-- **Installer** (`tTorrent-<version>-windows-x64-setup.exe`): installs for your user only, in `%LOCALAPPDATA%\Programs\tTorrent`. You choose:
+- **Installer** (`tTorrent-<version>-windows-x64-setup.exe`): installs in `C:\Program Files\tTorrent`, so Windows asks for admin rights once. You choose:
   - a desktop shortcut and a Start menu shortcut;
   - starting tTorrent when Windows starts;
   - opening magnet links and .torrent files with tTorrent;
-  - a Windows Firewall rule and long file paths (over 260 characters). Only these two need admin rights, so Windows asks once, and only if you keep them ticked.
+  - a Windows Firewall rule and long file paths (over 260 characters).
+
+  Versions up to 0.6.4 installed in `%LOCALAPPDATA%\Programs\tTorrent`. The installer moves that copy to Program Files and keeps your torrents and settings, starting with Windows, and opening magnet links and .torrent files. If you pinned the old copy to the taskbar, pin it again.
 - **Portable** (`tTorrent-<version>-windows-x64.zip`): unzip anywhere and run `ttorrent.exe`.
 
 The installer isn't code-signed yet, so Windows SmartScreen may say "Windows protected your PC". Click **More info › Run anyway**, and compare the file with the release's `sha256-<version>.txt` if you want to be sure.

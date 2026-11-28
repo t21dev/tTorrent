@@ -13,23 +13,26 @@
 ;   TT_UNFILES   an include with a Delete line for every staged file
 ;   TT_OUT       the setup .exe to write
 ;
-; It installs for the current user only (no admin prompt) into
-; %LOCALAPPDATA%\Programs\tTorrent, the same place install-local.ps1 uses.
-; Nothing here touches qBittorrent's registry keys, files or settings
-; (dist\windows\qbittorrent.nsi is upstream's installer and stays as it is).
-; The registry names match src\gui\dose\doseassoc.cpp.
+; It installs for all users into Program Files (one UAC prompt at the start),
+; the same place install-local.ps1 uses. The program and its uninstall entry
+; are per machine (HKLM); what the person chooses (opening magnet links and
+; .torrent files, starting with Windows) stays per user (HKCU), in the same
+; keys the app itself writes. Nothing here touches qBittorrent's registry
+; keys, files or settings (dist\windows\qbittorrent.nsi is upstream's
+; installer and stays as it is). The registry names match
+; src\gui\dose\doseassoc.cpp.
 ;
-; Two choices need admin rights: the firewall rule and long file paths. They
-; run together in one elevated step, so the person sees one UAC prompt, and
-; only when one of them is ticked. A silent install (/S) skips that step,
-; because nobody is there to answer the prompt.
+; Up to 0.6.4 tTorrent installed per user into %LOCALAPPDATA%\Programs\tTorrent.
+; An install finds such a copy and moves it here (see SecMove): the old files
+; go, what the person had set up carries over to the new path, and torrents
+; and settings (the profile) are never touched.
 
 Unicode true
 ManifestDPIAware true
 ManifestDPIAwareness "PerMonitorV2,System"
 SetCompressor /SOLID LZMA
 SetCompressorDictSize 64
-RequestExecutionLevel user
+RequestExecutionLevel admin
 
 !include "MUI2.nsh"
 !include "x64.nsh"
@@ -44,8 +47,9 @@ RequestExecutionLevel user
 
 Name "${APP} ${TT_VERSION}"
 OutFile "${TT_OUT}"
-InstallDir "$LOCALAPPDATA\Programs\tTorrent"
-InstallDirRegKey HKCU "${UNINST_KEY}" "InstallLocation"
+; An upgrade goes where the last install went (see .onInit). InstallDirRegKey
+; can't do that: it reads the 32-bit view of the registry.
+InstallDir "$PROGRAMFILES64\tTorrent"
 BrandingText "${APP} ${TT_VERSION}"
 
 VIProductVersion "${TT_VERSION}.0"
@@ -100,11 +104,45 @@ Var AssocMagnet
 Var AssocTorrent
 Var CheckMagnet
 Var CheckTorrent
+Var OldDir ; a per-user copy from 0.6.4 or earlier, empty if none
+Var NoAdmin ; 1 with /ADMIN=0
 
 Function .onInit
   ${IfNot} ${RunningX64}
     MessageBox MB_OK|MB_ICONSTOP "tTorrent needs 64-bit Windows."
     Abort
+  ${EndIf}
+  SetRegView 64
+  SetShellVarContext all
+  ; Upgrade in place, unless /D= chose another folder.
+  ${If} $INSTDIR == "$PROGRAMFILES64\tTorrent"
+    ReadRegStr $0 HKLM "${UNINST_KEY}" "InstallLocation"
+    ${If} $0 != ""
+      StrCpy $INSTDIR $0
+    ${EndIf}
+  ${EndIf}
+  ; The old per-user copy: from the old installer, or from install-local.ps1,
+  ; which used the same folder and wrote no uninstaller.
+  ReadRegStr $OldDir HKCU "${UNINST_KEY}" "InstallLocation"
+  ${If} $OldDir == ""
+  ${AndIf} ${FileExists} "$LOCALAPPDATA\Programs\tTorrent\ttorrent.exe"
+    StrCpy $OldDir "$LOCALAPPDATA\Programs\tTorrent"
+  ${EndIf}
+  ; /MOVE=0 leaves that copy alone (test installs, see VERIFY.md › Releases).
+  ${GetParameters} $0
+  ClearErrors
+  ${GetOptions} $0 "/MOVE=" $1
+  ${IfNot} ${Errors}
+  ${AndIf} $1 == "0"
+    StrCpy $OldDir ""
+  ${EndIf}
+  ; /ADMIN=0 skips the firewall rule and long file paths (test installs).
+  StrCpy $NoAdmin 0
+  ClearErrors
+  ${GetOptions} $0 "/ADMIN=" $1
+  ${IfNot} ${Errors}
+  ${AndIf} $1 == "0"
+    StrCpy $NoAdmin 1
   ${EndIf}
   StrCpy $AssocMagnet ${BST_CHECKED}
   StrCpy $AssocTorrent ${BST_CHECKED}
@@ -138,6 +176,60 @@ Function AssocPageLeave
   ${NSD_GetState} $CheckTorrent $AssocTorrent
 FunctionEnd
 
+; Moves a per-user copy from 0.6.4 or earlier out of the way. Its own
+; uninstaller removes exactly its files, shortcuts and keys, but also the
+; person's choices, so those are read first and written again for the new
+; path: starting with Windows here, magnet and .torrent handling in SecAssoc
+; (even with /ASSOC=0, which means "leave my handlers as they are").
+; CheckRunning has already made sure no tTorrent is running.
+Section "-Move the per-user copy" SecMove
+  StrCmp $OldDir "" move_done
+  StrCmp $OldDir $INSTDIR move_done
+  DetailPrint "Moving tTorrent from $OldDir"
+  StrCpy $R8 0 ; 1 when it started with Windows
+  ClearErrors
+  ReadRegStr $0 HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "tTorrent"
+  ${WordFind} "$0" "$OldDir\ttorrent.exe" "E#" $1
+  ${IfNot} ${Errors}
+    StrCpy $R8 1
+  ${EndIf}
+  ClearErrors
+  ReadRegStr $0 HKCU "Software\Classes\tTorrent.torrent\shell\open\command" ""
+  ${WordFind} "$0" "$OldDir\ttorrent.exe" "E#" $1
+  ${IfNot} ${Errors}
+    StrCpy $AssocTorrent ${BST_CHECKED}
+  ${EndIf}
+  ClearErrors
+  ReadRegStr $0 HKCU "Software\Classes\magnet\shell\open\command" ""
+  ${WordFind} "$0" "$OldDir\ttorrent.exe" "E#" $1
+  ${IfNot} ${Errors}
+    StrCpy $AssocMagnet ${BST_CHECKED}
+  ${EndIf}
+
+  ${If} ${FileExists} "$OldDir\uninstall.exe"
+    ; With _? it runs in place and waits, and leaves itself behind.
+    ExecWait '"$OldDir\uninstall.exe" /S _?=$OldDir'
+    Delete "$OldDir\uninstall.exe"
+  ${EndIf}
+  ; install-local.ps1 kept no file list, but its folder held only tTorrent.
+  ${If} $OldDir == "$LOCALAPPDATA\Programs\tTorrent"
+    RMDir /r "$OldDir"
+  ${Else}
+    RMDir "$OldDir"
+  ${EndIf}
+  ; The old shortcuts were per user; the new ones are for all users.
+  SetShellVarContext current
+  Delete "$SMPROGRAMS\tTorrent.lnk"
+  Delete "$DESKTOP\tTorrent.lnk"
+  SetShellVarContext all
+  DeleteRegKey HKCU "${UNINST_KEY}"
+
+  ${If} $R8 == 1
+    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "tTorrent" '"$INSTDIR\ttorrent.exe"'
+  ${EndIf}
+  move_done:
+SectionEnd
+
 Section "tTorrent (required)" SecApp
   SectionIn RO
   SetOutPath "$INSTDIR"
@@ -146,19 +238,19 @@ Section "tTorrent (required)" SecApp
   !include "${TT_FILES}"
   WriteUninstaller "$INSTDIR\uninstall.exe"
 
-  WriteRegStr HKCU "${UNINST_KEY}" "DisplayName" "${APP}"
-  WriteRegStr HKCU "${UNINST_KEY}" "DisplayVersion" "${TT_VERSION}"
-  WriteRegStr HKCU "${UNINST_KEY}" "DisplayIcon" '"$INSTDIR\ttorrent.exe",0'
-  WriteRegStr HKCU "${UNINST_KEY}" "Publisher" "t21 dev"
-  WriteRegStr HKCU "${UNINST_KEY}" "URLInfoAbout" "https://ttorrent.t21.dev"
-  WriteRegStr HKCU "${UNINST_KEY}" "InstallLocation" "$INSTDIR"
-  WriteRegStr HKCU "${UNINST_KEY}" "UninstallString" '"$INSTDIR\uninstall.exe"'
-  WriteRegStr HKCU "${UNINST_KEY}" "QuietUninstallString" '"$INSTDIR\uninstall.exe" /S'
-  WriteRegDWORD HKCU "${UNINST_KEY}" "NoModify" 1
-  WriteRegDWORD HKCU "${UNINST_KEY}" "NoRepair" 1
+  WriteRegStr HKLM "${UNINST_KEY}" "DisplayName" "${APP}"
+  WriteRegStr HKLM "${UNINST_KEY}" "DisplayVersion" "${TT_VERSION}"
+  WriteRegStr HKLM "${UNINST_KEY}" "DisplayIcon" '"$INSTDIR\ttorrent.exe",0'
+  WriteRegStr HKLM "${UNINST_KEY}" "Publisher" "t21 dev"
+  WriteRegStr HKLM "${UNINST_KEY}" "URLInfoAbout" "https://ttorrent.t21.dev"
+  WriteRegStr HKLM "${UNINST_KEY}" "InstallLocation" "$INSTDIR"
+  WriteRegStr HKLM "${UNINST_KEY}" "UninstallString" '"$INSTDIR\uninstall.exe"'
+  WriteRegStr HKLM "${UNINST_KEY}" "QuietUninstallString" '"$INSTDIR\uninstall.exe" /S'
+  WriteRegDWORD HKLM "${UNINST_KEY}" "NoModify" 1
+  WriteRegDWORD HKLM "${UNINST_KEY}" "NoRepair" 1
   ${GetSize} "$INSTDIR" "/S=0K" $0 $1 $2
   IntFmt $0 "0x%08X" $0
-  WriteRegDWORD HKCU "${UNINST_KEY}" "EstimatedSize" "$0"
+  WriteRegDWORD HKLM "${UNINST_KEY}" "EstimatedSize" "$0"
 SectionEnd
 
 Section "Desktop shortcut" SecDesktop
@@ -176,53 +268,28 @@ Section /o "Start tTorrent when Windows starts" SecStartup
 SectionEnd
 
 ; These two only record the choice; the hidden section below does the work.
-Section "Add a Windows Firewall rule (admin)" SecFirewall
+Section "Add a Windows Firewall rule" SecFirewall
 SectionEnd
 
-Section "Allow long file paths (admin)" SecLongPaths
+Section "Allow long file paths" SecLongPaths
 SectionEnd
 
-; One elevated cmd for both choices. ExecShellWait can't return the exit code,
-; so each result is checked afterwards and reported if it didn't happen (for
-; example when the person says no to the UAC prompt).
+; The installer already runs as admin, so neither needs a prompt of its own.
 Section "-Admin settings" SecAdmin
-  StrCpy $0 ""
+  StrCmp $NoAdmin 1 admin_done
   ${If} ${SectionIsSelected} ${SecFirewall}
-    StrCpy $0 'netsh advfirewall firewall delete rule name=tTorrent >nul & netsh advfirewall firewall add rule name=tTorrent dir=in action=allow program="$INSTDIR\ttorrent.exe" enable=yes profile=any >nul'
-  ${EndIf}
-  ${If} ${SectionIsSelected} ${SecLongPaths}
-    ${If} $0 != ""
-      StrCpy $0 "$0 & "
-    ${EndIf}
-    StrCpy $0 '$0reg add HKLM\SYSTEM\CurrentControlSet\Control\FileSystem /v LongPathsEnabled /t REG_DWORD /d 1 /f >nul'
-  ${EndIf}
-  StrCmp $0 "" admin_done
-  ${If} ${Silent}
-    DetailPrint "Skipped the firewall rule and long file paths: they need admin rights, and a silent install can't ask."
-    Goto admin_done
-  ${EndIf}
-  DetailPrint "Asking for admin rights for the firewall rule and long file paths..."
-  ExecShellWait "runas" "$SYSDIR\cmd.exe" '/c "$0"' SW_HIDE
-  StrCpy $1 ""
-  ${If} ${SectionIsSelected} ${SecFirewall}
-    nsExec::ExecToStack 'netsh advfirewall firewall show rule name=tTorrent'
-    Pop $2
-    Pop $3
-    ${If} $2 != "0"
-      StrCpy $1 "$1$\n- the Windows Firewall rule"
+    nsExec::ExecToStack 'netsh advfirewall firewall delete rule name=tTorrent'
+    Pop $0
+    Pop $1
+    nsExec::ExecToStack 'netsh advfirewall firewall add rule name=tTorrent dir=in action=allow program="$INSTDIR\ttorrent.exe" enable=yes profile=any'
+    Pop $0
+    Pop $1
+    ${If} $0 != "0"
+      DetailPrint "Couldn't add the Windows Firewall rule: $1"
     ${EndIf}
   ${EndIf}
   ${If} ${SectionIsSelected} ${SecLongPaths}
-    SetRegView 64
-    ReadRegDWORD $2 HKLM "SYSTEM\CurrentControlSet\Control\FileSystem" "LongPathsEnabled"
-    SetRegView lastused
-    ${If} $2 != "1"
-      StrCpy $1 "$1$\n- long file paths"
-    ${EndIf}
-  ${EndIf}
-  ${If} $1 != ""
-    DetailPrint "Not set up (needs admin rights):$1"
-    MessageBox MB_OK|MB_ICONINFORMATION "These weren't set up, because they need admin rights:$1$\n$\ntTorrent works without them. Windows asks about the firewall the first time tTorrent listens for peers."
+    WriteRegDWORD HKLM "SYSTEM\CurrentControlSet\Control\FileSystem" "LongPathsEnabled" 1
   ${EndIf}
   admin_done:
 SectionEnd
@@ -279,8 +346,14 @@ Section "-Open with tTorrent" SecAssoc
   ${EndIf}
 SectionEnd
 
+Function un.onInit
+  SetRegView 64
+  SetShellVarContext all
+FunctionEnd
+
 ; Removes only what the installer put there. Torrents, settings and downloads
-; (the profile in %APPDATA% and %LOCALAPPDATA%) stay.
+; (the profile in %APPDATA% and %LOCALAPPDATA%) stay. The per-user keys are
+; the current user's: normally the person who installed tTorrent removes it.
 Section "Uninstall"
   !include "${TT_UNFILES}"
   Delete "$INSTDIR\ttorrent-old*.exe"
@@ -297,13 +370,18 @@ Section "Uninstall"
   IfErrors +2
     DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "tTorrent"
 
-  ; Firewall rule: removing it needs admin rights, so ask only if it exists.
-  ; Long file paths stay on: other apps may rely on that Windows setting.
-  nsExec::ExecToStack 'netsh advfirewall firewall show rule name=tTorrent'
+  ; The firewall rule only if it is for this copy's exe. Long file paths
+  ; stay on: other apps may rely on that Windows setting.
+  nsExec::ExecToStack 'netsh advfirewall firewall show rule name=tTorrent verbose'
   Pop $0
   Pop $1
-  StrCmp $0 "0" 0 +2
-    ExecShellWait "runas" "$SYSDIR\netsh.exe" 'advfirewall firewall delete rule name=tTorrent' SW_HIDE
+  ClearErrors
+  ${un.WordFind} "$1" "$INSTDIR\ttorrent.exe" "E#" $2
+  ${IfNot} ${Errors}
+    nsExec::ExecToStack 'netsh advfirewall firewall delete rule name=tTorrent'
+    Pop $0
+    Pop $1
+  ${EndIf}
 
   DeleteRegKey HKCU "Software\Classes\tTorrent.torrent"
   DeleteRegKey HKCU "Software\Classes\tTorrent.magnet"
@@ -320,6 +398,10 @@ Section "Uninstall"
   DeleteRegKey HKCU "Software\tTorrent\Capabilities"
   DeleteRegKey /ifempty HKCU "Software\tTorrent"
   DeleteRegValue HKCU "Software\RegisteredApplications" "tTorrent"
-  DeleteRegKey HKCU "${UNINST_KEY}"
+  ; The uninstall entry only if it is this copy's (a test install elsewhere
+  ; must not remove the real one's).
+  ReadRegStr $0 HKLM "${UNINST_KEY}" "InstallLocation"
+  StrCmp $0 $INSTDIR 0 +2
+    DeleteRegKey HKLM "${UNINST_KEY}"
   System::Call 'shell32::SHChangeNotify(i 0x8000000, i 0, p 0, p 0)'
 SectionEnd

@@ -114,10 +114,11 @@ Only when the owner asks.
 2. Build, then run the screenshot pass and check the About dialog shows the new version.
 3. Stage `build\Release` without `ttorrent-old*.exe`, add `COPYING` as `COPYING.txt`, and zip it as `tTorrent-<version>-windows-x64.zip`. Build the installer from the same folder with `ttorrent\scripts\make-installer.ps1 -Dist <staged folder> -Out tTorrent-<version>-windows-x64-setup.exe` (needs NSIS 3). Write `sha256.txt` with both files.
 4. Unzip into an empty folder and start it with a scratch profile: it must start and listen. Then test the installer:
-   - First back up the Start Menu `tTorrent.lnk` and `HKCU\Software\RegisteredApplications`; the test replaces and removes them.
-   - Run `setup.exe /S /ASSOC=0 /D=<scratch folder>` (`/ASSOC=0` leaves your own magnet and .torrent handlers alone) and start the installed exe with a scratch profile.
+   - First back up the all-users Start Menu `tTorrent.lnk` (in `%ProgramData%\Microsoft\Windows\Start Menu\Programs`), `HKCU\Software\RegisteredApplications` and `HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\tTorrent`; the test replaces and removes them.
+   - From an elevated prompt, run `setup.exe /S /ASSOC=0 /MOVE=0 /ADMIN=0 /D=<scratch folder>` and start the installed exe with a scratch profile. `/ASSOC=0` leaves your own magnet and .torrent handlers alone, `/MOVE=0` leaves an old per-user copy alone, and `/ADMIN=0` leaves the firewall rule and long file paths alone.
    - Uninstall with `uninstall.exe /S _?=<scratch folder>`: the folder, the `tTorrent` keys and the shortcuts must be gone.
    - Restore the backups.
+   - If the move from an old per-user copy changed (`%LOCALAPPDATA%\Programs\tTorrent`, 0.6.4 and earlier), test it in Windows Sandbox or a VM: install the old release, turn on starting with Windows and both handlers, run the new setup, then check that the old folder, its uninstall entry and its shortcuts are gone, and that the Run value and handlers point at Program Files.
 5. Commit `chore(release): <version>`, tag `v<version>`, push both.
 6. `gh release create v<version> -R t21dev/tTorrent --prerelease --title "tTorrent <version> (preview)" --notes-file <notes> <setup.exe> <zip> <sha256.txt>`.
    - The notes list what's new and what's left out.
