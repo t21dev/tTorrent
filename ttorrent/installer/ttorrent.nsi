@@ -105,6 +105,7 @@ Var AssocTorrent
 Var CheckMagnet
 Var CheckTorrent
 Var OldDir ; a per-user copy from 0.6.4 or earlier, empty if none
+Var UserDir ; where 0.6.4 and earlier installed, for this user
 Var NoAdmin ; 1 with /ADMIN=0
 
 Function .onInit
@@ -112,6 +113,21 @@ Function .onInit
     MessageBox MB_OK|MB_ICONSTOP "tTorrent needs 64-bit Windows."
     Abort
   ${EndIf}
+  ; A silent install shows no pages, so CheckRunning never runs: refuse here
+  ; instead of replacing (and moving) files a running tTorrent holds open.
+  ${If} ${Silent}
+    nsExec::ExecToStack 'cmd /c tasklist /FI "IMAGENAME eq ttorrent.exe" /NH | find /I "ttorrent.exe"'
+    Pop $0
+    Pop $1
+    ${If} $0 == "0"
+      SetErrorLevel 3
+      Abort
+    ${EndIf}
+  ${EndIf}
+  ; Read before SetShellVarContext all, which turns $LOCALAPPDATA into
+  ; ProgramData.
+  SetShellVarContext current
+  StrCpy $UserDir "$LOCALAPPDATA\Programs\tTorrent"
   SetRegView 64
   SetShellVarContext all
   ; Upgrade in place, unless /D= chose another folder.
@@ -125,8 +141,8 @@ Function .onInit
   ; which used the same folder and wrote no uninstaller.
   ReadRegStr $OldDir HKCU "${UNINST_KEY}" "InstallLocation"
   ${If} $OldDir == ""
-  ${AndIf} ${FileExists} "$LOCALAPPDATA\Programs\tTorrent\ttorrent.exe"
-    StrCpy $OldDir "$LOCALAPPDATA\Programs\tTorrent"
+  ${AndIf} ${FileExists} "$UserDir\ttorrent.exe"
+    StrCpy $OldDir $UserDir
   ${EndIf}
   ; /MOVE=0 leaves that copy alone (test installs, see VERIFY.md › Releases).
   ${GetParameters} $0
@@ -212,7 +228,7 @@ Section "-Move the per-user copy" SecMove
     Delete "$OldDir\uninstall.exe"
   ${EndIf}
   ; install-local.ps1 kept no file list, but its folder held only tTorrent.
-  ${If} $OldDir == "$LOCALAPPDATA\Programs\tTorrent"
+  ${If} $OldDir == $UserDir
     RMDir /r "$OldDir"
   ${Else}
     RMDir "$OldDir"
