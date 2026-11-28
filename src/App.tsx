@@ -15,6 +15,7 @@ import {
 } from "./content";
 import { Mark, GitHub, ArrowRight, Download } from "./components/Icons";
 import { useDownload, useSystem } from "./download";
+import { AppSwitcher } from "./components/AppSwitcher";
 
 function Nav() {
   const [scrolled, setScrolled] = useState(false);
@@ -27,9 +28,12 @@ function Nav() {
   return (
     <header className="nav" data-scrolled={scrolled}>
       <div className="nav-inner">
-        <a className="brand" href="#top" aria-label="tTorrent, back to top">
-          <Mark /> <span>tTorrent</span>
-        </a>
+        <div className="brand-group">
+          <a className="brand" href="#top" aria-label="tTorrent, back to top">
+            <Mark /> <span>tTorrent</span>
+          </a>
+          <AppSwitcher current="ttorrent" />
+        </div>
         <nav aria-label="Sections" className="nav-links">
           <a href="#tour">Tour</a>
           <a href="#features">Features</a>

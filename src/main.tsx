@@ -5,6 +5,7 @@ import "@fontsource/dm-mono/latin-400.css";
 import "@fontsource/dm-mono/latin-500.css";
 import "./styles/tokens.css";
 import "./styles/site.css";
+import "./styles/switcher.css";
 import App from "./App";
 
 hydrateRoot(
