@@ -68,28 +68,32 @@ try {
     if ($running) { Write-Note 'tTorrent is running: restart it to use the new version.' }
     $exe = Join-Path $target 'ttorrent.exe'
 
-    # Move the old per-user copy: point what referred to it at the new exe.
+    # Point what referred to the old per-user copy at the new exe. That
+    # includes the keys Windows writes when ttorrent.exe is picked in "Open
+    # with" (torrent_auto_file, Applications\ttorrent.exe), which Default apps'
+    # choice often names. Runs even once the old folder is gone, to fix moves
+    # made before these keys were handled.
     $oldExe = Join-Path $oldTarget 'ttorrent.exe'
-    if (Test-Path $oldExe) {
-        $values = @(
-            @('HKCU:\Software\Microsoft\Windows\CurrentVersion\Run', 'tTorrent'),
-            @('HKCU:\Software\Classes\tTorrent.torrent\DefaultIcon', '(default)'),
-            @('HKCU:\Software\Classes\tTorrent.torrent\shell\open\command', '(default)'),
-            @('HKCU:\Software\Classes\tTorrent.magnet\DefaultIcon', '(default)'),
-            @('HKCU:\Software\Classes\tTorrent.magnet\shell\open\command', '(default)'),
-            @('HKCU:\Software\Classes\magnet\DefaultIcon', '(default)'),
-            @('HKCU:\Software\Classes\magnet\shell\open\command', '(default)'),
-            @('HKCU:\Software\tTorrent\Capabilities', 'ApplicationIcon'))
-        foreach ($v in $values) {
-            $key = Get-Item -LiteralPath $v[0] -ErrorAction SilentlyContinue
-            if (-not $key) { continue }
-            $name = if ($v[1] -eq '(default)') { '' } else { $v[1] }
-            $old = $key.GetValue($name)
-            if ($old -is [string] -and $old.IndexOf($oldExe, [StringComparison]::OrdinalIgnoreCase) -ge 0) {
-                $new = [regex]::Replace($old, [regex]::Escape($oldExe), $exe.Replace('$', '$$'), 'IgnoreCase')
-                Set-ItemProperty -LiteralPath $v[0] -Name $v[1] -Value $new
-            }
+    $values = @(
+        @('HKCU:\Software\Microsoft\Windows\CurrentVersion\Run', 'tTorrent'),
+        @('HKCU:\Software\tTorrent\Capabilities', 'ApplicationIcon'))
+    foreach ($progId in 'tTorrent.torrent', 'tTorrent.magnet', 'magnet', 'torrent_auto_file', 'magnet_auto_file', 'Applications\ttorrent.exe') {
+        $values += , @("HKCU:\Software\Classes\$progId\DefaultIcon", '(default)')
+        $values += , @("HKCU:\Software\Classes\$progId\shell\open\command", '(default)')
+    }
+    foreach ($v in $values) {
+        $key = Get-Item -LiteralPath $v[0] -ErrorAction SilentlyContinue
+        if (-not $key) { continue }
+        $name = if ($v[1] -eq '(default)') { '' } else { $v[1] }
+        $old = $key.GetValue($name)
+        if ($old -is [string] -and $old.IndexOf($oldExe, [StringComparison]::OrdinalIgnoreCase) -ge 0) {
+            $new = [regex]::Replace($old, [regex]::Escape($oldExe), $exe.Replace('$', '$$'), 'IgnoreCase')
+            Set-ItemProperty -LiteralPath $v[0] -Name $v[1] -Value $new
+            Write-Note "pointed $($v[0]) at $exe"
         }
+    }
+    # Move the old per-user copy.
+    if (Test-Path $oldExe) {
         netsh advfirewall firewall show rule name=tTorrent | Out-Null
         if (-not $LASTEXITCODE) { netsh advfirewall firewall set rule name=tTorrent new program="$exe" | Out-Null }
         Remove-Item -LiteralPath 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\tTorrent' -Recurse -ErrorAction SilentlyContinue

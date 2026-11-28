@@ -18,6 +18,8 @@
 #include <QCoreApplication>
 #include <QDesktopServices>
 #include <QDir>
+#include <QFileInfo>
+#include <QRegularExpression>
 #include <QSettings>
 #include <QUrl>
 
@@ -52,6 +54,40 @@ namespace
         classes.setValue(u"magnet/URL Protocol"_s, QString());
         classes.setValue(u"magnet/DefaultIcon/Default"_s, u"\"%1\",0"_s.arg(exe));
         classes.setValue(u"magnet/shell/open/command/Default"_s, open);
+    }
+
+    bool samePath(const QString &a, const QString &b)
+    {
+        return QDir::cleanPath(QDir::fromNativeSeparators(a)).compare(QDir::cleanPath(QDir::fromNativeSeparators(b)), Qt::CaseInsensitive) == 0;
+    }
+
+    // The copy the installer put in place: the folder its uninstall entry
+    // names, or Program Files\tTorrent (install-local.ps1 writes no entry).
+    bool isInstalledCopy(const QString &exeDir)
+    {
+        const QSettings uninstall {u"HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\tTorrent"_s
+            , QSettings::Registry64Format};
+        const QString location = uninstall.value(u"InstallLocation"_s).toString();
+        if (!location.isEmpty() && samePath(location, exeDir))
+            return true;
+        const QString programFiles = qEnvironmentVariable("ProgramW6432", qEnvironmentVariable("ProgramFiles"));
+        return !programFiles.isEmpty() && samePath(programFiles + u"\\tTorrent"_s, exeDir);
+    }
+
+    // Replaces a ttorrent.exe path in the value with exe when that file is
+    // gone. Arguments and icon indexes around it stay as they are.
+    bool repointValue(QSettings &settings, const QString &key, const QString &exe)
+    {
+        static const QRegularExpression pathRx {u"[A-Za-z]:\\\\[^\"]*?\\\\ttorrent\\.exe"_s, QRegularExpression::CaseInsensitiveOption};
+        const QString value = settings.value(key).toString();
+        const QRegularExpressionMatch match = pathRx.match(value);
+        if (!match.hasMatch())
+            return false;
+        const QString path = match.captured();
+        if (samePath(path, exe) || QFileInfo::exists(path))
+            return false;
+        settings.setValue(key, QString(value).replace(match.capturedStart(), match.capturedLength(), exe));
+        return true;
     }
 }
 #endif
@@ -110,6 +146,39 @@ void DoseAssoc::repairMagnetScheme()
     claimMagnetScheme(classes, exe, open);
     classes.sync();
     ::SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, nullptr, nullptr);
+#endif
+}
+
+void DoseAssoc::repairMovedInstall()
+{
+#ifdef Q_OS_WIN
+    const QString exe = QDir::toNativeSeparators(QCoreApplication::applicationFilePath());
+    if (!isInstalledCopy(QFileInfo(exe).absolutePath()))
+        return;
+
+    // torrent_auto_file and Applications\ttorrent.exe are what Windows writes
+    // for "Open with › Choose another app"; Default apps' choice (UserChoice)
+    // often names one of them, so it breaks with them.
+    bool repaired = false;
+    QSettings classes {u"HKEY_CURRENT_USER\\Software\\Classes"_s, QSettings::NativeFormat};
+    for (const QString &progId : {u"tTorrent.torrent"_s, u"tTorrent.magnet"_s, u"magnet"_s
+            , u"torrent_auto_file"_s, u"magnet_auto_file"_s, u"Applications/ttorrent.exe"_s})
+    {
+        repaired |= repointValue(classes, progId + u"/shell/open/command/Default"_s, exe);
+        repaired |= repointValue(classes, progId + u"/DefaultIcon/Default"_s, exe);
+    }
+    classes.sync();
+
+    QSettings software {u"HKEY_CURRENT_USER\\Software"_s, QSettings::NativeFormat};
+    repaired |= repointValue(software, u"tTorrent/Capabilities/ApplicationIcon"_s, exe);
+    repaired |= repointValue(software, u"Microsoft/Windows/CurrentVersion/Run/tTorrent"_s, exe);
+    software.sync();
+
+    if (!repaired)
+        return;
+    // tTorrent handled these at the old path, and the old uninstaller may have
+    // removed its own keys while moving: register this exe again.
+    registerForUser();
 #endif
 }
 

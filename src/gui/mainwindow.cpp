@@ -407,7 +407,7 @@ MainWindow::MainWindow(IGUIApplication *app, const WindowState initialState, con
     createKeyboardShortcuts();
     DoseShortcuts::install(this); // tTorrent: shortcut sheet, command palette, custom keys
     DoseAutomation::install(this); // tTorrent: disk guard, webhooks, unpack, notification cards
-    DoseAssoc::repairMagnetScheme(); // tTorrent: add the magnet key older installs missed
+    DoseAssoc::repairMovedInstall(); DoseAssoc::repairMagnetScheme(); // tTorrent: fix links to a moved exe, add the magnet key older installs missed
 
 #ifdef Q_OS_MACOS
     setUnifiedTitleAndToolBarOnMac(true);

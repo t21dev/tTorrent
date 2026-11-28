@@ -310,6 +310,59 @@ Section "-Admin settings" SecAdmin
   admin_done:
 SectionEnd
 
+; Points a value that names the old per-user exe at the new one. Sets $R7 to
+; 1 when it changed something.
+!macro REPOINT SUBKEY VALUE
+  ClearErrors
+  ReadRegStr $0 HKCU "${SUBKEY}" "${VALUE}"
+  ${If} $0 != ""
+    ClearErrors
+    ${WordReplace} "$0" "$UserDir\ttorrent.exe" "$INSTDIR\ttorrent.exe" "E+" $1
+    ${IfNot} ${Errors}
+      WriteRegStr HKCU "${SUBKEY}" "${VALUE}" "$1"
+      StrCpy $R7 1
+    ${EndIf}
+  ${EndIf}
+!macroend
+
+; Fixes .torrent and magnet handling that still names the old per-user exe
+; after it is gone: what 0.6.5 and 0.6.6 left behind when they moved it, and
+; the keys Windows writes itself when the person picks ttorrent.exe in "Open
+; with" (torrent_auto_file, Applications\ttorrent.exe). Default apps' choice
+; (UserChoice) often names one of those, so double-clicking a .torrent file
+; said the app could not be found. Runs on every install, not only on a move,
+; so an upgrade from a broken install is fixed too. What it finds counts as
+; the person's choice, and SecAssoc registers tTorrent again for it.
+Section "-Repoint the old path" SecRepoint
+  ${If} ${FileExists} "$UserDir\ttorrent.exe" ; /MOVE=0 kept the old copy
+  ${OrIf} $UserDir == $INSTDIR
+    Goto repoint_done
+  ${EndIf}
+  StrCpy $R7 0
+  !insertmacro REPOINT "Software\Classes\tTorrent.torrent\shell\open\command" ""
+  !insertmacro REPOINT "Software\Classes\tTorrent.torrent\DefaultIcon" ""
+  !insertmacro REPOINT "Software\Classes\torrent_auto_file\shell\open\command" ""
+  !insertmacro REPOINT "Software\Classes\torrent_auto_file\DefaultIcon" ""
+  !insertmacro REPOINT "Software\Classes\Applications\ttorrent.exe\shell\open\command" ""
+  !insertmacro REPOINT "Software\Classes\Applications\ttorrent.exe\DefaultIcon" ""
+  ${If} $R7 == 1
+    StrCpy $AssocTorrent ${BST_CHECKED}
+  ${EndIf}
+  StrCpy $R7 0
+  !insertmacro REPOINT "Software\Classes\tTorrent.magnet\shell\open\command" ""
+  !insertmacro REPOINT "Software\Classes\tTorrent.magnet\DefaultIcon" ""
+  !insertmacro REPOINT "Software\Classes\magnet\shell\open\command" ""
+  !insertmacro REPOINT "Software\Classes\magnet\DefaultIcon" ""
+  !insertmacro REPOINT "Software\Classes\magnet_auto_file\shell\open\command" ""
+  !insertmacro REPOINT "Software\Classes\magnet_auto_file\DefaultIcon" ""
+  ${If} $R7 == 1
+    StrCpy $AssocMagnet ${BST_CHECKED}
+  ${EndIf}
+  !insertmacro REPOINT "Software\tTorrent\Capabilities" "ApplicationIcon"
+  !insertmacro REPOINT "Software\Microsoft\Windows\CurrentVersion\Run" "tTorrent"
+  repoint_done:
+SectionEnd
+
 ; Makes tTorrent the handler for what the person ticked, for this user only
 ; (HKCU; qBittorrent's keys under HKLM are never touched). Windows keeps a
 ; default the person chose in Settings (UserChoice) and won't let an
