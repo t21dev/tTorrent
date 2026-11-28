@@ -1,21 +1,21 @@
 {
-  "version": "0.6.5",
+  "version": "0.6.6",
   "date": "2026-11-28",
-  "page": "https://github.com/t21dev/tTorrent/releases/tag/v0.6.5",
+  "page": "https://github.com/t21dev/tTorrent/releases/tag/v0.6.6",
   "assets": {
     "windows": {
-      "name": "tTorrent-0.6.5-windows-x64-setup.exe",
-      "url": "https://github.com/t21dev/tTorrent/releases/download/v0.6.5/tTorrent-0.6.5-windows-x64-setup.exe",
-      "size": 23476070
+      "name": "tTorrent-0.6.6-windows-x64-setup.exe",
+      "url": "https://github.com/t21dev/tTorrent/releases/download/v0.6.6/tTorrent-0.6.6-windows-x64-setup.exe",
+      "size": 23473586
     },
     "windowsPortable": {
-      "name": "tTorrent-0.6.5-windows-x64.zip",
-      "url": "https://github.com/t21dev/tTorrent/releases/download/v0.6.5/tTorrent-0.6.5-windows-x64.zip",
-      "size": 30850808
+      "name": "tTorrent-0.6.6-windows-x64.zip",
+      "url": "https://github.com/t21dev/tTorrent/releases/download/v0.6.6/tTorrent-0.6.6-windows-x64.zip",
+      "size": 30850805
     },
     "checksums": {
-      "name": "sha256-0.6.5.txt",
-      "url": "https://github.com/t21dev/tTorrent/releases/download/v0.6.5/sha256-0.6.5.txt",
+      "name": "sha256-0.6.6.txt",
+      "url": "https://github.com/t21dev/tTorrent/releases/download/v0.6.6/sha256-0.6.6.txt",
       "size": 202
     }
   }
