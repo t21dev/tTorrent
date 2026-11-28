@@ -22,10 +22,10 @@
 // A release changes all four lines below; the build fails if they disagree.
 // This file is also read by the resource compiler (qbittorrent.rc), so it
 // holds only #defines outside the RC_INVOKED block.
-#define TTORRENT_VERSION "0.6.5"
+#define TTORRENT_VERSION "0.6.6"
 #define TTORRENT_VERSION_MAJOR 0
 #define TTORRENT_VERSION_MINOR 6
-#define TTORRENT_VERSION_PATCH 5
+#define TTORRENT_VERSION_PATCH 6
 #define TTORRENT_VERSION_LABEL "stable"
 
 #ifndef RC_INVOKED
